@@ -50,6 +50,30 @@ class SettingsRepository {
     );
   }
 
+  /// Every stored key with its raw value. Keys the user never changed are
+  /// absent; callers layer [SettingsKeys.defaults] underneath.
+  Future<Map<String, String>> getAll() async {
+    final rows = await _db.query('settings', columns: ['key', 'value']);
+    return {
+      for (final row in rows) row['key'] as String: row['value'] as String,
+    };
+  }
+
+  /// Writes several keys in one batch.
+  Future<void> setMany(Map<String, String> values) async {
+    if (values.isEmpty) return;
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final batch = _db.batch();
+    for (final entry in values.entries) {
+      batch.insert(
+        'settings',
+        {'key': entry.key, 'value': entry.value, 'updated_at': now},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
   Future<void> setInt(String key, int value) => setString(key, '$value');
 
   Future<void> setBool(String key, bool value) =>

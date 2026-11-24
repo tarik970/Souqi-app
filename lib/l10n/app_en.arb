@@ -206,7 +206,144 @@
     }
   },
   "printInvoice": "Print",
-  "sharePdf": "Share PDF",
+  "sharePdf": "Share as PDF",
   "newSale": "New sale",
-  "backToHome": "Back to home"
+  "backToHome": "Back to home",
+  "setupPrinterQuestion": "Do you have a receipt printer?",
+  "setupPrinterYes": "Yes, I print invoices",
+  "setupPrinterNo": "No, I share them (image / WhatsApp)",
+
+  "invoiceSettingsTitle": "Invoice & printing",
+  "previewTitle": "Preview",
+  "sectionOutput": "After saving a sale",
+  "outputModePrint": "Print",
+  "outputModeShare": "Share",
+  "outputModeBoth": "Print + Share",
+  "outputModeHint": "Sets the main button after a sale is saved. The other actions stay in the menu.",
+  "sectionPrinter": "Bluetooth printer",
+  "printerNone": "No printer selected",
+  "choosePrinter": "Choose printer",
+  "forgetPrinter": "Forget this printer",
+  "pairedDevicesTitle": "Paired devices",
+  "noPairedDevices": "No paired devices. Pair the printer in the phone's Bluetooth settings first (the PIN is usually 0000 or 1234), then come back.",
+  "openBluetoothSettings": "Bluetooth settings",
+  "openAppSettings": "App settings",
+  "refresh": "Refresh",
+  "testPrint": "Test print",
+  "feedLinesLabel": "Blank lines after printing",
+  "cutPaperLabel": "Cut the paper after printing",
+  "cutPaperHint": "Only for printers with a cutter",
+  "sectionPaper": "Paper",
+  "paperWidthLabel": "Paper width",
+  "paperWidthPreset": "{mm} mm",
+  "@paperWidthPreset": {
+    "placeholders": {
+      "mm": {"type": "String"}
+    }
+  },
+  "paperCustom": "Custom",
+  "paperWidthMmLabel": "Paper width (mm)",
+  "printerDpiLabel": "Printer resolution (DPI)",
+  "sideMarginLabel": "Side margin (mm)",
+  "printableWidthInfo": "Printable width: {dots} dots ({mm} mm)",
+  "@printableWidthInfo": {
+    "placeholders": {
+      "dots": {"type": "String"},
+      "mm": {"type": "String"}
+    }
+  },
+  "advancedSection": "Advanced",
+  "printableDotsOverrideLabel": "Printable width (dots)",
+  "printableDotsOverrideHint": "Leave empty to compute it from the paper width, margin and DPI",
+  "invalidNumber": "Invalid number",
+  "sectionShop": "Shop details",
+  "shopNameLabel": "Shop name",
+  "logoLabel": "Logo",
+  "logoHint": "A simple dark logo on a white background prints best",
+  "pickLogo": "Choose image",
+  "removeLogo": "Remove",
+  "logoError": "This image could not be read",
+  "headerTextLabel": "Header text",
+  "footerTextLabel": "Footer text",
+  "sectionContent": "Invoice content",
+  "invoiceLanguageLabel": "Invoice language",
+  "baseFontSizeLabel": "Font size",
+  "showItemCodeLabel": "Item code",
+  "showUnitLabel": "Unit",
+  "showUnitPriceLabel": "Unit price",
+  "showDateTimeLabel": "Date and time",
+  "showInvoiceNumberLabel": "Invoice number",
+  "showCustomerNameLabel": "Customer name",
+  "showCustomerPhoneLabel": "Customer phone",
+  "showAccountNumberLabel": "Account / card number",
+  "maskAccountLabel": "Hide all but the last 4 digits",
+  "sectionCurrency": "Currencies on the invoice",
+  "currencyDisplayLabel": "Write the currency as",
+  "currencyDisplaySymbol": "Symbol",
+  "currencyDisplayCode": "Code",
+  "extraCurrenciesLabel": "Also show the total in",
+  "extraCurrenciesHint": "Up to 2 currencies. The exchange rate used is printed under the total.",
+  "extraCurrenciesNone": "Set the exchange rate of another currency to use this.",
+  "sectionSharing": "Sharing",
+  "shareWidthLabel": "Width of the shared image",
+  "shareWidthSameAsPaper": "Same as the paper",
+  "shareWidthMmLabel": "Share width (mm)",
+  "defaultCountryCodeLabel": "Default country code",
+  "defaultCountryCodeHint": "For sending on WhatsApp: a number typed as 09… is sent to +{code} 9…",
+  "@defaultCountryCodeHint": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+
+  "invoiceCustomerLabel": "Customer",
+  "invoicePhoneLabel": "Phone",
+  "invoiceAccountLabel": "Account no.",
+  "sampleItemSugar": "Sugar",
+  "sampleItemTea": "Tea",
+  "sampleItemPackage": "Internet package 100 GB",
+  "sampleUnitKg": "kg",
+  "sampleUnitBox": "box",
+  "sampleCustomerName": "Ahmad",
+
+  "shareInvoice": "Share",
+  "shareAsImage": "Share as image",
+  "sendOnWhatsApp": "Send on WhatsApp",
+  "saveImageToPhone": "Save image to phone",
+  "savePdfToPhone": "Save PDF to phone",
+  "moreActions": "More",
+  "printSent": "Sent to the printer",
+  "savedToPhone": "Saved to {path}",
+  "@savedToPhone": {
+    "placeholders": {
+      "path": {"type": "String"}
+    }
+  },
+  "whatsAppNotInstalled": "WhatsApp is not installed — opening the share menu instead",
+  "whatsAppUnsupported": "Could not open the chat directly — opening the share menu instead",
+  "whatsAppChooseTitle": "Send with",
+  "whatsAppRegular": "WhatsApp",
+  "whatsAppBusiness": "WhatsApp Business",
+  "whatsAppPhoneTitle": "WhatsApp number",
+  "whatsAppPhoneHint": "e.g. 0944 123 456",
+  "invalidPhone": "Invalid phone number",
+  "send": "Send",
+  "errorNoPrinter": "No printer selected. Choose one in Settings → Invoice & printing.",
+  "errorBluetoothUnsupported": "This device has no Bluetooth.",
+  "errorBluetoothOff": "Bluetooth is off. Turn it on and try again.",
+  "errorBluetoothPermission": "Souqi is not allowed to use Bluetooth. Allow \"Nearby devices\" in the app settings.",
+  "errorPrinterUnreachable": "Cannot reach the printer {name}. Check that it is switched on, close by and paired.",
+  "@errorPrinterUnreachable": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "errorPrinterWrite": "The connection to the printer dropped while printing. Try again.",
+  "errorStoragePermission": "Souqi is not allowed to save files. Allow storage access in the app settings.",
+  "errorOutputUnknown": "Something went wrong: {detail}",
+  "@errorOutputUnknown": {
+    "placeholders": {
+      "detail": {"type": "String"}
+    }
+  }
 }

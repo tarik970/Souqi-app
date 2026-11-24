@@ -1,5 +1,387 @@
 package com.souqi.souqi
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass
+import android.bluetooth.BluetoothManager
+import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.MediaScannerConnection
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.provider.MediaStore
+import android.provider.Settings
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
-class MainActivity : FlutterActivity()
+/**
+ * Hosts the Flutter UI and the "souqi/native" method channel — the Android
+ * half of lib/core/platform/native_bridge.dart:
+ *
+ *  - Bluetooth receipt printing (paired devices, connect, chunked write),
+ *  - the direct "send to this WhatsApp chat" intent,
+ *  - saving a file to Downloads/Souqi,
+ *  - shortcuts into the system Bluetooth and app settings.
+ *
+ * Nothing here uses the network.
+ */
+class MainActivity : FlutterActivity() {
+    private val printer = PrinterConnection()
+
+    /** One thread for all blocking work, so print jobs never interleave. */
+    private val io: ExecutorService = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+
+    /** Completion of the runtime-permission request in flight, if any. */
+    private var pendingPermission: ((Boolean) -> Unit)? = null
+
+    private val adapter: BluetoothAdapter?
+        get() = (getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+            .setMethodCallHandler(::onMethodCall)
+    }
+
+    override fun onDestroy() {
+        io.execute { printer.close() }
+        io.shutdown()
+        super.onDestroy()
+    }
+
+    private fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "btStatus" -> result.success(
+                mapOf(
+                    "supported" to (adapter != null),
+                    "enabled" to bluetoothEnabled(),
+                    "permission" to hasBluetoothPermission(),
+                ),
+            )
+            "btRequestPermission" -> requestBluetoothPermission(result)
+            "btPairedDevices" -> pairedDevices(result)
+            "btPrint" -> print(call, result)
+            "btDisconnect" -> io.execute {
+                printer.close()
+                main.post { result.success(null) }
+            }
+            "openBluetoothSettings" -> {
+                open(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+                result.success(null)
+            }
+            "openAppSettings" -> {
+                open(
+                    Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", packageName, null),
+                    ),
+                )
+                result.success(null)
+            }
+            "whatsAppPackages" -> result.success(WHATSAPP_PACKAGES.filter(::isInstalled))
+            "sendToWhatsApp" -> sendToWhatsApp(call, result)
+            "saveToDownloads" -> saveToDownloads(call, result)
+            else -> result.notImplemented()
+        }
+    }
+
+    // ---- Runtime permissions ------------------------------------------
+
+    /**
+     * Android 12+ guards Bluetooth behind the "Nearby devices" runtime
+     * permissions. Older versions grant BLUETOOTH / BLUETOOTH_ADMIN at
+     * install time, so there is nothing to ask.
+     */
+    private fun hasBluetoothPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
+        return BLUETOOTH_PERMISSIONS.all {
+            checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun requestBluetoothPermission(result: MethodChannel.Result) {
+        if (hasBluetoothPermission()) {
+            result.success(true)
+            return
+        }
+        askPermissions(BLUETOOTH_PERMISSIONS) { granted -> result.success(granted) }
+    }
+
+    private fun askPermissions(permissions: Array<String>, done: (Boolean) -> Unit) {
+        // A second request while one is open: answer the first as denied.
+        pendingPermission?.invoke(false)
+        pendingPermission = done
+        requestPermissions(permissions, REQUEST_PERMISSIONS)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQUEST_PERMISSIONS) return
+        val done = pendingPermission ?: return
+        pendingPermission = null
+        done(
+            grantResults.isNotEmpty() &&
+                grantResults.all { it == PackageManager.PERMISSION_GRANTED },
+        )
+    }
+
+    // ---- Bluetooth printer --------------------------------------------
+
+    private fun bluetoothEnabled(): Boolean = try {
+        adapter?.isEnabled == true
+    } catch (_: SecurityException) {
+        false
+    }
+
+    /** Replies with an error and returns null unless Bluetooth is usable. */
+    private fun usableAdapter(result: MethodChannel.Result): BluetoothAdapter? {
+        val adapter = adapter
+        when {
+            adapter == null -> result.error(BT_UNSUPPORTED, null, null)
+            !hasBluetoothPermission() -> result.error(BT_PERMISSION, null, null)
+            !bluetoothEnabled() -> result.error(BT_OFF, null, null)
+            else -> return adapter
+        }
+        return null
+    }
+
+    /**
+     * Devices already paired in the system settings. The app never scans —
+     * pairing stays where the user expects it, and no location permission
+     * is needed on any Android version.
+     */
+    @SuppressLint("MissingPermission")
+    private fun pairedDevices(result: MethodChannel.Result) {
+        val adapter = usableAdapter(result) ?: return
+        try {
+            val devices = adapter.bondedDevices.orEmpty().map { device ->
+                mapOf(
+                    "name" to (device.name ?: ""),
+                    "address" to device.address,
+                    "imaging" to (device.bluetoothClass?.majorDeviceClass ==
+                        BluetoothClass.Device.Major.IMAGING),
+                )
+            }
+            result.success(devices)
+        } catch (e: SecurityException) {
+            result.error(BT_PERMISSION, e.message, null)
+        }
+    }
+
+    private fun print(call: MethodCall, result: MethodChannel.Result) {
+        val address = call.argument<String>("address")
+        val bytes = call.argument<ByteArray>("bytes")
+        if (address.isNullOrEmpty() || bytes == null) {
+            result.error(PrinterConnection.UNREACHABLE, "missing address or data", null)
+            return
+        }
+        val chunkSize = call.argument<Int>("chunkSize") ?: 1024
+        val chunkDelayMs = (call.argument<Int>("chunkDelayMs") ?: 0).toLong()
+        val adapter = usableAdapter(result) ?: return
+        io.execute {
+            try {
+                printer.write(adapter, address, bytes, chunkSize, chunkDelayMs)
+                main.post { result.success(null) }
+            } catch (e: PrinterException) {
+                main.post { result.error(e.code, e.message, null) }
+            } catch (e: SecurityException) {
+                main.post { result.error(BT_PERMISSION, e.message, null) }
+            } catch (e: Exception) {
+                main.post { result.error(PrinterConnection.WRITE, e.message, null) }
+            }
+        }
+    }
+
+    // ---- System screens -----------------------------------------------
+
+    private fun open(intent: Intent) {
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+        }
+    }
+
+    // ---- WhatsApp ------------------------------------------------------
+
+    private fun isInstalled(packageName: String): Boolean = try {
+        packageManager.getPackageInfo(packageName, 0)
+        true
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
+    }
+
+    /**
+     * Opens WhatsApp (or WhatsApp Business) directly on one chat with the
+     * file attached: ACTION_SEND restricted to the app's package, plus the
+     * "jid" extra naming the chat (international number, digits only).
+     *
+     * The "jid" extra is not a documented API. It has worked for years, but
+     * a WhatsApp build may ignore it and show its contact picker instead —
+     * the file is still attached. If the intent cannot be started at all,
+     * this replies false and the Dart side falls back to the share sheet.
+     */
+    private fun sendToWhatsApp(call: MethodCall, result: MethodChannel.Result) {
+        val target = call.argument<String>("package")
+        val phone = call.argument<String>("phone")
+        val path = call.argument<String>("path")
+        val text = call.argument<String>("text")
+        if (target !in WHATSAPP_PACKAGES || phone.isNullOrEmpty() || path.isNullOrEmpty()) {
+            result.success(false)
+            return
+        }
+        try {
+            val uri = FileProvider.getUriForFile(this, "$packageName.souqi.files", File(path))
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                setPackage(target)
+                type = call.argument<String>("mimeType") ?: "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                if (!text.isNullOrEmpty()) putExtra(Intent.EXTRA_TEXT, text)
+                putExtra("jid", "$phone@s.whatsapp.net")
+                // Carries the read grant on every Android version.
+                clipData = ClipData.newRawUri(null, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(intent)
+            result.success(true)
+        } catch (_: ActivityNotFoundException) {
+            result.success(false)
+        } catch (_: IllegalArgumentException) {
+            // The file is outside the folder SouqiFileProvider exposes.
+            result.success(false)
+        } catch (_: SecurityException) {
+            result.success(false)
+        }
+    }
+
+    // ---- Save to phone -------------------------------------------------
+
+    private fun saveToDownloads(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("path")
+        val name = call.argument<String>("fileName")
+        val mime = call.argument<String>("mimeType") ?: "application/octet-stream"
+        if (path.isNullOrEmpty() || name.isNullOrEmpty()) {
+            result.error(SAVE_FAILED, "missing path or file name", null)
+            return
+        }
+        val save = {
+            io.execute {
+                try {
+                    val shown = copyToDownloads(File(path), name, mime)
+                    main.post { result.success(shown) }
+                } catch (e: Exception) {
+                    main.post { result.error(SAVE_FAILED, e.message, null) }
+                }
+            }
+        }
+        // Android 10+ needs no permission to add a file to Downloads through
+        // MediaStore. Android 9 and older write the file directly and need
+        // the (legacy) storage permission.
+        val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED
+        if (!needsPermission) {
+            save()
+            return
+        }
+        askPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)) { granted ->
+            if (granted) save() else result.error(STORAGE_PERMISSION, null, null)
+        }
+    }
+
+    /** Copies [source] into Downloads/Souqi; returns the path to show. */
+    private fun copyToDownloads(source: File, name: String, mime: String): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(MediaStore.MediaColumns.MIME_TYPE, mime)
+                put(
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER",
+                )
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val collection =
+                MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val uri = contentResolver.insert(collection, values)
+                ?: throw IOException("could not create the file")
+            try {
+                val out = contentResolver.openOutputStream(uri)
+                    ?: throw IOException("could not open the file")
+                out.use { stream -> source.inputStream().use { it.copyTo(stream) } }
+                values.clear()
+                values.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                contentResolver.update(uri, values, null, null)
+            } catch (e: Exception) {
+                contentResolver.delete(uri, null, null)
+                throw e
+            }
+            // MediaStore renames duplicates ("invoice-12 (1).png").
+            val shown = contentResolver.query(
+                uri,
+                arrayOf(MediaStore.MediaColumns.DISPLAY_NAME),
+                null,
+                null,
+                null,
+            )?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+            return "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/${shown ?: name}"
+        }
+
+        @Suppress("DEPRECATION")
+        val downloads =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val folder = File(downloads, FOLDER)
+        if (!folder.exists() && !folder.mkdirs()) {
+            throw IOException("could not create ${folder.path}")
+        }
+        val base = name.substringBeforeLast('.')
+        val extension = name.substringAfterLast('.', "")
+        var target = File(folder, name)
+        var copy = 1
+        while (target.exists()) {
+            val suffix = if (extension.isEmpty()) "" else ".$extension"
+            target = File(folder, "$base ($copy)$suffix")
+            copy++
+        }
+        source.copyTo(target)
+        MediaScannerConnection.scanFile(this, arrayOf(target.absolutePath), arrayOf(mime), null)
+        return "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/${target.name}"
+    }
+
+    companion object {
+        private const val CHANNEL = "souqi/native"
+        private const val FOLDER = "Souqi"
+        private const val REQUEST_PERMISSIONS = 48731
+
+        private const val BT_UNSUPPORTED = "BT_UNSUPPORTED"
+        private const val BT_OFF = "BT_OFF"
+        private const val BT_PERMISSION = "BT_PERMISSION"
+        private const val STORAGE_PERMISSION = "STORAGE_PERMISSION"
+        private const val SAVE_FAILED = "SAVE_FAILED"
+
+        private val BLUETOOTH_PERMISSIONS = arrayOf(
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_SCAN,
+        )
+        private val WHATSAPP_PACKAGES = listOf("com.whatsapp", "com.whatsapp.w4b")
+    }
+}

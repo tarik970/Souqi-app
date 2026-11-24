@@ -23,7 +23,7 @@ CORE FEATURES (later phases)
 2. Units: preset list (kg, g, bag, piece, box, liter) + user-defined units. Quantities can be decimals (0.5 kg).
 3. Sale screen: add items by tapping favorites, searching, or typing a code; set quantity; live total; save + print invoice.
 4. Invoice settings (fully dynamic, stored in DB): paper width (80 mm default, 58 mm, or custom mm), printer DPI (203 default), side margins, base font size, shop name, logo, header text, footer text, invoice language, and toggles for which fields to show (item code, unit, unit price, date/time, invoice number).
-5. Printing to a Bluetooth ESC/POS thermal printer. Arabic text must print correctly, so the invoice is rendered as a Flutter widget, captured to an image at the exact printable width in dots, converted to monochrome and sent as an ESC/POS raster image. Also share the invoice as PDF (WhatsApp etc.).
+5. Printing to a Bluetooth ESC/POS thermal printer. Arabic text must print correctly, so the invoice is rendered as a Flutter widget, captured to an image at the exact printable width in dots, converted to monochrome and sent as an ESC/POS raster image. Shops without a printer are fully supported: output mode Print / Share / Both; share the invoice as an image (default) or PDF, send it straight to the customer's WhatsApp chat when the customer has a phone number, or save it to the phone.
 6. Invoice archive: search by date range / invoice number / product, view, reprint, delete one, delete a date range, and auto-delete invoices older than N days (user setting, off by default).
 7. Statistics: sales total, invoice count, average invoice, top products by quantity and by amount, for today / this week / this month / custom range, plus comparison with the previous period.
 8. Extras: bulk price change by percentage (all or selected products, with rounding option), barcode scan with camera, discount per invoice (amount or %), favorites bar, data backup/restore to a single file, PIN lock for settings/archive/stats.
@@ -67,4 +67,7 @@ QUALITY
 
 SECRETS
 - Never create, request, store or commit the licensing PRIVATE key inside this project. Only the public key may appear in the app.
+
+BUILD NOTES
 - Keep `kotlin.incremental=false` in android/gradle.properties (fixes a Windows Kotlin cache lock bug). Never remove it.
+- UI imports come from package:material_ui (Flutter 3.50); localization delegates from material_ui's GlobalMaterialLocalizations.delegates.

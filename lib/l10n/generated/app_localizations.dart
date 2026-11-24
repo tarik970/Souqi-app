@@ -870,7 +870,7 @@ abstract class AppLocalizations {
   /// No description provided for @sharePdf.
   ///
   /// In en, this message translates to:
-  /// **'Share PDF'**
+  /// **'Share as PDF'**
   String get sharePdf;
 
   /// No description provided for @newSale.
@@ -884,6 +884,624 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to home'**
   String get backToHome;
+
+  /// No description provided for @setupPrinterQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you have a receipt printer?'**
+  String get setupPrinterQuestion;
+
+  /// No description provided for @setupPrinterYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I print invoices'**
+  String get setupPrinterYes;
+
+  /// No description provided for @setupPrinterNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No, I share them (image / WhatsApp)'**
+  String get setupPrinterNo;
+
+  /// No description provided for @invoiceSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice & printing'**
+  String get invoiceSettingsTitle;
+
+  /// No description provided for @previewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get previewTitle;
+
+  /// No description provided for @sectionOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving a sale'**
+  String get sectionOutput;
+
+  /// No description provided for @outputModePrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get outputModePrint;
+
+  /// No description provided for @outputModeShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get outputModeShare;
+
+  /// No description provided for @outputModeBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Print + Share'**
+  String get outputModeBoth;
+
+  /// No description provided for @outputModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets the main button after a sale is saved. The other actions stay in the menu.'**
+  String get outputModeHint;
+
+  /// No description provided for @sectionPrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth printer'**
+  String get sectionPrinter;
+
+  /// No description provided for @printerNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No printer selected'**
+  String get printerNone;
+
+  /// No description provided for @choosePrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose printer'**
+  String get choosePrinter;
+
+  /// No description provided for @forgetPrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget this printer'**
+  String get forgetPrinter;
+
+  /// No description provided for @pairedDevicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired devices'**
+  String get pairedDevicesTitle;
+
+  /// No description provided for @noPairedDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'No paired devices. Pair the printer in the phone\'s Bluetooth settings first (the PIN is usually 0000 or 1234), then come back.'**
+  String get noPairedDevices;
+
+  /// No description provided for @openBluetoothSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth settings'**
+  String get openBluetoothSettings;
+
+  /// No description provided for @openAppSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'App settings'**
+  String get openAppSettings;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @testPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Test print'**
+  String get testPrint;
+
+  /// No description provided for @feedLinesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Blank lines after printing'**
+  String get feedLinesLabel;
+
+  /// No description provided for @cutPaperLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut the paper after printing'**
+  String get cutPaperLabel;
+
+  /// No description provided for @cutPaperHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for printers with a cutter'**
+  String get cutPaperHint;
+
+  /// No description provided for @sectionPaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper'**
+  String get sectionPaper;
+
+  /// No description provided for @paperWidthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper width'**
+  String get paperWidthLabel;
+
+  /// No description provided for @paperWidthPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'{mm} mm'**
+  String paperWidthPreset(String mm);
+
+  /// No description provided for @paperCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get paperCustom;
+
+  /// No description provided for @paperWidthMmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper width (mm)'**
+  String get paperWidthMmLabel;
+
+  /// No description provided for @printerDpiLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer resolution (DPI)'**
+  String get printerDpiLabel;
+
+  /// No description provided for @sideMarginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Side margin (mm)'**
+  String get sideMarginLabel;
+
+  /// No description provided for @printableWidthInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Printable width: {dots} dots ({mm} mm)'**
+  String printableWidthInfo(String dots, String mm);
+
+  /// No description provided for @advancedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get advancedSection;
+
+  /// No description provided for @printableDotsOverrideLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Printable width (dots)'**
+  String get printableDotsOverrideLabel;
+
+  /// No description provided for @printableDotsOverrideHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to compute it from the paper width, margin and DPI'**
+  String get printableDotsOverrideHint;
+
+  /// No description provided for @invalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number'**
+  String get invalidNumber;
+
+  /// No description provided for @sectionShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop details'**
+  String get sectionShop;
+
+  /// No description provided for @shopNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name'**
+  String get shopNameLabel;
+
+  /// No description provided for @logoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo'**
+  String get logoLabel;
+
+  /// No description provided for @logoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A simple dark logo on a white background prints best'**
+  String get logoHint;
+
+  /// No description provided for @pickLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose image'**
+  String get pickLogo;
+
+  /// No description provided for @removeLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeLogo;
+
+  /// No description provided for @logoError.
+  ///
+  /// In en, this message translates to:
+  /// **'This image could not be read'**
+  String get logoError;
+
+  /// No description provided for @headerTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Header text'**
+  String get headerTextLabel;
+
+  /// No description provided for @footerTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Footer text'**
+  String get footerTextLabel;
+
+  /// No description provided for @sectionContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice content'**
+  String get sectionContent;
+
+  /// No description provided for @invoiceLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice language'**
+  String get invoiceLanguageLabel;
+
+  /// No description provided for @baseFontSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size'**
+  String get baseFontSizeLabel;
+
+  /// No description provided for @showItemCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Item code'**
+  String get showItemCodeLabel;
+
+  /// No description provided for @showUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get showUnitLabel;
+
+  /// No description provided for @showUnitPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit price'**
+  String get showUnitPriceLabel;
+
+  /// No description provided for @showDateTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date and time'**
+  String get showDateTimeLabel;
+
+  /// No description provided for @showInvoiceNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice number'**
+  String get showInvoiceNumberLabel;
+
+  /// No description provided for @showCustomerNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer name'**
+  String get showCustomerNameLabel;
+
+  /// No description provided for @showCustomerPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer phone'**
+  String get showCustomerPhoneLabel;
+
+  /// No description provided for @showAccountNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account / card number'**
+  String get showAccountNumberLabel;
+
+  /// No description provided for @maskAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide all but the last 4 digits'**
+  String get maskAccountLabel;
+
+  /// No description provided for @sectionCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currencies on the invoice'**
+  String get sectionCurrency;
+
+  /// No description provided for @currencyDisplayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the currency as'**
+  String get currencyDisplayLabel;
+
+  /// No description provided for @currencyDisplaySymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol'**
+  String get currencyDisplaySymbol;
+
+  /// No description provided for @currencyDisplayCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get currencyDisplayCode;
+
+  /// No description provided for @extraCurrenciesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Also show the total in'**
+  String get extraCurrenciesLabel;
+
+  /// No description provided for @extraCurrenciesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 2 currencies. The exchange rate used is printed under the total.'**
+  String get extraCurrenciesHint;
+
+  /// No description provided for @extraCurrenciesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the exchange rate of another currency to use this.'**
+  String get extraCurrenciesNone;
+
+  /// No description provided for @sectionSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get sectionSharing;
+
+  /// No description provided for @shareWidthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Width of the shared image'**
+  String get shareWidthLabel;
+
+  /// No description provided for @shareWidthSameAsPaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the paper'**
+  String get shareWidthSameAsPaper;
+
+  /// No description provided for @shareWidthMmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Share width (mm)'**
+  String get shareWidthMmLabel;
+
+  /// No description provided for @defaultCountryCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default country code'**
+  String get defaultCountryCodeLabel;
+
+  /// No description provided for @defaultCountryCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For sending on WhatsApp: a number typed as 09… is sent to +{code} 9…'**
+  String defaultCountryCodeHint(String code);
+
+  /// No description provided for @invoiceCustomerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get invoiceCustomerLabel;
+
+  /// No description provided for @invoicePhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get invoicePhoneLabel;
+
+  /// No description provided for @invoiceAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account no.'**
+  String get invoiceAccountLabel;
+
+  /// No description provided for @sampleItemSugar.
+  ///
+  /// In en, this message translates to:
+  /// **'Sugar'**
+  String get sampleItemSugar;
+
+  /// No description provided for @sampleItemTea.
+  ///
+  /// In en, this message translates to:
+  /// **'Tea'**
+  String get sampleItemTea;
+
+  /// No description provided for @sampleItemPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Internet package 100 GB'**
+  String get sampleItemPackage;
+
+  /// No description provided for @sampleUnitKg.
+  ///
+  /// In en, this message translates to:
+  /// **'kg'**
+  String get sampleUnitKg;
+
+  /// No description provided for @sampleUnitBox.
+  ///
+  /// In en, this message translates to:
+  /// **'box'**
+  String get sampleUnitBox;
+
+  /// No description provided for @sampleCustomerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Ahmad'**
+  String get sampleCustomerName;
+
+  /// No description provided for @shareInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareInvoice;
+
+  /// No description provided for @shareAsImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Share as image'**
+  String get shareAsImage;
+
+  /// No description provided for @sendOnWhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Send on WhatsApp'**
+  String get sendOnWhatsApp;
+
+  /// No description provided for @saveImageToPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Save image to phone'**
+  String get saveImageToPhone;
+
+  /// No description provided for @savePdfToPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Save PDF to phone'**
+  String get savePdfToPhone;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get moreActions;
+
+  /// No description provided for @printSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the printer'**
+  String get printSent;
+
+  /// No description provided for @savedToPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {path}'**
+  String savedToPhone(String path);
+
+  /// No description provided for @whatsAppNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp is not installed — opening the share menu instead'**
+  String get whatsAppNotInstalled;
+
+  /// No description provided for @whatsAppUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the chat directly — opening the share menu instead'**
+  String get whatsAppUnsupported;
+
+  /// No description provided for @whatsAppChooseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send with'**
+  String get whatsAppChooseTitle;
+
+  /// No description provided for @whatsAppRegular.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get whatsAppRegular;
+
+  /// No description provided for @whatsAppBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp Business'**
+  String get whatsAppBusiness;
+
+  /// No description provided for @whatsAppPhoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp number'**
+  String get whatsAppPhoneTitle;
+
+  /// No description provided for @whatsAppPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 0944 123 456'**
+  String get whatsAppPhoneHint;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid phone number'**
+  String get invalidPhone;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @errorNoPrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'No printer selected. Choose one in Settings → Invoice & printing.'**
+  String get errorNoPrinter;
+
+  /// No description provided for @errorBluetoothUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no Bluetooth.'**
+  String get errorBluetoothUnsupported;
+
+  /// No description provided for @errorBluetoothOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth is off. Turn it on and try again.'**
+  String get errorBluetoothOff;
+
+  /// No description provided for @errorBluetoothPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi is not allowed to use Bluetooth. Allow \"Nearby devices\" in the app settings.'**
+  String get errorBluetoothPermission;
+
+  /// No description provided for @errorPrinterUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach the printer {name}. Check that it is switched on, close by and paired.'**
+  String errorPrinterUnreachable(String name);
+
+  /// No description provided for @errorPrinterWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the printer dropped while printing. Try again.'**
+  String get errorPrinterWrite;
+
+  /// No description provided for @errorStoragePermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi is not allowed to save files. Allow storage access in the app settings.'**
+  String get errorStoragePermission;
+
+  /// No description provided for @errorOutputUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong: {detail}'**
+  String errorOutputUnknown(String detail);
 }
 
 class _AppLocalizationsDelegate

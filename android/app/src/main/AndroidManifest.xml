@@ -1,4 +1,28 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Bluetooth receipt printer (Bluetooth Classic, serial port profile).
+         Android 11 and older: install-time permissions, no location needed
+         because the app only lists devices that are already paired. -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <!-- Android 12+: runtime "Nearby devices" permissions. CONNECT lists the
+         paired devices and opens the socket; SCAN is only needed to stop a
+         running discovery before connecting and never derives location. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <!-- "Save to phone" on Android 9 and older only; Android 10+ writes to
+         Downloads/Souqi through MediaStore with no storage permission. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <uses-feature android:name="android.hardware.bluetooth"
+        android:required="false" />
+
     <application
         android:label="souqi"
         android:name="${applicationName}"
@@ -25,6 +49,20 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- Hands the staged invoice image/PDF (app cache, "share" folder)
+             to WhatsApp through a content:// URI. A subclass, so it cannot
+             clash with the FileProviders that plugins declare. -->
+        <provider
+            android:name=".SouqiFileProvider"
+            android:authorities="${applicationId}.souqi.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/souqi_file_paths" />
+        </provider>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -41,5 +79,8 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- "Send on WhatsApp": see which of the two apps is installed. -->
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
     </queries>
 </manifest>

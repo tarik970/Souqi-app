@@ -12,13 +12,22 @@ abstract final class SettingsKeys {
   static const shopType = 'shop_type'; // GROCERY / CARDS / BOTH
   static const setupDone = 'setup_done';
   static const shopName = 'shop_name';
+
+  /// The logo as a base64 PNG, already downscaled. Kept in the database (not
+  /// as a loose file) so it travels with backup/restore.
   static const shopLogoBase64 = 'shop_logo_base64';
 
-  // Invoice / printer settings.
+  // Paper / printer geometry. Millimetre values are decimal text ("3.5").
   static const paperWidthMm = 'paper_width_mm';
   static const printerDpi = 'printer_dpi';
-  static const marginLeftMm = 'margin_left_mm';
-  static const marginRightMm = 'margin_right_mm';
+  static const sideMarginMm = 'side_margin_mm';
+  static const printableDotsOverride = 'printable_dots_override'; // '' = computed
+  static const feedLines = 'feed_lines';
+  static const cutPaper = 'cut_paper';
+  static const printerMac = 'printer_mac';
+  static const printerName = 'printer_name';
+
+  // Invoice content.
   static const baseFontSize = 'base_font_size';
   static const headerText = 'header_text';
   static const footerText = 'footer_text';
@@ -27,11 +36,18 @@ abstract final class SettingsKeys {
   static const showUnitPrice = 'show_unit_price';
   static const showDateTime = 'show_date_time';
   static const showInvoiceNumber = 'show_invoice_number';
-  static const extraTotalCurrencies = 'extra_total_currencies'; // JSON list, max 2
+  static const showCustomerName = 'show_customer_name';
+  static const showCustomerPhone = 'show_customer_phone';
+  static const showAccountNumber = 'show_account_number';
   static const maskAccountNumber = 'mask_account_number';
   static const showPoweredBy = 'show_powered_by'; // one text line, no image
-  static const printerMac = 'printer_mac';
-  static const printerName = 'printer_name';
+  static const currencyDisplay = 'currency_display'; // SYMBOL / CODE
+  static const extraTotalCurrencies = 'extra_total_currencies'; // JSON list, max 2
+
+  // Output / sharing.
+  static const outputMode = 'output_mode'; // PRINT / SHARE / BOTH
+  static const shareWidthMm = 'share_width_mm'; // '' = same as the paper
+  static const defaultCountryCode = 'default_country_code';
 
   // Archive / security.
   static const autoDeleteDays = 'auto_delete_days'; // '0' = off
@@ -46,10 +62,18 @@ abstract final class SettingsKeys {
     shopType: 'GROCERY',
     setupDone: '0',
     shopName: '',
+    shopLogoBase64: '',
     paperWidthMm: '80',
     printerDpi: '203',
-    marginLeftMm: '0',
-    marginRightMm: '0',
+    // 80 mm paper has a 72 mm print head: with the brief's formula
+    // round((80 - 2 × 3.5) × 203 / 25.4) = 583 → 576 dots. A 4 mm margin
+    // would land on 575 → 568 because 203 dpi is slightly under 8 dots/mm.
+    sideMarginMm: '3.5',
+    printableDotsOverride: '',
+    feedLines: '3',
+    cutPaper: '0',
+    printerMac: '',
+    printerName: '',
     baseFontSize: '22',
     headerText: '',
     footerText: '',
@@ -58,9 +82,16 @@ abstract final class SettingsKeys {
     showUnitPrice: '1',
     showDateTime: '1',
     showInvoiceNumber: '1',
-    extraTotalCurrencies: '[]',
+    showCustomerName: '1',
+    showCustomerPhone: '1',
+    showAccountNumber: '1',
     maskAccountNumber: '0',
     showPoweredBy: '1',
+    currencyDisplay: 'SYMBOL',
+    extraTotalCurrencies: '[]',
+    outputMode: 'PRINT',
+    shareWidthMm: '',
+    defaultCountryCode: '963',
     autoDeleteDays: '0',
   };
 }

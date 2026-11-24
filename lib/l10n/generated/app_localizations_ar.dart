@@ -425,11 +425,343 @@ class AppLocalizationsAr extends AppLocalizations {
   String get printInvoice => 'طباعة';
 
   @override
-  String get sharePdf => 'مشاركة PDF';
+  String get sharePdf => 'مشاركة كملف PDF';
 
   @override
   String get newSale => 'فاتورة جديدة';
 
   @override
   String get backToHome => 'العودة للرئيسية';
+
+  @override
+  String get setupPrinterQuestion => 'هل لديك طابعة فواتير؟';
+
+  @override
+  String get setupPrinterYes => 'نعم، أطبع الفواتير';
+
+  @override
+  String get setupPrinterNo => 'لا، أشاركها (صورة / واتساب)';
+
+  @override
+  String get invoiceSettingsTitle => 'الفاتورة والطباعة';
+
+  @override
+  String get previewTitle => 'معاينة';
+
+  @override
+  String get sectionOutput => 'بعد حفظ الفاتورة';
+
+  @override
+  String get outputModePrint => 'طباعة';
+
+  @override
+  String get outputModeShare => 'مشاركة';
+
+  @override
+  String get outputModeBoth => 'طباعة + مشاركة';
+
+  @override
+  String get outputModeHint =>
+      'يحدّد الزر الرئيسي بعد حفظ الفاتورة. بقية الخيارات تبقى في القائمة.';
+
+  @override
+  String get sectionPrinter => 'طابعة البلوتوث';
+
+  @override
+  String get printerNone => 'لم تُحدَّد طابعة';
+
+  @override
+  String get choosePrinter => 'اختيار الطابعة';
+
+  @override
+  String get forgetPrinter => 'نسيان هذه الطابعة';
+
+  @override
+  String get pairedDevicesTitle => 'الأجهزة المقترنة';
+
+  @override
+  String get noPairedDevices =>
+      'لا توجد أجهزة مقترنة. اقرن الطابعة أولاً من إعدادات البلوتوث في الهاتف (الرمز غالباً 0000 أو 1234) ثم عُد إلى هنا.';
+
+  @override
+  String get openBluetoothSettings => 'إعدادات البلوتوث';
+
+  @override
+  String get openAppSettings => 'إعدادات التطبيق';
+
+  @override
+  String get refresh => 'تحديث';
+
+  @override
+  String get testPrint => 'طباعة تجريبية';
+
+  @override
+  String get feedLinesLabel => 'أسطر فارغة بعد الطباعة';
+
+  @override
+  String get cutPaperLabel => 'قصّ الورق بعد الطباعة';
+
+  @override
+  String get cutPaperHint => 'للطابعات المزوّدة بقاطع فقط';
+
+  @override
+  String get sectionPaper => 'الورق';
+
+  @override
+  String get paperWidthLabel => 'عرض الورق';
+
+  @override
+  String paperWidthPreset(String mm) {
+    return '$mm مم';
+  }
+
+  @override
+  String get paperCustom => 'مخصّص';
+
+  @override
+  String get paperWidthMmLabel => 'عرض الورق (مم)';
+
+  @override
+  String get printerDpiLabel => 'دقة الطابعة (DPI)';
+
+  @override
+  String get sideMarginLabel => 'الهامش الجانبي (مم)';
+
+  @override
+  String printableWidthInfo(String dots, String mm) {
+    return 'عرض الطباعة: $dots نقطة ($mm مم)';
+  }
+
+  @override
+  String get advancedSection => 'إعدادات متقدمة';
+
+  @override
+  String get printableDotsOverrideLabel => 'عرض الطباعة (بالنقاط)';
+
+  @override
+  String get printableDotsOverrideHint =>
+      'اتركه فارغاً ليُحسب من عرض الورق والهامش والدقة';
+
+  @override
+  String get invalidNumber => 'رقم غير صالح';
+
+  @override
+  String get sectionShop => 'بيانات المحل';
+
+  @override
+  String get shopNameLabel => 'اسم المحل';
+
+  @override
+  String get logoLabel => 'الشعار';
+
+  @override
+  String get logoHint => 'الشعار البسيط الداكن على خلفية بيضاء يُطبع أفضل';
+
+  @override
+  String get pickLogo => 'اختيار صورة';
+
+  @override
+  String get removeLogo => 'إزالة';
+
+  @override
+  String get logoError => 'تعذّرت قراءة هذه الصورة';
+
+  @override
+  String get headerTextLabel => 'نص الترويسة';
+
+  @override
+  String get footerTextLabel => 'نص التذييل';
+
+  @override
+  String get sectionContent => 'محتوى الفاتورة';
+
+  @override
+  String get invoiceLanguageLabel => 'لغة الفاتورة';
+
+  @override
+  String get baseFontSizeLabel => 'حجم الخط';
+
+  @override
+  String get showItemCodeLabel => 'رمز الصنف';
+
+  @override
+  String get showUnitLabel => 'الوحدة';
+
+  @override
+  String get showUnitPriceLabel => 'سعر الوحدة';
+
+  @override
+  String get showDateTimeLabel => 'التاريخ والوقت';
+
+  @override
+  String get showInvoiceNumberLabel => 'رقم الفاتورة';
+
+  @override
+  String get showCustomerNameLabel => 'اسم الزبون';
+
+  @override
+  String get showCustomerPhoneLabel => 'هاتف الزبون';
+
+  @override
+  String get showAccountNumberLabel => 'رقم الحساب / الكرت';
+
+  @override
+  String get maskAccountLabel => 'إخفاء الرقم ما عدا آخر 4 خانات';
+
+  @override
+  String get sectionCurrency => 'العملات في الفاتورة';
+
+  @override
+  String get currencyDisplayLabel => 'كتابة العملة';
+
+  @override
+  String get currencyDisplaySymbol => 'الرمز';
+
+  @override
+  String get currencyDisplayCode => 'الكود';
+
+  @override
+  String get extraCurrenciesLabel => 'إظهار الإجمالي أيضاً بـ';
+
+  @override
+  String get extraCurrenciesHint =>
+      'عملتان كحدّ أقصى. يُطبع سعر الصرف المستخدم تحت الإجمالي.';
+
+  @override
+  String get extraCurrenciesNone =>
+      'حدّد سعر صرف عملة أخرى لاستخدام هذا الخيار.';
+
+  @override
+  String get sectionSharing => 'المشاركة';
+
+  @override
+  String get shareWidthLabel => 'عرض الصورة عند المشاركة';
+
+  @override
+  String get shareWidthSameAsPaper => 'مثل عرض الورق';
+
+  @override
+  String get shareWidthMmLabel => 'عرض المشاركة (مم)';
+
+  @override
+  String get defaultCountryCodeLabel => 'رمز الدولة الافتراضي';
+
+  @override
+  String defaultCountryCodeHint(String code) {
+    return 'للإرسال عبر واتساب: الرقم المكتوب 09… يُرسل إلى ‎+$code 9…';
+  }
+
+  @override
+  String get invoiceCustomerLabel => 'الزبون';
+
+  @override
+  String get invoicePhoneLabel => 'الهاتف';
+
+  @override
+  String get invoiceAccountLabel => 'رقم الحساب';
+
+  @override
+  String get sampleItemSugar => 'سكر';
+
+  @override
+  String get sampleItemTea => 'شاي';
+
+  @override
+  String get sampleItemPackage => 'باقة إنترنت 100 غيغا';
+
+  @override
+  String get sampleUnitKg => 'كغ';
+
+  @override
+  String get sampleUnitBox => 'علبة';
+
+  @override
+  String get sampleCustomerName => 'أحمد';
+
+  @override
+  String get shareInvoice => 'مشاركة';
+
+  @override
+  String get shareAsImage => 'مشاركة كصورة';
+
+  @override
+  String get sendOnWhatsApp => 'إرسال عبر واتساب';
+
+  @override
+  String get saveImageToPhone => 'حفظ الصورة في الهاتف';
+
+  @override
+  String get savePdfToPhone => 'حفظ ملف PDF في الهاتف';
+
+  @override
+  String get moreActions => 'المزيد';
+
+  @override
+  String get printSent => 'أُرسلت إلى الطابعة';
+
+  @override
+  String savedToPhone(String path) {
+    return 'حُفظت في $path';
+  }
+
+  @override
+  String get whatsAppNotInstalled =>
+      'واتساب غير مثبّت — سيتم فتح قائمة المشاركة';
+
+  @override
+  String get whatsAppUnsupported =>
+      'تعذّر فتح المحادثة مباشرة — سيتم فتح قائمة المشاركة';
+
+  @override
+  String get whatsAppChooseTitle => 'الإرسال عبر';
+
+  @override
+  String get whatsAppRegular => 'واتساب';
+
+  @override
+  String get whatsAppBusiness => 'واتساب للأعمال';
+
+  @override
+  String get whatsAppPhoneTitle => 'رقم واتساب';
+
+  @override
+  String get whatsAppPhoneHint => 'مثال: 0944 123 456';
+
+  @override
+  String get invalidPhone => 'رقم هاتف غير صالح';
+
+  @override
+  String get send => 'إرسال';
+
+  @override
+  String get errorNoPrinter =>
+      'لم تُحدَّد طابعة. اخترها من الإعدادات ← الفاتورة والطباعة.';
+
+  @override
+  String get errorBluetoothUnsupported => 'هذا الجهاز لا يدعم البلوتوث.';
+
+  @override
+  String get errorBluetoothOff => 'البلوتوث مُطفأ. شغّله ثم حاول مجدداً.';
+
+  @override
+  String get errorBluetoothPermission =>
+      'لا يملك سوقي إذن استخدام البلوتوث. اسمح بإذن «الأجهزة المجاورة» من إعدادات التطبيق.';
+
+  @override
+  String errorPrinterUnreachable(String name) {
+    return 'تعذّر الوصول إلى الطابعة $name. تأكد أنها تعمل وقريبة ومقترنة بالهاتف.';
+  }
+
+  @override
+  String get errorPrinterWrite =>
+      'انقطع الاتصال بالطابعة أثناء الطباعة. حاول مجدداً.';
+
+  @override
+  String get errorStoragePermission =>
+      'لا يملك سوقي إذن حفظ الملفات. اسمح بإذن التخزين من إعدادات التطبيق.';
+
+  @override
+  String errorOutputUnknown(String detail) {
+    return 'حدث خطأ: $detail';
+  }
 }

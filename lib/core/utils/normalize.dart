@@ -54,3 +54,63 @@ String normalizeName(String input) {
       .replaceAll(RegExp(r'\s+'), ' ')
       .toLowerCase();
 }
+
+/// Converts a phone number the way a shop owner types it into the
+/// international form a WhatsApp chat link needs: digits only, country code
+/// first, no '+' and no '00'.
+///
+///   0944 123 456        → 963944123456   (trunk zero replaced by the code)
+///   +963 944 123 456    → 963944123456
+///   00963944123456      → 963944123456
+///   ٠٩٤٤١٢٣٤٥٦          → 963944123456   (Arabic-Indic digits)
+///   +963 (0) 944 123456 → 963944123456   (trunk zero typed after the code)
+///
+/// Returns null when the result cannot be a phone number (E.164 allows at
+/// most 15 digits; fewer than 8 is not a subscriber number anywhere).
+String? toInternationalPhone(
+  String input, {
+  String defaultCountryCode = '963',
+}) {
+  final raw = normalizeDigits(input.trim());
+  final hasPlus = raw.startsWith('+');
+  var digits = normalizePhone(raw);
+  if (digits.isEmpty) return null;
+  final cc = normalizePhone(defaultCountryCode).replaceFirst(RegExp('^0+'), '');
+
+  if (hasPlus) {
+    // Already international.
+  } else if (digits.startsWith('00')) {
+    digits = digits.substring(2);
+  } else if (digits.startsWith('0')) {
+    digits = '$cc${digits.substring(1)}';
+  } else if (cc.isNotEmpty &&
+      digits.startsWith(cc) &&
+      digits.length >= cc.length + 7) {
+    // International, typed without '+' or '00'.
+  } else {
+    digits = '$cc$digits';
+  }
+
+  if (cc.isNotEmpty && digits.startsWith('${cc}0')) {
+    digits = '$cc${digits.substring(cc.length + 1)}';
+  }
+  if (digits.length < 8 || digits.length > 15) return null;
+  return digits;
+}
+
+/// Hides everything but the last four characters of an account / card number
+/// for printing ("0011-2233-4455" → "****-****-4455"). Spaces and dashes are
+/// kept so the grouping stays readable. Four characters or fewer are returned
+/// unchanged — there would be nothing left to recognise the account by.
+String maskAllButLast4(String input, {String maskChar = '*'}) {
+  final chars = input.split('');
+  final maskable = <int>[
+    for (var i = 0; i < chars.length; i++)
+      if (!_spacesAndDashes.hasMatch(chars[i])) i,
+  ];
+  if (maskable.length <= 4) return input;
+  for (final index in maskable.take(maskable.length - 4)) {
+    chars[index] = maskChar;
+  }
+  return chars.join();
+}

@@ -30,6 +30,15 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  # Phase 3 (printing / sharing). Bluetooth and ESC/POS deliberately use NO
+  # package: see android/.../PrinterConnection.kt and lib/core/printing/.
+  # System share sheet (image / PDF).
+  share_plus: ^13.3.1
+  # Picking the shop logo (Android photo picker, no storage permission).
+  image_picker: ^1.2.4
+  # Pure Dart: wraps the rendered invoice image in a paper-width PDF page.
+  pdf: ^3.13.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

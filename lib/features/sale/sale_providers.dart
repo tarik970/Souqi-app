@@ -1,28 +1,21 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/features.dart';
-import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
+import '../invoice/invoice_providers.dart';
 
-/// Up to two extra currencies shown under the invoice total.
-final extraTotalCurrenciesProvider = FutureProvider<List<String>>((ref) async {
-  final raw = await ref
-      .watch(settingsRepositoryProvider)
-      .getString(SettingsKeys.extraTotalCurrencies);
-  try {
-    final decoded = jsonDecode(raw);
-    if (decoded is! List) return const [];
-    return decoded.whereType<String>().take(2).toList();
-  } on FormatException {
-    return const [];
-  }
-});
+/// Up to two extra currencies shown under the invoice total. One source of
+/// truth: the invoice settings (edited there, or by the sale screen's
+/// "secondary total" shortcut).
+final extraTotalCurrenciesProvider = FutureProvider<List<String>>(
+  (ref) => ref.watch(
+    invoiceSettingsProvider.selectAsync((settings) => settings.extraCurrencies),
+  ),
+);
 
 /// Currency table + base code + extra display currencies, everything the cart
 /// math needs. Rebuilt whenever a rate changes.

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Files SouqiFileProvider may expose: only the staging folder
+     <cache>/share, where invoice images and PDFs are written before they are
+     shared (see outputDirectoryProvider in invoice_output.dart). -->
+<paths>
+    <cache-path name="share" path="share/" />
+</paths>

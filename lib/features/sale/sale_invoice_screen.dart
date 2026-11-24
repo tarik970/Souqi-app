@@ -6,11 +6,17 @@ import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/invoice.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../invoice/invoice_actions.dart';
+import '../invoice/invoice_preview.dart';
+import '../invoice/invoice_providers.dart';
+import '../invoice/invoice_settings_screen.dart';
 import 'sale_providers.dart';
 import 'sale_screen.dart';
 
-/// Shown right after an invoice is saved: what was stored, and what to do
-/// next. Print and Share PDF are placeholders until the printing phase.
+/// Shown right after an invoice is saved: a short summary in the app
+/// language, the invoice exactly as it will be printed or shared, and the
+/// output actions (primary button per the output mode, the rest under
+/// "More").
 class SaleInvoiceScreen extends ConsumerWidget {
   const SaleInvoiceScreen({super.key, required this.invoice});
 
@@ -27,6 +33,7 @@ class SaleInvoiceScreen extends ConsumerWidget {
     final symbol = currency == null
         ? invoice.currencyCode
         : (currency.symbol.isEmpty ? currency.code : currency.symbol);
+    final render = ref.watch(invoiceRenderContextProvider).value;
 
     String money(int minor) => formatMinor(
           minor,
@@ -35,11 +42,19 @@ class SaleInvoiceScreen extends ConsumerWidget {
           symbol: symbol,
         );
 
-    void comingSoon() => ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l10n.comingSoon)));
-
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.invoiceSavedTitle)),
+      appBar: AppBar(
+        title: Text(l10n.invoiceSavedTitle),
+        actions: [
+          IconButton(
+            tooltip: l10n.invoiceSettingsTitle,
+            icon: const Icon(Icons.tune),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const InvoiceSettingsScreen()),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -49,8 +64,8 @@ class SaleInvoiceScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   Icon(Icons.check_circle,
-                      size: 56, color: theme.colorScheme.primary),
-                  const SizedBox(height: 12),
+                      size: 48, color: theme.colorScheme.primary),
+                  const SizedBox(height: 8),
                   Text(
                     l10n.invoiceNoLabel(
                       NumberFormat.decimalPattern(locale)
@@ -66,9 +81,10 @@ class SaleInvoiceScreen extends ConsumerWidget {
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.outline),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     money(invoice.totalMinor),
+                    key: const ValueKey('saved-total'),
                     style: theme.textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -88,42 +104,14 @@ class SaleInvoiceScreen extends ConsumerWidget {
                       style: theme.textTheme.titleSmall
                           ?.copyWith(color: theme.colorScheme.outline),
                     ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.itemsCount(invoice.items.length),
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  if (invoice.discountMinor != 0)
-                    Text(
-                      '${l10n.discountLabel} − ${money(invoice.discountMinor)}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: comingSoon,
-                  icon: const Icon(Icons.print_outlined),
-                  label: Text(l10n.printInvoice),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: comingSoon,
-                  icon: const Icon(Icons.share_outlined),
-                  label: Text(l10n.sharePdf),
-                ),
-              ),
-            ],
-          ),
+          InvoiceActions(invoice: invoice),
           const SizedBox(height: 12),
-          FilledButton.icon(
+          FilledButton.tonalIcon(
             onPressed: () => Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const SaleScreen()),
             ),
@@ -133,11 +121,22 @@ class SaleInvoiceScreen extends ConsumerWidget {
               child: Text(l10n.newSale),
             ),
           ),
-          const SizedBox(height: 8),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(l10n.backToHome),
           ),
+          const SizedBox(height: 8),
+          // The on-screen invoice view: the very widget that is printed and
+          // shared, so what is seen here is what the customer gets.
+          if (render != null)
+            InvoicePaperPreview(
+              key: const ValueKey('saved-invoice-view'),
+              invoice: invoice,
+              settings: render.settings,
+              currencies: render.currencies,
+              logo: render.logo,
+              maxWidth: 380,
+            ),
         ],
       ),
     );

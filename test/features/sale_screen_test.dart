@@ -228,6 +228,76 @@ void main() {
     expect(items.single['line_total_minor'], 2000);
   });
 
+  testWidgets('a line priced in another currency shows its ORIGINAL price',
+      (tester) async {
+    // 1 USD = 13,000 SYP; the product is priced 2.50 USD, the sale is in SYP.
+    await db(
+      tester,
+      () => database.db.update(
+        'currencies',
+        {'rate_num': 13000, 'rate_den': 1, 'rate_updated_at': 1},
+        where: 'code = ?',
+        whereArgs: ['USD'],
+      ),
+    );
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db(
+      tester,
+      () => database.db.insert('products', {
+        'name': 'Oil',
+        'name_norm': 'oil',
+        'code': '9',
+        'kind': 'GOODS',
+        'price_minor': 250,
+        'currency_code': 'USD',
+        'is_favorite': 1,
+        'is_active': 1,
+        'created_at': now,
+        'updated_at': now,
+      }),
+    );
+    await db(tester, () => insertFavorite('Salt', priceMinor: 300, code: '8'));
+    await pumpSale(tester);
+
+    await submitCode(tester, '9');
+    await submitCode(tester, '9');
+    await submitCode(tester, '8');
+
+    // Cross-currency: "qty × original price in its own currency" — the
+    // converted unit price (32,500 SYP) is not what the line multiplies.
+    expect(find.text(r'2 × 2.50 $'), findsOneWidget);
+    expect(lineTotal('65,000 ل.س'), findsOneWidget);
+    // Same currency: "qty × unit price".
+    expect(find.text('1 × 300 ل.س'), findsOneWidget);
+    expect(totalText(tester), '65,300 ل.س');
+  });
+
+  testWidgets('after saving: the invoice view and the Print button',
+      (tester) async {
+    await db(tester, () => insertFavorite('Water', priceMinor: 500, code: '7'));
+    await pumpSale(tester);
+    await submitCode(tester, '7');
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await settle(tester);
+
+    expect(find.byType(SaleInvoiceScreen), findsOneWidget);
+    // Output mode defaults to Print: it is the primary button.
+    expect(find.byKey(const ValueKey('invoice-primary-print')), findsOneWidget);
+    expect(find.byKey(const ValueKey('invoice-primary-shareImage')), findsNothing);
+    // The on-screen invoice is the same widget that gets printed, in the
+    // INVOICE language (Arabic by default) although the app is in English.
+    final view = find.byKey(const ValueKey('saved-invoice-view'), skipOffstage: false);
+    expect(view, findsOneWidget);
+    expect(
+      find.descendant(
+        of: view,
+        matching: find.text('فاتورة رقم 1', skipOffstage: false),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('saving is blocked while the cart is empty', (tester) async {
     await db(tester, () => insertFavorite('Salt', priceMinor: 300));
     await pumpSale(tester);

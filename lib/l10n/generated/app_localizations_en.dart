@@ -425,11 +425,343 @@ class AppLocalizationsEn extends AppLocalizations {
   String get printInvoice => 'Print';
 
   @override
-  String get sharePdf => 'Share PDF';
+  String get sharePdf => 'Share as PDF';
 
   @override
   String get newSale => 'New sale';
 
   @override
   String get backToHome => 'Back to home';
+
+  @override
+  String get setupPrinterQuestion => 'Do you have a receipt printer?';
+
+  @override
+  String get setupPrinterYes => 'Yes, I print invoices';
+
+  @override
+  String get setupPrinterNo => 'No, I share them (image / WhatsApp)';
+
+  @override
+  String get invoiceSettingsTitle => 'Invoice & printing';
+
+  @override
+  String get previewTitle => 'Preview';
+
+  @override
+  String get sectionOutput => 'After saving a sale';
+
+  @override
+  String get outputModePrint => 'Print';
+
+  @override
+  String get outputModeShare => 'Share';
+
+  @override
+  String get outputModeBoth => 'Print + Share';
+
+  @override
+  String get outputModeHint =>
+      'Sets the main button after a sale is saved. The other actions stay in the menu.';
+
+  @override
+  String get sectionPrinter => 'Bluetooth printer';
+
+  @override
+  String get printerNone => 'No printer selected';
+
+  @override
+  String get choosePrinter => 'Choose printer';
+
+  @override
+  String get forgetPrinter => 'Forget this printer';
+
+  @override
+  String get pairedDevicesTitle => 'Paired devices';
+
+  @override
+  String get noPairedDevices =>
+      'No paired devices. Pair the printer in the phone\'s Bluetooth settings first (the PIN is usually 0000 or 1234), then come back.';
+
+  @override
+  String get openBluetoothSettings => 'Bluetooth settings';
+
+  @override
+  String get openAppSettings => 'App settings';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get testPrint => 'Test print';
+
+  @override
+  String get feedLinesLabel => 'Blank lines after printing';
+
+  @override
+  String get cutPaperLabel => 'Cut the paper after printing';
+
+  @override
+  String get cutPaperHint => 'Only for printers with a cutter';
+
+  @override
+  String get sectionPaper => 'Paper';
+
+  @override
+  String get paperWidthLabel => 'Paper width';
+
+  @override
+  String paperWidthPreset(String mm) {
+    return '$mm mm';
+  }
+
+  @override
+  String get paperCustom => 'Custom';
+
+  @override
+  String get paperWidthMmLabel => 'Paper width (mm)';
+
+  @override
+  String get printerDpiLabel => 'Printer resolution (DPI)';
+
+  @override
+  String get sideMarginLabel => 'Side margin (mm)';
+
+  @override
+  String printableWidthInfo(String dots, String mm) {
+    return 'Printable width: $dots dots ($mm mm)';
+  }
+
+  @override
+  String get advancedSection => 'Advanced';
+
+  @override
+  String get printableDotsOverrideLabel => 'Printable width (dots)';
+
+  @override
+  String get printableDotsOverrideHint =>
+      'Leave empty to compute it from the paper width, margin and DPI';
+
+  @override
+  String get invalidNumber => 'Invalid number';
+
+  @override
+  String get sectionShop => 'Shop details';
+
+  @override
+  String get shopNameLabel => 'Shop name';
+
+  @override
+  String get logoLabel => 'Logo';
+
+  @override
+  String get logoHint => 'A simple dark logo on a white background prints best';
+
+  @override
+  String get pickLogo => 'Choose image';
+
+  @override
+  String get removeLogo => 'Remove';
+
+  @override
+  String get logoError => 'This image could not be read';
+
+  @override
+  String get headerTextLabel => 'Header text';
+
+  @override
+  String get footerTextLabel => 'Footer text';
+
+  @override
+  String get sectionContent => 'Invoice content';
+
+  @override
+  String get invoiceLanguageLabel => 'Invoice language';
+
+  @override
+  String get baseFontSizeLabel => 'Font size';
+
+  @override
+  String get showItemCodeLabel => 'Item code';
+
+  @override
+  String get showUnitLabel => 'Unit';
+
+  @override
+  String get showUnitPriceLabel => 'Unit price';
+
+  @override
+  String get showDateTimeLabel => 'Date and time';
+
+  @override
+  String get showInvoiceNumberLabel => 'Invoice number';
+
+  @override
+  String get showCustomerNameLabel => 'Customer name';
+
+  @override
+  String get showCustomerPhoneLabel => 'Customer phone';
+
+  @override
+  String get showAccountNumberLabel => 'Account / card number';
+
+  @override
+  String get maskAccountLabel => 'Hide all but the last 4 digits';
+
+  @override
+  String get sectionCurrency => 'Currencies on the invoice';
+
+  @override
+  String get currencyDisplayLabel => 'Write the currency as';
+
+  @override
+  String get currencyDisplaySymbol => 'Symbol';
+
+  @override
+  String get currencyDisplayCode => 'Code';
+
+  @override
+  String get extraCurrenciesLabel => 'Also show the total in';
+
+  @override
+  String get extraCurrenciesHint =>
+      'Up to 2 currencies. The exchange rate used is printed under the total.';
+
+  @override
+  String get extraCurrenciesNone =>
+      'Set the exchange rate of another currency to use this.';
+
+  @override
+  String get sectionSharing => 'Sharing';
+
+  @override
+  String get shareWidthLabel => 'Width of the shared image';
+
+  @override
+  String get shareWidthSameAsPaper => 'Same as the paper';
+
+  @override
+  String get shareWidthMmLabel => 'Share width (mm)';
+
+  @override
+  String get defaultCountryCodeLabel => 'Default country code';
+
+  @override
+  String defaultCountryCodeHint(String code) {
+    return 'For sending on WhatsApp: a number typed as 09… is sent to +$code 9…';
+  }
+
+  @override
+  String get invoiceCustomerLabel => 'Customer';
+
+  @override
+  String get invoicePhoneLabel => 'Phone';
+
+  @override
+  String get invoiceAccountLabel => 'Account no.';
+
+  @override
+  String get sampleItemSugar => 'Sugar';
+
+  @override
+  String get sampleItemTea => 'Tea';
+
+  @override
+  String get sampleItemPackage => 'Internet package 100 GB';
+
+  @override
+  String get sampleUnitKg => 'kg';
+
+  @override
+  String get sampleUnitBox => 'box';
+
+  @override
+  String get sampleCustomerName => 'Ahmad';
+
+  @override
+  String get shareInvoice => 'Share';
+
+  @override
+  String get shareAsImage => 'Share as image';
+
+  @override
+  String get sendOnWhatsApp => 'Send on WhatsApp';
+
+  @override
+  String get saveImageToPhone => 'Save image to phone';
+
+  @override
+  String get savePdfToPhone => 'Save PDF to phone';
+
+  @override
+  String get moreActions => 'More';
+
+  @override
+  String get printSent => 'Sent to the printer';
+
+  @override
+  String savedToPhone(String path) {
+    return 'Saved to $path';
+  }
+
+  @override
+  String get whatsAppNotInstalled =>
+      'WhatsApp is not installed — opening the share menu instead';
+
+  @override
+  String get whatsAppUnsupported =>
+      'Could not open the chat directly — opening the share menu instead';
+
+  @override
+  String get whatsAppChooseTitle => 'Send with';
+
+  @override
+  String get whatsAppRegular => 'WhatsApp';
+
+  @override
+  String get whatsAppBusiness => 'WhatsApp Business';
+
+  @override
+  String get whatsAppPhoneTitle => 'WhatsApp number';
+
+  @override
+  String get whatsAppPhoneHint => 'e.g. 0944 123 456';
+
+  @override
+  String get invalidPhone => 'Invalid phone number';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get errorNoPrinter =>
+      'No printer selected. Choose one in Settings → Invoice & printing.';
+
+  @override
+  String get errorBluetoothUnsupported => 'This device has no Bluetooth.';
+
+  @override
+  String get errorBluetoothOff => 'Bluetooth is off. Turn it on and try again.';
+
+  @override
+  String get errorBluetoothPermission =>
+      'Souqi is not allowed to use Bluetooth. Allow \"Nearby devices\" in the app settings.';
+
+  @override
+  String errorPrinterUnreachable(String name) {
+    return 'Cannot reach the printer $name. Check that it is switched on, close by and paired.';
+  }
+
+  @override
+  String get errorPrinterWrite =>
+      'The connection to the printer dropped while printing. Try again.';
+
+  @override
+  String get errorStoragePermission =>
+      'Souqi is not allowed to save files. Allow storage access in the app settings.';
+
+  @override
+  String errorOutputUnknown(String detail) {
+    return 'Something went wrong: $detail';
+  }
 }

@@ -5,6 +5,7 @@ import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../currencies/currencies_screen.dart';
+import '../invoice/invoice_settings_screen.dart';
 import '../setup/setup_screen.dart';
 import '../units/units_screen.dart';
 import 'about_screen.dart';
@@ -12,12 +13,6 @@ import 'about_screen.dart';
 final shopTypeProvider = FutureProvider<String>(
   (ref) => ref.watch(settingsRepositoryProvider).getString(
         SettingsKeys.shopType,
-      ),
-);
-
-final showPoweredByProvider = FutureProvider<bool>(
-  (ref) => ref.watch(settingsRepositoryProvider).getBool(
-        SettingsKeys.showPoweredBy,
       ),
 );
 
@@ -80,6 +75,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.receipt_long),
+            title: Text(l10n.invoiceSettingsTitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const InvoiceSettingsScreen()),
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.currency_exchange),
             title: Text(l10n.settingsCurrencies),
             trailing: const Icon(Icons.chevron_right),
@@ -96,17 +99,6 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const Divider(),
-          SwitchListTile(
-            secondary: const Icon(Icons.receipt),
-            title: Text(l10n.showPoweredBy),
-            value: ref.watch(showPoweredByProvider).value ?? true,
-            onChanged: (value) async {
-              await ref
-                  .read(settingsRepositoryProvider)
-                  .setBool(SettingsKeys.showPoweredBy, value);
-              ref.invalidate(showPoweredByProvider);
-            },
-          ),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.aboutTitle),

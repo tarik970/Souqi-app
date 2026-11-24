@@ -3,13 +3,17 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
+import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../invoice/invoice_providers.dart';
 
 const shopTypeGrocery = 'GROCERY';
 const shopTypeCards = 'CARDS';
 const shopTypeBoth = 'BOTH';
 
-/// First-launch screen: choose app language and shop type.
+/// First-launch screen: choose the app language, the shop type and whether
+/// the shop has a receipt printer (which sets the invoice output mode:
+/// Print, or Share for shops without one). All three can be changed later.
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -19,12 +23,19 @@ class SetupScreen extends ConsumerStatefulWidget {
 
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   String _shopType = shopTypeGrocery;
+  bool _hasPrinter = true;
   bool _saving = false;
 
   Future<void> _start() async {
     setState(() => _saving = true);
     final settings = ref.read(settingsRepositoryProvider);
     await settings.setString(SettingsKeys.shopType, _shopType);
+    await settings.setString(
+      SettingsKeys.outputMode,
+      (_hasPrinter ? OutputMode.print : OutputMode.share).db,
+    );
+    // The invoice settings may already be loaded; make them re-read.
+    ref.invalidate(invoiceSettingsProvider);
     await settings.setBool(SettingsKeys.setupDone, true);
     ref.read(setupDoneProvider.notifier).complete();
   }
@@ -88,6 +99,26 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       : null,
                   selected: _shopType == value,
                   onTap: () => setState(() => _shopType = value),
+                ),
+              ),
+            const SizedBox(height: 24),
+            Text(l10n.setupPrinterQuestion, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            for (final (value, label, icon) in [
+              (true, l10n.setupPrinterYes, Icons.print),
+              (false, l10n.setupPrinterNo, Icons.share),
+            ])
+              Card(
+                child: ListTile(
+                  key: ValueKey('setup-printer-$value'),
+                  leading: Icon(icon),
+                  title: Text(label),
+                  trailing: _hasPrinter == value
+                      ? Icon(Icons.check_circle,
+                          color: theme.colorScheme.primary)
+                      : null,
+                  selected: _hasPrinter == value,
+                  onTap: () => setState(() => _hasPrinter = value),
                 ),
               ),
             const SizedBox(height: 32),

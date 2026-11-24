@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../config/features.dart';
-import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/cart.dart';
@@ -13,6 +10,7 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../invoice/invoice_providers.dart';
 import 'discount_sheet.dart';
 import 'quantity_sheet.dart';
 import 'quick_item_sheet.dart';
@@ -173,11 +171,11 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       ),
     );
     if (picked == null) return;
-    await ref.read(settingsRepositoryProvider).setString(
-          SettingsKeys.extraTotalCurrencies,
-          jsonEncode(picked.isEmpty ? <String>[] : [picked]),
+    await ref.read(invoiceSettingsProvider.notifier).change(
+          (settings) => settings.copyWith(
+            extraCurrencies: picked.isEmpty ? const [] : [picked],
+          ),
         );
-    ref.invalidate(extraTotalCurrenciesProvider);
   }
 
   Future<void> _save() async {
@@ -491,6 +489,27 @@ class _CartList extends ConsumerWidget {
     final symbol = currency.symbol.isEmpty ? currency.code : currency.symbol;
     final ctx = ref.watch(currencyContextProvider).value;
 
+    /// "qty × unit price", the same wording as the printed invoice. A line
+    /// priced in another currency shows its ORIGINAL price and currency
+    /// ("10 × 5,000 SYP" next to a 3.85 USD total): the converted unit price
+    /// is rounded on its own and would not multiply out to the line total.
+    String detail(LineTotals entry) {
+      final line = entry.line;
+      final cross = line.priceCurrencyCode != currency.code;
+      final origin = ctx?.lookup(line.priceCurrencyCode);
+      final price = formatMinor(
+        line.unitPriceMinor,
+        decimals: origin?.decimalPlaces ?? entry.origDecimals,
+        locale: locale,
+        symbol: !cross
+            ? symbol
+            : (origin == null || origin.symbol.isEmpty
+                ? line.priceCurrencyCode
+                : origin.symbol),
+      );
+      return '${formatQuantity(line.qtyThousandths, locale: locale)} × $price';
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.only(bottom: 8),
       itemCount: totals.lines.length,
@@ -498,7 +517,6 @@ class _CartList extends ConsumerWidget {
       itemBuilder: (context, index) {
         final entry = totals.lines[index];
         final line = entry.line;
-        final showOriginal = line.priceCurrencyCode != currency.code;
         return ListTile(
           onTap: () => onEdit(line),
           leading: Container(
@@ -522,28 +540,9 @@ class _CartList extends ConsumerWidget {
             ),
           ),
           title: Text(line.name),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${formatMinor(
-                entry.unitPriceMinor,
-                decimals: currency.decimalPlaces,
-                locale: locale,
-                symbol: symbol,
-              )} × ${formatQuantity(line.qtyThousandths, locale: locale)}'),
-              if (showOriginal)
-                Text(
-                  formatMinor(
-                    line.unitPriceMinor,
-                    decimals:
-                        ctx?.lookup(line.priceCurrencyCode)?.decimalPlaces ?? 0,
-                    locale: locale,
-                    symbol: line.priceCurrencyCode,
-                  ),
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.outline),
-                ),
-            ],
+          subtitle: Text(
+            detail(entry),
+            key: ValueKey('cart-line-detail-${line.id}'),
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
