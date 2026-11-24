@@ -7,6 +7,7 @@ import 'core/constants/settings_keys.dart';
 import 'core/providers.dart';
 import 'data/db/app_database.dart';
 import 'data/repositories/settings_repository.dart';
+import 'features/settings/storage_providers.dart';
 
 Future<void> main() async {
   assert(featureFlagsConsistent,
@@ -25,6 +26,8 @@ Future<void> main() async {
         appLocaleProvider
             .overrideWith(() => AppLocaleNotifier(Locale(language))),
         setupDoneProvider.overrideWith(() => SetupDoneNotifier(setupDone)),
+        // Only the real app sweeps old invoices and stale share files.
+        housekeepingOnStartProvider.overrideWithValue(true),
       ],
       child: const SouqiApp(),
     ),

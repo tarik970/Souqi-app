@@ -7,9 +7,13 @@ import 'migrations/migration_v2.dart';
 
 /// Owns the sqflite [Database]: opening, PRAGMAs and versioned migrations.
 class AppDatabase {
-  AppDatabase._(this.db);
+  AppDatabase._(this.db, this.path);
 
   final Database db;
+
+  /// Where the file lives, for the housekeeping that measures it. In tests
+  /// this is [inMemoryDatabasePath] (':memory:'), which is no file at all.
+  final String path;
 
   static const String fileName = 'souqi.db';
 
@@ -52,7 +56,7 @@ class AppDatabase {
         },
       ),
     );
-    return AppDatabase._(db);
+    return AppDatabase._(db, dbPath);
   }
 
   Future<void> close() => db.close();

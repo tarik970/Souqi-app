@@ -264,5 +264,12 @@
   "errorPrinterUnreachable": "تعذّر الوصول إلى الطابعة {name}. تأكد أنها تعمل وقريبة ومقترنة بالهاتف.",
   "errorPrinterWrite": "انقطع الاتصال بالطابعة أثناء الطباعة. حاول مجدداً.",
   "errorStoragePermission": "لا يملك سوقي إذن حفظ الملفات. اسمح بإذن التخزين من إعدادات التطبيق.",
-  "errorOutputUnknown": "حدث خطأ: {detail}"
+  "errorOutputUnknown": "حدث خطأ: {detail}",
+  "storageTitle": "التخزين",
+  "storageInvoiceCount": "الفواتير المحفوظة",
+  "storageDatabaseSize": "حجم قاعدة البيانات",
+  "optimizingStorage": "جارٍ التحسين…",
+  "sizeInBytes": "{size} بايت",
+  "sizeInKilobytes": "{size} كيلوبايت",
+  "sizeInMegabytes": "{size} ميغابايت"
 }

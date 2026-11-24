@@ -816,4 +816,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorOutputUnknown(String detail) {
     return 'Something went wrong: $detail';
   }
+
+  @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get storageInvoiceCount => 'Invoices stored';
+
+  @override
+  String get storageDatabaseSize => 'Database size';
+
+  @override
+  String get optimizingStorage => 'Optimizing…';
+
+  @override
+  String sizeInBytes(String size) {
+    return '$size B';
+  }
+
+  @override
+  String sizeInKilobytes(String size) {
+    return '$size KB';
+  }
+
+  @override
+  String sizeInMegabytes(String size) {
+    return '$size MB';
+  }
 }

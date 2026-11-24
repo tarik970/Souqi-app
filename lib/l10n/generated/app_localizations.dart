@@ -1592,6 +1592,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong: {detail}'**
   String errorOutputUnknown(String detail);
+
+  /// No description provided for @storageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storageTitle;
+
+  /// No description provided for @storageInvoiceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices stored'**
+  String get storageInvoiceCount;
+
+  /// No description provided for @storageDatabaseSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Database size'**
+  String get storageDatabaseSize;
+
+  /// No description provided for @optimizingStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimizing…'**
+  String get optimizingStorage;
+
+  /// No description provided for @sizeInBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} B'**
+  String sizeInBytes(String size);
+
+  /// No description provided for @sizeInKilobytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} KB'**
+  String sizeInKilobytes(String size);
+
+  /// No description provided for @sizeInMegabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} MB'**
+  String sizeInMegabytes(String size);
 }
 
 class _AppLocalizationsDelegate

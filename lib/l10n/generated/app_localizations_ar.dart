@@ -816,4 +816,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String errorOutputUnknown(String detail) {
     return 'حدث خطأ: $detail';
   }
+
+  @override
+  String get storageTitle => 'التخزين';
+
+  @override
+  String get storageInvoiceCount => 'الفواتير المحفوظة';
+
+  @override
+  String get storageDatabaseSize => 'حجم قاعدة البيانات';
+
+  @override
+  String get optimizingStorage => 'جارٍ التحسين…';
+
+  @override
+  String sizeInBytes(String size) {
+    return '$size بايت';
+  }
+
+  @override
+  String sizeInKilobytes(String size) {
+    return '$size كيلوبايت';
+  }
+
+  @override
+  String sizeInMegabytes(String size) {
+    return '$size ميغابايت';
+  }
 }

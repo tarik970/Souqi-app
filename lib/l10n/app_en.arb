@@ -367,5 +367,27 @@
     "placeholders": {
       "detail": {"type": "String"}
     }
+  },
+  "storageTitle": "Storage",
+  "storageInvoiceCount": "Invoices stored",
+  "storageDatabaseSize": "Database size",
+  "optimizingStorage": "Optimizing…",
+  "sizeInBytes": "{size} B",
+  "@sizeInBytes": {
+    "placeholders": {
+      "size": {"type": "String"}
+    }
+  },
+  "sizeInKilobytes": "{size} KB",
+  "@sizeInKilobytes": {
+    "placeholders": {
+      "size": {"type": "String"}
+    }
+  },
+  "sizeInMegabytes": "{size} MB",
+  "@sizeInMegabytes": {
+    "placeholders": {
+      "size": {"type": "String"}
+    }
   }
 }
