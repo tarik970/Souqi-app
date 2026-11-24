@@ -64,5 +64,60 @@ void main() {
     test('converts Arabic-Indic digits', () {
       expect(normalizeName('انترنت ١٠٠ غيغا'), 'انترنت 100 غيغا');
     });
+
+    test('Latin letters are case-insensitive', () {
+      expect(normalizeName('PEPSI Max'), normalizeName('pepsi max'));
+    });
+
+    test('unifies the alef variants أ / إ / آ', () {
+      expect(normalizeName('أرز'), 'ارز');
+      expect(normalizeName('إبرة'), normalizeName('ابره'));
+      expect(normalizeName('آيس كريم'), normalizeName('ايس كريم'));
+    });
+
+    test('ة reads as ه and ى as ي', () {
+      expect(normalizeName('قهوة'), 'قهوه');
+      expect(normalizeName('قهوة'), normalizeName('قهوه'));
+      expect(normalizeName('حلوى'), normalizeName('حلوي'));
+    });
+
+    test('removes tatweel and diacritics', () {
+      expect(normalizeName('ســـكر'), 'سكر');
+      expect(normalizeName('سُكَّر'), 'سكر');
+    });
+
+    test('removes invisible direction and joiner marks', () {
+      final rlm = String.fromCharCode(0x200F);
+      final zwnj = String.fromCharCode(0x200C);
+      expect(normalizeName('$rlmسكر$zwnj'), 'سكر');
+    });
+
+    test('drops a leading "ال" from every word', () {
+      expect(normalizeName('السكر'), 'سكر');
+      expect(normalizeName('السكر الناعم'), 'سكر ناعم');
+      expect(normalizeName('سكر الناعم'), 'سكر ناعم');
+      // After the alef is unified: "الأرز" is "أرز".
+      expect(normalizeName('الأرز'), normalizeName('أرز'));
+    });
+
+    test('keeps short words that merely start with "ال"', () {
+      expect(normalizeName('ال'), 'ال');
+      expect(normalizeName('ألف ليلة'), 'الف ليله');
+    });
+
+    test('every variant of one name normalizes to the same text', () {
+      const variants = [
+        'سكر ناعم',
+        'السكر الناعم',
+        '  سكر   ناعم ',
+        'سُكَّر ناعِم',
+        'ســكر نــاعم',
+      ];
+      expect(variants.map(normalizeName).toSet(), {'سكر ناعم'});
+    });
+
+    test('text made only of marks normalizes to nothing', () {
+      expect(normalizeName(' ـــ '), '');
+    });
   });
 }

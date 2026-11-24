@@ -29,15 +29,18 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Future<void> _start() async {
     setState(() => _saving = true);
     final settings = ref.read(settingsRepositoryProvider);
+    // The three writes below finish even if this screen is gone meanwhile
+    // (back button), so they go through the container, not through `ref`.
+    final container = ProviderScope.containerOf(context, listen: false);
     await settings.setString(SettingsKeys.shopType, _shopType);
     await settings.setString(
       SettingsKeys.outputMode,
       (_hasPrinter ? OutputMode.print : OutputMode.share).db,
     );
     // The invoice settings may already be loaded; make them re-read.
-    ref.invalidate(invoiceSettingsProvider);
+    container.invalidate(invoiceSettingsProvider);
     await settings.setBool(SettingsKeys.setupDone, true);
-    ref.read(setupDoneProvider.notifier).complete();
+    container.read(setupDoneProvider.notifier).complete();
   }
 
   @override

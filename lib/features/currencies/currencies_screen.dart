@@ -109,7 +109,7 @@ class _CurrencyTile extends ConsumerWidget {
           if (!_isBase)
             PopupMenuItem<void>(
               child: Text(l10n.updateRate),
-              onTap: () => _updateRate(context, ref),
+              onTap: () => _updateRate(context),
             ),
           PopupMenuItem<void>(
             child: Text(l10n.edit),
@@ -136,18 +136,21 @@ class _CurrencyTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _updateRate(BuildContext context, WidgetRef ref) {
+  Future<void> _updateRate(BuildContext context) {
     return showUpdateRateDialog(
       context,
-      ref,
       currency: currency,
       baseCode: baseCode ?? '',
     );
   }
 
+  // This tile is rebuilt, and can be replaced, while a dialog or a database
+  // write is in flight. Everything needed after an await is therefore taken
+  // up front: `ref` and `context` are not touched once the tile may be gone.
   Future<void> _setAsBase(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
     final repo = ref.read(currencyRepositoryProvider);
     if (!await repo.canChangeBase()) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.baseChangeLocked)));
@@ -177,18 +180,19 @@ class _CurrencyTile extends ConsumerWidget {
     } on BaseCurrencyLockedException {
       messenger.showSnackBar(SnackBar(content: Text(l10n.baseChangeLocked)));
     }
-    ref.invalidate(currenciesProvider);
-    ref.invalidate(baseCurrencyCodeProvider);
+    container.invalidate(currenciesProvider);
+    container.invalidate(baseCurrencyCodeProvider);
   }
 
   Future<void> _toggleActive(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await ref
           .read(currencyRepositoryProvider)
           .setActive(currency.code, !currency.isActive);
-      ref.invalidate(currenciesProvider);
+      container.invalidate(currenciesProvider);
     } on BaseCurrencyException {
       messenger
           .showSnackBar(SnackBar(content: Text(l10n.cannotDisableBase)));

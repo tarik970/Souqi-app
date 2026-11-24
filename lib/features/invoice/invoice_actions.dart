@@ -77,21 +77,25 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     if (_running != null) return;
     final l10n = AppLocalizations.of(context);
     setState(() => _running = action);
+    // Each branch reads `ref` / `widget` once, before its first await;
+    // [_snack] checks `mounted` itself.
+    final output = _output;
+    final invoice = _invoice;
     try {
       switch (action) {
         case InvoiceAction.print:
-          await _output.printInvoice(_invoice);
+          await output.printInvoice(invoice);
           _snack(l10n.printSent);
         case InvoiceAction.shareImage:
-          await _output.shareImage(_invoice);
+          await output.shareImage(invoice);
         case InvoiceAction.sharePdf:
-          await _output.sharePdfFile(_invoice);
+          await output.sharePdfFile(invoice);
         case InvoiceAction.whatsApp:
           await _sendOnWhatsApp(l10n);
         case InvoiceAction.saveImage:
-          _snack(l10n.savedToPhone(await _output.saveImage(_invoice)));
+          _snack(l10n.savedToPhone(await output.saveImage(invoice)));
         case InvoiceAction.savePdf:
-          _snack(l10n.savedToPhone(await _output.savePdf(_invoice)));
+          _snack(l10n.savedToPhone(await output.savePdf(invoice)));
       }
     } on OutputException catch (e) {
       if (mounted) showOutputError(context, ref, e);
@@ -122,6 +126,11 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
   }
 
   Future<void> _sendOnWhatsApp(AppLocalizations l10n) async {
+    // Taken before the first await: the two dialogs below can outlive this
+    // widget, and neither `ref` nor `widget` may be touched after that.
+    final output = _output;
+    final bridge = ref.read(nativeBridgeProvider);
+    final invoice = _invoice;
     final settings = await ref.read(invoiceSettingsProvider.future);
     if (!mounted) return;
     // No customer phone on the invoice: ask for a number for this one send.
@@ -131,28 +140,28 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
 
     List<String> packages;
     try {
-      packages = await ref.read(nativeBridgeProvider).whatsAppPackages();
+      packages = await bridge.whatsAppPackages();
     } on OutputException {
       packages = const [];
     }
     if (!mounted) return;
     if (packages.isEmpty) {
       _snack(l10n.whatsAppNotInstalled);
-      await _output.shareImage(_invoice);
+      await output.shareImage(invoice);
       return;
     }
     final package =
         packages.length == 1 ? packages.single : await _askPackage(packages);
-    if (package == null) return;
+    if (package == null || !mounted) return;
 
-    final opened = await _output.sendToWhatsApp(
-      _invoice,
+    final opened = await output.sendToWhatsApp(
+      invoice,
       package: package,
       internationalPhone: phone,
     );
     if (!opened) {
-      _snack(l10n.whatsAppUnsupported);
-      await _output.shareImage(_invoice);
+      _snack(l10n.whatsAppUnsupported); // checks `mounted` itself
+      await output.shareImage(invoice);
     }
   }
 
@@ -210,7 +219,7 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
         ),
       ),
     );
-    if (picked != null) await _run(picked);
+    if (picked != null && mounted) await _run(picked);
   }
 
   Widget _spinnerOr(InvoiceAction action) => _running == action

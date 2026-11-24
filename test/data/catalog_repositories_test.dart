@@ -18,8 +18,10 @@ void main() {
   late ProductRepository products;
   late UnitRepository units;
   late CurrencyRepository currencies;
+  var nextInvoiceNo = 1;
 
   setUp(() async {
+    nextInvoiceNo = 1;
     appDb = await openTestDb();
     products = ProductRepository(appDb.db);
     units = UnitRepository(appDb.db);
@@ -120,6 +122,206 @@ void main() {
       expect(updated.kind, ProductKind.service);
       expect(updated.unitId, isNull, reason: 'services carry no unit');
       expect(updated.priceMinor, 2000);
+    });
+  });
+
+  /// Records [times] sales of the product, [daysAgo] days back.
+  Future<void> sell(int productId, {int times = 1, int daysAgo = 0}) async {
+    for (var i = 0; i < times; i++) {
+      final invoiceId = await insertInvoice(
+        appDb.db,
+        invoiceNo: nextInvoiceNo++,
+        createdAt: DateTime.now().subtract(Duration(days: daysAgo)),
+      );
+      await insertInvoiceItem(appDb.db,
+          invoiceId: invoiceId, productId: productId);
+    }
+  }
+
+  group('search ranking', () {
+    test('exact code, then name starts with, then name contains', () async {
+      await products.insert(goods('Tea 7 herbs'));
+      await products.insert(goods('7 Up'));
+      await products.insert(goods('Water', code: '7'));
+
+      final found = await products.list(query: '7');
+      expect(found.map((p) => p.name), ['Water', '7 Up', 'Tea 7 herbs']);
+    });
+
+    test('an exact name beats a name that only starts with the text',
+        () async {
+      await products.insert(goods('Sugar cubes'));
+      await products.insert(goods('Sugar'));
+      final cubes = (await products.list(query: 'cubes')).single;
+      await sell(cubes.id!, times: 5); // popularity must not outrank exactness
+
+      final found = await products.list(query: 'sugar');
+      expect(found.map((p) => p.name), ['Sugar', 'Sugar cubes']);
+    });
+
+    test('within a group the most-sold product of the last 30 days leads',
+        () async {
+      final coarse = await products.insert(goods('Sugar coarse'));
+      final fine = await products.insert(goods('Sugar fine'));
+      final brown = await products.insert(goods('Sugar brown'));
+
+      // No sales yet: plain name order.
+      expect((await products.list(query: 'sugar')).map((p) => p.name),
+          ['Sugar brown', 'Sugar coarse', 'Sugar fine']);
+
+      await sell(fine, times: 3);
+      await sell(coarse, times: 1);
+      await sell(brown, times: 9, daysAgo: 45); // too old to count
+
+      expect((await products.list(query: 'sugar')).map((p) => p.name),
+          ['Sugar fine', 'Sugar coarse', 'Sugar brown']);
+    });
+
+    test('a starts-with match stays above a better-selling contains match',
+        () async {
+      final brown = await products.insert(goods('Brown sugar'));
+      await products.insert(goods('Sugar'));
+      await sell(brown, times: 10);
+
+      final found = await products.list(query: 'sug');
+      expect(found.map((p) => p.name), ['Sugar', 'Brown sugar']);
+    });
+
+    test('Arabic variants find the product: "السكر" finds "سكر"', () async {
+      await products.insert(goods('سكر'));
+      await products.insert(goods('قهوة تركية'));
+      await products.insert(goods('أرز مصري'));
+
+      expect((await products.list(query: 'السكر')).single.name, 'سكر');
+      expect((await products.list(query: 'سُكَّر')).single.name, 'سكر');
+      expect((await products.list(query: 'قهوه')).single.name, 'قهوة تركية');
+      expect((await products.list(query: 'القهوة')).single.name, 'قهوة تركية');
+      expect((await products.list(query: 'ارز')).single.name, 'أرز مصري');
+      expect((await products.list(query: 'الأرز المصري')).single.name,
+          'أرز مصري');
+    });
+
+    test('% and _ in the typed text match only themselves', () async {
+      await products.insert(goods('Discount 50%'));
+      await products.insert(goods('Sugar'));
+      expect((await products.list(query: '%')).single.name, 'Discount 50%');
+      expect(await products.list(query: '_'), isEmpty);
+    });
+
+    test('text that normalizes to nothing matches nothing', () async {
+      await products.insert(goods('Sugar'));
+      expect(await products.list(query: 'ـــ'), isEmpty);
+    });
+  });
+
+  group('favorites bar', () {
+    test('starred products first, then the most sold of the last 30 days',
+        () async {
+      final zeta = await products.insert(goods('Zeta'));
+      final alpha = await products.insert(goods('Alpha'));
+      await products.setFavorite(zeta, true);
+      await products.setFavorite(alpha, true);
+
+      final bread = await products.insert(goods('Bread'));
+      final milk = await products.insert(goods('Milk'));
+      final old = await products.insert(goods('Old hit'));
+      await products.insert(goods('Never sold'));
+      final gone = await products.insert(goods('Deactivated'));
+
+      await sell(bread, times: 2);
+      await sell(milk, times: 5);
+      await sell(old, times: 20, daysAgo: 31); // outside the window
+      await sell(gone, times: 9);
+      await products.setActive(gone, false);
+      await sell(zeta, times: 50); // starred: listed once, with the stars
+
+      final bar = await products.favoritesBar();
+      expect(bar.map((p) => p.name), ['Alpha', 'Zeta', 'Milk', 'Bread']);
+    });
+
+    test('auto-favorites fill the bar up to 12 buttons in total', () async {
+      final star = await products.insert(goods('Star'));
+      await products.setFavorite(star, true);
+      for (var i = 1; i <= 15; i++) {
+        final id = await products
+            .insert(goods('Item ${i.toString().padLeft(2, '0')}'));
+        await sell(id, times: i); // Item 15 sells best
+      }
+
+      final bar = await products.favoritesBar();
+      expect(bar, hasLength(12));
+      expect(bar.first.name, 'Star');
+      expect(bar[1].name, 'Item 15');
+      expect(bar.last.name, 'Item 05');
+    });
+
+    test('switched off: only the starred products', () async {
+      final star = await products.insert(goods('Star'));
+      await products.setFavorite(star, true);
+      final bread = await products.insert(goods('Bread'));
+      await sell(bread, times: 3);
+
+      final bar = await products.favoritesBar(includeAuto: false);
+      expect(bar.map((p) => p.name), ['Star']);
+    });
+
+    test('more than 12 starred products are all shown', () async {
+      for (var i = 0; i < 14; i++) {
+        final id = await products.insert(goods('Star $i'));
+        await products.setFavorite(id, true);
+      }
+      final bread = await products.insert(goods('Bread'));
+      await sell(bread);
+
+      final bar = await products.favoritesBar();
+      expect(bar, hasLength(14));
+      expect(bar.every((p) => p.isFavorite), isTrue);
+    });
+  });
+
+  group('duplicate guard and price memory', () {
+    test('findByName matches the normalized name, active product first',
+        () async {
+      final inactive = await products.insert(goods('سكر ناعم'));
+      await products.setActive(inactive, false);
+      expect((await products.findByName('السكر الناعم'))!.id, inactive);
+
+      final active = await products.insert(goods('السكر الناعم'));
+      expect((await products.findByName('ســكر ناعم'))!.id, active);
+      expect(await products.findByName('سكر خشن'), isNull);
+      expect(await products.findByName('  '), isNull);
+    });
+
+    test('updatePriceFromSale: same currency only, never to zero', () async {
+      final id = await products.insert(goods('Sugar')); // 1000 SYP
+
+      expect(
+        await products.updatePriceFromSale(id,
+            priceMinor: 1200, currencyCode: 'SYP'),
+        isTrue,
+      );
+      expect((await products.getById(id))!.priceMinor, 1200);
+
+      expect(
+        await products.updatePriceFromSale(id,
+            priceMinor: 150, currencyCode: 'USD'),
+        isFalse,
+        reason: 'a price in another currency is not the product price',
+      );
+      expect(
+        await products.updatePriceFromSale(id,
+            priceMinor: 0, currencyCode: 'SYP'),
+        isFalse,
+      );
+      expect(
+        await products.updatePriceFromSale(id,
+            priceMinor: 1200, currencyCode: 'SYP'),
+        isFalse,
+        reason: 'unchanged price',
+      );
+      final product = (await products.getById(id))!;
+      expect(product.priceMinor, 1200);
+      expect(product.currencyCode, 'SYP');
     });
   });
 

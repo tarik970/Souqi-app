@@ -290,16 +290,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get saleFavorites => 'المفضّلة';
 
   @override
-  String get saleFavoritesHint => 'ضع نجمة على المنتجات لتظهر هنا كأزرار سريعة';
+  String get saleFavoritesHint =>
+      'تظهر هنا المنتجات ذات النجمة والأكثر مبيعاً كأزرار سريعة';
 
   @override
-  String get saleSearchHint => 'الاسم أو الرمز — اضغط إدخال للرمز المطابق';
+  String get saleSearchHint => 'اكتب اسم الصنف أو رمزه';
 
   @override
   String get cartEmpty => 'السلة فارغة';
 
   @override
-  String get cartEmptyHint => 'اضغط على منتج مفضّل أو ابحث عن صنف';
+  String get cartEmptyHint => 'اكتب اسم الصنف لبيعه، أو اضغط على منتج مفضّل';
 
   @override
   String get noMatchingProducts => 'لا توجد منتجات مطابقة';
@@ -412,6 +413,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get secondaryTotalNone => 'بلا';
+
+  @override
+  String get done => 'تم';
+
+  @override
+  String addNewItem(String name) {
+    return 'إضافة «$name»';
+  }
+
+  @override
+  String get newItemDontSave => 'لا تحفظه كمنتج';
+
+  @override
+  String get newItemMore => 'المزيد';
+
+  @override
+  String get newItemLess => 'أقل';
+
+  @override
+  String get unitPriceUpdatesProduct =>
+      'السعر المعدَّل يُحفظ للمنتج أيضاً عند حفظ الفاتورة';
+
+  @override
+  String get cartNewProduct => 'منتج جديد';
+
+  @override
+  String get cartPriceWillUpdate => 'سيُحفظ السعر الجديد';
+
+  @override
+  String get sectionSelling => 'البيع';
+
+  @override
+  String get settingSaveNewItems => 'حفظ الأصناف الجديدة كمنتجات';
+
+  @override
+  String get settingSaveNewItemsHint =>
+      'الصنف المكتوب أثناء البيع يُحفظ عند حفظ فاتورته';
+
+  @override
+  String get settingUpdatePrices => 'تحديث سعر المنتج من المبيعات';
+
+  @override
+  String get settingUpdatePricesHint =>
+      'السعر المعدَّل أثناء البيع يصبح سعر المنتج المحفوظ';
+
+  @override
+  String get settingAutoFavorites => 'المفضّلة التلقائية';
+
+  @override
+  String get settingAutoFavoritesHint =>
+      'بعد المنتجات ذات النجمة، يعرض شريط المفضّلة الأكثر مبيعاً في آخر 30 يوماً';
 
   @override
   String get invoiceSavedTitle => 'تم حفظ الفاتورة';

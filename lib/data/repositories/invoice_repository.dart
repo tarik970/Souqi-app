@@ -1,13 +1,16 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../domain/models/invoice.dart';
+import '../../domain/models/product.dart';
 import 'counter_repository.dart';
+import 'product_repository.dart';
 
 /// Reads and writes invoices.
 ///
 /// Takes a [Database] (not a [DatabaseExecutor]) because saving an invoice
 /// must run in one transaction: drawing the sequential invoice number, the
-/// invoice row and all item rows either all land or none do.
+/// invoice row, all item rows and the products created or re-priced by the
+/// sale either all land or none do.
 class InvoiceRepository {
   InvoiceRepository(this._db);
 
@@ -19,37 +22,87 @@ class InvoiceRepository {
   ///
   /// The number comes from the persisted counter inside the same transaction,
   /// so numbers are sequential, never reused and never shared by two saves.
+  ///
+  /// The same transaction also carries out each item's catalog instructions
+  /// ("type-to-sell"): an item typed into the sale becomes a product — or is
+  /// linked to the product that already has that name — and a price the
+  /// seller changed becomes the product's saved price. Because it is one
+  /// transaction, a sale that is never saved leaves the catalog untouched,
+  /// and a save that fails leaves no half-created products behind.
   Future<Invoice> save(Invoice draft) async {
     if (draft.items.isEmpty) {
       throw ArgumentError.value(draft, 'draft', 'an invoice needs items');
     }
     return _db.transaction((txn) async {
+      final products = ProductRepository(txn);
       final invoiceNo = await _counters.next(txn, CounterRepository.invoiceNo);
       final id = await txn.insert('invoices', draft.toRow(invoiceNo: invoiceNo));
       final saved = <InvoiceItem>[];
       for (var i = 0; i < draft.items.length; i++) {
         final item = draft.items[i];
-        final itemId = await txn.insert(
-          'invoice_items',
-          item.toRow(invoiceId: id, sortOrder: i),
-        );
-        saved.add(InvoiceItem(
-          id: itemId,
-          productId: item.productId,
-          productName: item.productName,
-          productCode: item.productCode,
-          kind: item.kind,
-          unitName: item.unitName,
-          qtyThousandths: item.qtyThousandths,
-          origUnitPriceMinor: item.origUnitPriceMinor,
-          origCurrencyCode: item.origCurrencyCode,
-          origRate: item.origRate,
-          unitPriceMinor: item.unitPriceMinor,
-          lineTotalMinor: item.lineTotalMinor,
-        ));
+        var productId = item.productId;
+        if (productId == null && item.saveAsProduct) {
+          productId = await _productForTypedItem(txn, products, item);
+        } else if (productId != null && item.updateProductPrice) {
+          await products.updatePriceFromSale(
+            productId,
+            priceMinor: item.origUnitPriceMinor,
+            currencyCode: item.origCurrencyCode,
+          );
+        }
+        final itemId = await txn.insert('invoice_items', {
+          ...item.toRow(invoiceId: id, sortOrder: i),
+          'product_id': productId,
+        });
+        saved.add(item.saved(id: itemId, productId: productId));
       }
       return draft.copyWith(id: id, invoiceNo: invoiceNo, items: saved);
     });
+  }
+
+  /// The product a typed item belongs to: the existing product with the same
+  /// normalized name (the duplicate guard — "السكر" is "سكر"), otherwise a new
+  /// one made from the line. No code is assigned; it can be added later from
+  /// the Products screen.
+  Future<int> _productForTypedItem(
+    Transaction txn,
+    ProductRepository products,
+    InvoiceItem item,
+  ) async {
+    final existing = await products.findByName(item.productName);
+    if (existing != null) {
+      // Selling it again with "save" on means the shop wants it back.
+      if (!existing.isActive) await products.setActive(existing.id!, true);
+      if (item.updateProductPrice) {
+        await products.updatePriceFromSale(
+          existing.id!,
+          priceMinor: item.origUnitPriceMinor,
+          currencyCode: item.origCurrencyCode,
+        );
+      }
+      return existing.id!;
+    }
+
+    // The unit may have been deleted while the item sat in the cart; a
+    // dangling id would fail the foreign key and take the whole sale with it.
+    var unitId = item.kind == ProductKind.goods ? item.unitId : null;
+    if (unitId != null) {
+      final rows = await txn.query(
+        'units',
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [unitId],
+        limit: 1,
+      );
+      if (rows.isEmpty) unitId = null;
+    }
+    return products.insert(Product(
+      name: item.productName,
+      kind: item.kind,
+      unitId: unitId,
+      priceMinor: item.origUnitPriceMinor,
+      currencyCode: item.origCurrencyCode,
+    ));
   }
 
   Future<Invoice?> getById(int id) async {

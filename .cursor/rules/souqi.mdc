@@ -21,7 +21,13 @@ LANGUAGES
 CORE FEATURES (later phases)
 1. Products: name, optional short code (e.g. "101"), kind, unit, price, favorite flag, active flag. Fast search by name or code. Kind is either GOODS (sold by quantity and unit, e.g. 0.5 kg sugar) or SERVICE/CARD (sold per piece, quantity 1 by default, no unit needed, e.g. "Internet 100 GB package" or "ADSL 4 Mbps monthly renewal"); a SERVICE/CARD product can be marked "requires customer account" so a sale of it must be linked to a customer's card/account number.
 2. Units: preset list (kg, g, bag, piece, box, liter) + user-defined units. Quantities can be decimals (0.5 kg).
-3. Sale screen: add items by tapping favorites, searching, or typing a code; set quantity; live total; save + print invoice.
+3. Sale screen ("type-to-sell", built after field feedback — shops do not set up products in advance): add items by tapping favorites, searching, or typing a code; set quantity; live total; save + print/share invoice.
+   - Typing a name with no exact match shows "+ Add «text»" on top (also above partial matches); Enter opens it. Digits-only text with no matching code shows "No item with code …" instead (typos and unknown barcodes never become products).
+   - The new item opens in the quantity sheet (price field focused, qty 1, last-used unit, GOODS, base currency, "More" for unit/kind/currency, "Don't save as a product" checkbox).
+   - New products are created only when the invoice is SAVED, inside the invoice transaction; abandoned carts create nothing. A name matching an existing (or deactivated) product reuses it, using the shared Arabic name normalization (leading "ال" per word, أ/إ/آ→ا, ة→ه, ى→ي, no tatweel/diacritics).
+   - A changed unit price (product's own currency, > 0) is written back to the product on invoice save (setting, default on).
+   - Favorites bar: starred products first, then the top sellers of the last 30 days by number of sales (up to 12 automatic; setting to turn off). Search ranking: exact code, exact name, starts-with, contains; best sellers first within each.
+   - Settings → Selling holds these three switches (save new items, update prices from sales, automatic favorites), all on by default.
 4. Invoice settings (fully dynamic, stored in DB): paper width (80 mm default, 58 mm, or custom mm), printer DPI (203 default), side margins, base font size, shop name, logo, header text, footer text, invoice language, and toggles for which fields to show (item code, unit, unit price, date/time, invoice number).
 5. Printing to a Bluetooth ESC/POS thermal printer. Arabic text must print correctly, so the invoice is rendered as a Flutter widget, captured to an image at the exact printable width in dots, converted to monochrome and sent as an ESC/POS raster image. Shops without a printer are fully supported: output mode Print / Share / Both; share the invoice as an image (default) or PDF, send it straight to the customer's WhatsApp chat when the customer has a phone number, or save it to the phone.
 6. Invoice archive: search by date range / invoice number / product, view, reprint, delete one, delete a date range, and auto-delete invoices older than N days (user setting, off by default).
@@ -71,3 +77,6 @@ SECRETS
 BUILD NOTES
 - Keep `kotlin.incremental=false` in android/gradle.properties (fixes a Windows Kotlin cache lock bug). Never remove it.
 - UI imports come from package:material_ui (Flutter 3.50); localization delegates from material_ui's GlobalMaterialLocalizations.delegates.
+- Bluetooth printing uses our own platform channel (PrinterConnection.kt) and our own ESC/POS raster code (lib/core/printing/escpos.dart); do not add printer plugins.
+- Database is at schema version 2 (v2 = recomputed normalized search columns). Every schema change is a new version step with a migration test.
+- Do not run `flutter test` and `flutter build`/`run` at the same time (l10n files get regenerated); `flutter gen-l10n` restores them.

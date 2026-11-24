@@ -47,12 +47,74 @@ String normalizeCode(String input) {
       .toUpperCase();
 }
 
-/// Name normalization for search columns (products, customers):
-/// trim, collapse internal whitespace, convert Arabic-Indic digits, lowercase.
+/// Inclusive code-unit ranges dropped from names: tatweel, Arabic diacritics
+/// (tashkeel, Quranic marks, superscript alef) and the invisible direction /
+/// joiner marks keyboards sometimes insert. Written as numbers on purpose:
+/// literal invisible characters in source code are a trap.
+const _nameNoiseRanges = <(int, int)>[
+  (0x0640, 0x0640), // tatweel
+  (0x0610, 0x061A),
+  (0x064B, 0x065F), // the common tashkeel
+  (0x0670, 0x0670), // superscript alef
+  (0x06D6, 0x06DC),
+  (0x06DF, 0x06E8),
+  (0x06EA, 0x06ED),
+  (0x200B, 0x200F), // zero-width space and joiners, LRM, RLM
+  (0x202A, 0x202E), // direction embeddings
+  (0x2066, 0x2069), // direction isolates
+  (0xFEFF, 0xFEFF),
+];
+
+bool _isNameNoise(int codeUnit) {
+  for (final (from, to) in _nameNoiseRanges) {
+    if (codeUnit >= from && codeUnit <= to) return true;
+  }
+  return false;
+}
+
+String _stripNameNoise(String input) {
+  if (!input.codeUnits.any(_isNameNoise)) return input;
+  return String.fromCharCodes(input.codeUnits.where((c) => !_isNameNoise(c)));
+}
+
+/// Letters the same word is commonly typed with, folded to one spelling.
+const _arabicFold = <String, String>{
+  'أ': 'ا',
+  'إ': 'ا',
+  'آ': 'ا',
+  'ٱ': 'ا',
+  'ة': 'ه',
+  'ى': 'ي',
+  // Persian / Urdu keyboard variants of the same letters.
+  'ی': 'ي',
+  'ک': 'ك',
+};
+
+final _arabicFoldPattern = RegExp('[${_arabicFold.keys.join()}]');
+
+/// Name normalization for search columns and the duplicate-product guard
+/// (products, customers). Two names that normalize to the same text are the
+/// same name as far as the app is concerned:
+///
+/// - trim and collapse internal whitespace;
+/// - Arabic-Indic digits → 0-9, Latin letters lowercased;
+/// - tatweel and diacritics removed ("سُكَّر" = "سكر", "ســكر" = "سكر");
+/// - أ / إ / آ → ا, ة → ه, ى → ي;
+/// - a leading "ال" dropped from every word ("السكر الناعم" = "سكر ناعم"),
+///   as long as at least two letters remain, so short words that merely
+///   start with those letters ("الف" from "ألف") are left alone.
+///
+/// Stored in `name_norm`; the search query goes through the same function,
+/// which is what makes "السكر" find "سكر".
 String normalizeName(String input) {
-  return normalizeDigits(input.trim())
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .toLowerCase();
+  final folded = _stripNameNoise(normalizeDigits(input))
+      .replaceAllMapped(_arabicFoldPattern, (m) => _arabicFold[m[0]]!)
+      .toLowerCase()
+      .trim();
+  if (folded.isEmpty) return '';
+  return folded.split(RegExp(r'\s+')).map((word) {
+    return word.length >= 4 && word.startsWith('ال') ? word.substring(2) : word;
+  }).join(' ');
 }
 
 /// Converts a phone number the way a shop owner types it into the

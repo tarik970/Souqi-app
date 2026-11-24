@@ -6,21 +6,30 @@ import '../../core/providers.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
+import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'sale_providers.dart';
 
 /// Opens the quantity / unit-price sheet for [line] and returns the edited
 /// line, or null when the user cancels.
+///
+/// [startAtPrice] is the "type-to-sell" entry: the price field is empty and
+/// selected, so the seller types the price straight away.
 Future<CartLine?> showQuantitySheet(
   BuildContext context, {
   required CartLine line,
   bool isEdit = false,
+  bool startAtPrice = false,
 }) {
   return showModalBottomSheet<CartLine>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) => QuantitySheet(line: line, isEdit: isEdit),
+    builder: (_) => QuantitySheet(
+      line: line,
+      isEdit: isEdit,
+      startAtPrice: startAtPrice,
+    ),
   );
 }
 
@@ -28,13 +37,24 @@ Future<CartLine?> showQuantitySheet(
 enum _Field { qty, price }
 
 /// Fast quantity + price entry: a numeric keypad (no OS keyboard), quick
-/// quantity buttons, the product's unit, an editable unit price for this sale
-/// only, and the line total updating live.
+/// quantity buttons, the product's unit, an editable unit price and the line
+/// total updating live.
+///
+/// For an item typed into the sale (a line with no product id) the same sheet
+/// also carries a "don't save as a product" checkbox and a "more" link that
+/// unfolds unit / type / currency, so a new product is described without
+/// leaving the sale.
 class QuantitySheet extends ConsumerStatefulWidget {
-  const QuantitySheet({super.key, required this.line, required this.isEdit});
+  const QuantitySheet({
+    super.key,
+    required this.line,
+    required this.isEdit,
+    this.startAtPrice = false,
+  });
 
   final CartLine line;
   final bool isEdit;
+  final bool startAtPrice;
 
   @override
   ConsumerState<QuantitySheet> createState() => _QuantitySheetState();
@@ -44,8 +64,26 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
   late String _qtyText = quantityToPlainText(widget.line.qtyThousandths);
   late String _priceText = '';
   late String _priceCurrencyCode = widget.line.priceCurrencyCode;
-  _Field _active = _Field.qty;
-  bool _priceInitialized = false;
+  late _Field _active = widget.startAtPrice ? _Field.price : _Field.qty;
+
+  /// With [QuantitySheet.startAtPrice] the price stays empty instead of being
+  /// prefilled from the line.
+  late bool _priceInitialized = widget.startAtPrice;
+
+  // Only used for an item typed into the sale.
+  late ProductKind _kind = widget.line.kind;
+  late int? _unitId = widget.line.unitId;
+  late String? _unitName = widget.line.unitName;
+  late bool _dontSave = !widget.line.saveAsProduct;
+  bool _showMore = false;
+
+  /// An item typed into the sale, not a saved product (yet).
+  bool get _isTypedItem => widget.line.productId == null;
+
+  /// The unit shown next to the quantity: services have none.
+  String? get _shownUnit => !_isTypedItem
+      ? widget.line.unitName
+      : (_kind == ProductKind.goods ? _unitName : null);
 
   /// A field still showing its prefilled value: the first digit typed
   /// replaces it instead of appending, the way a cashier expects (opening a
@@ -132,6 +170,10 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     final priceMinor =
         parseAmountMinor(_priceText, decimals: priceCurrency.decimalPlaces);
     final valid = qty != null && qty > 0 && priceMinor != null;
+    final kind = _isTypedItem ? _kind : widget.line.kind;
+    final unitName = _shownUnit;
+    final updatesProductPrice =
+        ref.watch(saleSettingsProvider).value?.updatePrices ?? true;
 
     final draft = widget.line.copyWith(
       qtyThousandths: qty != null && qty > 0 ? qty : 1,
@@ -146,6 +188,9 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     final lineTotal = valid ? preview.lines.first.lineTotalMinor : 0;
 
     final sellable = ref.watch(sellableCurrenciesProvider);
+    final units = _isTypedItem
+        ? ref.watch(unitsProvider).value ?? const <Unit>[]
+        : const <Unit>[];
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
@@ -173,12 +218,12 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
             style: theme.textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
-          if (widget.line.unitName != null || widget.line.code != null)
+          if (unitName != null || widget.line.code != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 [
-                  if (widget.line.unitName != null) widget.line.unitName!,
+                  ?unitName,
                   if (widget.line.code != null) '#${widget.line.code}',
                 ].join(' · '),
                 style: theme.textTheme.bodyMedium
@@ -196,7 +241,7 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
                   value: _qtyText.isEmpty
                       ? '0'
                       : localizeDigits(_qtyText, locale),
-                  suffix: widget.line.unitName,
+                  suffix: unitName,
                   selected: _active == _Field.qty,
                   invalid: qty == null || qty <= 0,
                   onTap: () => setState(() => _active = _Field.qty),
@@ -213,13 +258,95 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
                       ? priceCurrency.code
                       : priceCurrency.symbol,
                   selected: _active == _Field.price,
-                  invalid: priceMinor == null,
+                  // An empty price is not wrong, just not typed yet: no red
+                  // border, but "Add" stays disabled.
+                  muted: _priceText.isEmpty,
+                  invalid: priceMinor == null && _priceText.isNotEmpty,
                   onTap: () => setState(() => _active = _Field.price),
                 ),
               ),
             ],
           ),
-          if (sellable.length > 1) ...[
+          if (_isTypedItem) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    key: const ValueKey('new-item-dont-save'),
+                    onTap: () => setState(() => _dontSave = !_dontSave),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _dontSave,
+                          onChanged: (value) =>
+                              setState(() => _dontSave = value ?? false),
+                        ),
+                        Flexible(
+                          child: Text(
+                            l10n.newItemDontSave,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                TextButton(
+                  key: const ValueKey('new-item-more'),
+                  onPressed: () => setState(() => _showMore = !_showMore),
+                  child: Text(_showMore ? l10n.newItemLess : l10n.newItemMore),
+                ),
+              ],
+            ),
+            if (_showMore) ...[
+              SegmentedButton<ProductKind>(
+                key: const ValueKey('new-item-kind'),
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                      value: ProductKind.goods, label: Text(l10n.kindGoods)),
+                  ButtonSegment(
+                      value: ProductKind.service,
+                      label: Text(l10n.kindService)),
+                ],
+                selected: {_kind},
+                onSelectionChanged: (selection) =>
+                    setState(() => _kind = selection.first),
+              ),
+              if (_kind == ProductKind.goods) ...[
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int?>(
+                  key: const ValueKey('new-item-unit'),
+                  // A unit that was deleted meanwhile is not in the list.
+                  initialValue:
+                      units.any((u) => u.id == _unitId) ? _unitId : null,
+                  decoration: InputDecoration(
+                    labelText: l10n.productUnit,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: [
+                    DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text(l10n.unitNone),
+                    ),
+                    for (final unit in units)
+                      DropdownMenuItem<int?>(
+                        value: unit.id,
+                        child: Text(unit.nameFor(locale)),
+                      ),
+                  ],
+                  onChanged: (id) => setState(() {
+                    _unitId = id;
+                    _unitName = id == null
+                        ? null
+                        : units.firstWhere((u) => u.id == id).nameFor(locale);
+                  }),
+                ),
+              ],
+            ],
+          ],
+          if (sellable.length > 1 && (!_isTypedItem || _showMore)) ...[
             const SizedBox(height: 8),
             Align(
               alignment: AlignmentDirectional.centerStart,
@@ -242,14 +369,17 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
               ),
             ),
           ],
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              l10n.unitPriceThisSaleOnly,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline),
+          if (!_isTypedItem)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                updatesProductPrice
+                    ? l10n.unitPriceUpdatesProduct
+                    : l10n.unitPriceThisSaleOnly,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.outline),
+              ),
             ),
-          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -300,7 +430,7 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final preset in widget.line.kind == ProductKind.goods
+              for (final preset in kind == ProductKind.goods
                   ? const [250, 500, 1000, 2000]
                   : const [1000, 2000, 3000, 5000])
                 OutlinedButton(
@@ -341,6 +471,13 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
                             qtyThousandths: qty,
                             unitPriceMinor: priceMinor,
                             priceCurrencyCode: priceCurrency.code,
+                            kind: kind,
+                            unitId: _isTypedItem
+                                ? () =>
+                                    kind == ProductKind.goods ? _unitId : null
+                                : null,
+                            unitName: _isTypedItem ? () => unitName : null,
+                            saveAsProduct: _isTypedItem ? !_dontSave : null,
                           ))
                       : null,
                   child: Text(
@@ -361,6 +498,7 @@ class _ValueField extends StatelessWidget {
     required this.value,
     this.suffix,
     required this.selected,
+    this.muted = false,
     required this.invalid,
     required this.onTap,
   });
@@ -369,6 +507,9 @@ class _ValueField extends StatelessWidget {
   final String value;
   final String? suffix;
   final bool selected;
+
+  /// The value is a placeholder (nothing typed yet): shown greyed.
+  final bool muted;
   final bool invalid;
   final VoidCallback onTap;
 
@@ -403,8 +544,10 @@ class _ValueField extends StatelessWidget {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: muted ? theme.colorScheme.outline : null,
+                    ),
                   ),
                 ),
                 if (suffix != null) ...[

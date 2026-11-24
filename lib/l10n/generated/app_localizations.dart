@@ -618,13 +618,13 @@ abstract class AppLocalizations {
   /// No description provided for @saleFavoritesHint.
   ///
   /// In en, this message translates to:
-  /// **'Star products to get one-tap buttons here'**
+  /// **'Starred products and your best sellers appear here as one-tap buttons'**
   String get saleFavoritesHint;
 
   /// No description provided for @saleSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Name or code — press enter for an exact code'**
+  /// **'Type an item name or code'**
   String get saleSearchHint;
 
   /// No description provided for @cartEmpty.
@@ -636,7 +636,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Tap a favorite or search for an item'**
+  /// **'Type an item name to sell it, or tap a favorite'**
   String get cartEmptyHint;
 
   /// No description provided for @noMatchingProducts.
@@ -848,6 +848,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'None'**
   String get secondaryTotalNone;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// Top row of the sale search: sells the typed text as a new item
+  ///
+  /// In en, this message translates to:
+  /// **'Add «{name}»'**
+  String addNewItem(String name);
+
+  /// No description provided for @newItemDontSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t save as a product'**
+  String get newItemDontSave;
+
+  /// No description provided for @newItemMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get newItemMore;
+
+  /// No description provided for @newItemLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get newItemLess;
+
+  /// No description provided for @unitPriceUpdatesProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'A changed price is also saved to the product when the invoice is saved'**
+  String get unitPriceUpdatesProduct;
+
+  /// No description provided for @cartNewProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'New product'**
+  String get cartNewProduct;
+
+  /// No description provided for @cartPriceWillUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'New price will be saved'**
+  String get cartPriceWillUpdate;
+
+  /// No description provided for @sectionSelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling'**
+  String get sectionSelling;
+
+  /// No description provided for @settingSaveNewItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Save new items as products'**
+  String get settingSaveNewItems;
+
+  /// No description provided for @settingSaveNewItemsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An item typed during a sale is saved when its invoice is saved'**
+  String get settingSaveNewItemsHint;
+
+  /// No description provided for @settingUpdatePrices.
+  ///
+  /// In en, this message translates to:
+  /// **'Update product price from sales'**
+  String get settingUpdatePrices;
+
+  /// No description provided for @settingUpdatePricesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A price changed during a sale becomes the product\'s saved price'**
+  String get settingUpdatePricesHint;
+
+  /// No description provided for @settingAutoFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic favorites'**
+  String get settingAutoFavorites;
+
+  /// No description provided for @settingAutoFavoritesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'After your starred products, the favorites bar shows the best sellers of the last 30 days'**
+  String get settingAutoFavoritesHint;
 
   /// No description provided for @invoiceSavedTitle.
   ///

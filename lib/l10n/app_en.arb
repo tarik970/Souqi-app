@@ -140,10 +140,10 @@
   "cannotDisableBase": "The base currency cannot be disabled.",
 
   "saleFavorites": "Favorites",
-  "saleFavoritesHint": "Star products to get one-tap buttons here",
-  "saleSearchHint": "Name or code — press enter for an exact code",
+  "saleFavoritesHint": "Starred products and your best sellers appear here as one-tap buttons",
+  "saleSearchHint": "Type an item name or code",
   "cartEmpty": "Cart is empty",
-  "cartEmptyHint": "Tap a favorite or search for an item",
+  "cartEmptyHint": "Type an item name to sell it, or tap a favorite",
   "noMatchingProducts": "No matching products",
   "codeNotFound": "No item with code {code}",
   "@codeNotFound": {
@@ -197,6 +197,28 @@
   },
   "secondaryTotalTitle": "Secondary total",
   "secondaryTotalNone": "None",
+  "done": "Done",
+
+  "addNewItem": "Add «{name}»",
+  "@addNewItem": {
+    "description": "Top row of the sale search: sells the typed text as a new item",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "newItemDontSave": "Don't save as a product",
+  "newItemMore": "More",
+  "newItemLess": "Less",
+  "unitPriceUpdatesProduct": "A changed price is also saved to the product when the invoice is saved",
+  "cartNewProduct": "New product",
+  "cartPriceWillUpdate": "New price will be saved",
+  "sectionSelling": "Selling",
+  "settingSaveNewItems": "Save new items as products",
+  "settingSaveNewItemsHint": "An item typed during a sale is saved when its invoice is saved",
+  "settingUpdatePrices": "Update product price from sales",
+  "settingUpdatePricesHint": "A price changed during a sale becomes the product's saved price",
+  "settingAutoFavorites": "Automatic favorites",
+  "settingAutoFavoritesHint": "After your starred products, the favorites bar shows the best sellers of the last 30 days",
 
   "invoiceSavedTitle": "Invoice saved",
   "invoiceNoLabel": "Invoice no. {no}",

@@ -49,6 +49,20 @@ abstract final class SettingsKeys {
   static const shareWidthMm = 'share_width_mm'; // '' = same as the paper
   static const defaultCountryCode = 'default_country_code';
 
+  // Selling ("type-to-sell").
+  /// An item typed during a sale becomes a product when the invoice is saved.
+  static const saveNewItemsAsProducts = 'save_new_items_as_products';
+
+  /// A unit price changed during a sale becomes the product's saved price.
+  static const updateProductPriceFromSales = 'update_product_price_from_sales';
+
+  /// The favorites bar is topped up with the best sellers of the last 30 days.
+  static const autoFavorites = 'auto_favorites';
+
+  /// Unit of the last new item typed into a sale: a unit id, '0' for
+  /// "no unit", '' until the first one (then the preset "piece").
+  static const lastNewItemUnitId = 'last_new_item_unit_id';
+
   // Archive / security.
   static const autoDeleteDays = 'auto_delete_days'; // '0' = off
   static const pinHash = 'pin_hash';
@@ -92,6 +106,10 @@ abstract final class SettingsKeys {
     outputMode: 'PRINT',
     shareWidthMm: '',
     defaultCountryCode: '963',
+    saveNewItemsAsProducts: '1',
+    updateProductPriceFromSales: '1',
+    autoFavorites: '1',
+    lastNewItemUnitId: '',
     autoDeleteDays: '0',
   };
 }

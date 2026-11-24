@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/invoice_repository.dart';
+import 'package:souqi/data/repositories/product_repository.dart';
 import 'package:souqi/domain/models/cart.dart';
 import 'package:souqi/domain/models/currency.dart';
 import 'package:souqi/domain/models/invoice.dart';
@@ -228,6 +229,299 @@ void main() {
         )),
         throwsArgumentError,
       );
+    });
+  });
+
+  group('type-to-sell: products created by the sale', () {
+    /// An item typed into the sale: no product id.
+    CartLine typed(
+      String name, {
+      int priceMinor = 700,
+      bool save = true,
+      int? unitId,
+      ProductKind kind = ProductKind.goods,
+      String currency = 'SYP',
+    }) =>
+        CartLine(
+          name: name,
+          kind: kind,
+          unitId: unitId,
+          unitName: unitId == null ? null : 'kg',
+          unitPriceMinor: priceMinor,
+          priceCurrencyCode: currency,
+          qtyThousandths: 1000,
+          saveAsProduct: save,
+        );
+
+    Future<List<Map<String, Object?>>> productRows() =>
+        database.db.query('products', orderBy: 'id ASC');
+
+    test('the product is created when the invoice is saved, not before',
+        () async {
+      final unitId = await insertUnit(database.db);
+      final cart = const Cart().add(typed('Bread', unitId: unitId));
+      final draft = draftOf(cart);
+
+      // Building the cart and the draft touched nothing.
+      expect(await productRows(), hasLength(2));
+
+      final saved = await invoices.save(draft);
+
+      final rows = await productRows();
+      expect(rows, hasLength(3));
+      final bread = rows.last;
+      expect(bread['name'], 'Bread');
+      expect(bread['name_norm'], 'bread');
+      expect(bread['code'], isNull, reason: 'no code is required');
+      expect(bread['kind'], 'GOODS');
+      expect(bread['unit_id'], unitId);
+      expect(bread['price_minor'], 700);
+      expect(bread['currency_code'], 'SYP');
+      expect(bread['is_active'], 1);
+      expect(bread['is_favorite'], 0);
+
+      // The invoice line is linked to the new product.
+      expect(saved.items.single.productId, bread['id']);
+      final item = (await database.db.query('invoice_items')).single;
+      expect(item['product_id'], bread['id']);
+      expect(item['product_name'], 'Bread');
+    });
+
+    test('a "don\'t save" line creates nothing', () async {
+      final cart = const Cart().add(typed('Bread', save: false));
+      final saved = await invoices.save(draftOf(cart));
+
+      expect(await productRows(), hasLength(2));
+      expect(saved.items.single.productId, isNull);
+      expect((await database.db.query('invoice_items')).single['product_id'],
+          isNull);
+    });
+
+    test('a service keeps no unit; its currency is the line currency',
+        () async {
+      final unitId = await insertUnit(database.db);
+      final cart = const Cart().add(typed(
+        'Top-up',
+        kind: ProductKind.service,
+        unitId: unitId,
+        priceMinor: 250,
+        currency: 'USD',
+      ));
+      await invoices.save(draftOf(cart));
+
+      final product = (await productRows()).last;
+      expect(product['kind'], 'SERVICE');
+      expect(product['unit_id'], isNull);
+      expect(product['price_minor'], 250);
+      expect(product['currency_code'], 'USD');
+    });
+
+    test('a failed save leaves no product behind', () async {
+      final draft = draftOf(const Cart().add(typed('Bread')));
+      final broken = draft.copyWith(items: [
+        ...draft.items,
+        InvoiceItem(
+          productName: 'Broken',
+          kind: ProductKind.goods,
+          qtyThousandths: 0, // CHECK (> 0) fails
+          origUnitPriceMinor: 100,
+          origCurrencyCode: 'SYP',
+          origRate: RateFraction.one,
+          unitPriceMinor: 100,
+          lineTotalMinor: 0,
+        ),
+      ]);
+
+      await expectLater(invoices.save(broken), throwsA(isA<Exception>()));
+      expect(await productRows(), hasLength(2));
+      expect(await database.db.query('invoices'), isEmpty);
+    });
+
+    test('a unit deleted while the item sat in the cart does not block the sale',
+        () async {
+      final cart = const Cart().add(typed('Bread', unitId: 987654));
+      await invoices.save(draftOf(cart));
+      expect((await productRows()).last['unit_id'], isNull);
+    });
+
+    group('duplicate guard', () {
+      const cases = <String, List<String>>{
+        'سكر ناعم': [
+          'السكر الناعم',
+          '  سكر   ناعم ',
+          'سُكَّر ناعِم',
+          'ســكر نــاعم',
+        ],
+        'قهوة': ['قهوه', 'القهوة', 'القهوه'],
+        'أرز': ['ارز', 'إرز', 'آرز', 'الأرز'],
+        'حلوى': ['حلوي', 'الحلوى'],
+        'Pepsi': ['pepsi', ' PEPSI '],
+      };
+
+      for (final MapEntry(key: existing, value: variants) in cases.entries) {
+        test('"$existing" is reused for ${variants.length} spellings',
+            () async {
+          final existingId = await ProductRepository(database.db).insert(
+            Product(
+              name: existing,
+              kind: ProductKind.goods,
+              priceMinor: 700,
+              currencyCode: 'SYP',
+            ),
+          );
+          final before = (await productRows()).length;
+
+          for (final variant in variants) {
+            final saved =
+                await invoices.save(draftOf(const Cart().add(typed(variant))));
+            expect(saved.items.single.productId, existingId,
+                reason: '"$variant" is "$existing"');
+            // The receipt still says what the seller typed.
+            expect(saved.items.single.productName, variant);
+          }
+          expect(await productRows(), hasLength(before),
+              reason: 'no duplicate product was created');
+        });
+      }
+
+      test('a genuinely different name is a new product', () async {
+        await ProductRepository(database.db).insert(const Product(
+          name: 'سكر',
+          kind: ProductKind.goods,
+          priceMinor: 700,
+          currencyCode: 'SYP',
+        ));
+        final before = (await productRows()).length;
+        await invoices.save(draftOf(const Cart().add(typed('سكر خشن'))));
+        expect(await productRows(), hasLength(before + 1));
+      });
+
+      test('the same new name twice in one sale creates one product',
+          () async {
+        final cart = const Cart()
+            .add(typed('خبز'))
+            .add(typed('الخبز', priceMinor: 800));
+        final saved = await invoices.save(draftOf(cart));
+
+        expect(await productRows(), hasLength(3));
+        expect(saved.items[0].productId, isNotNull);
+        expect(saved.items[1].productId, saved.items[0].productId);
+      });
+
+      test('a deactivated product with that name is reused and reactivated',
+          () async {
+        await database.db.update(
+          'products',
+          {'is_active': 0},
+          where: 'id = ?',
+          whereArgs: [sugarId],
+        );
+        final saved =
+            await invoices.save(draftOf(const Cart().add(typed('sugar'))));
+
+        expect(saved.items.single.productId, sugarId);
+        expect(await productRows(), hasLength(2));
+        final sugar = (await ProductRepository(database.db).getById(sugarId))!;
+        expect(sugar.isActive, isTrue);
+      });
+    });
+  });
+
+  group('remember last price', () {
+    /// The seeded Sugar product costs 1000 SYP. [listPrice] is what the cart
+    /// saw when the line was added; [priceMinor] is what the seller charged.
+    CartLine sugar({
+      required int priceMinor,
+      int listPrice = 1000,
+      String currency = 'SYP',
+    }) =>
+        CartLine(
+          productId: sugarId,
+          name: 'Sugar',
+          code: '101',
+          unitName: 'kg',
+          unitPriceMinor: priceMinor,
+          priceCurrencyCode: currency,
+          qtyThousandths: 1000,
+          listPriceMinor: listPrice,
+          listCurrencyCode: 'SYP',
+        );
+
+    Future<Product> savedSugar() async =>
+        (await ProductRepository(database.db).getById(sugarId))!;
+
+    Invoice draft(CartLine line, {bool update = true}) => Invoice.fromCart(
+          cart: const Cart().add(line),
+          ctx: ctx(),
+          createdAt: DateTime.utc(2026, 3, 1, 10, 30),
+          updateProductPrices: update,
+        );
+
+    test('a changed price becomes the product price when the invoice is saved',
+        () async {
+      final invoice = draft(sugar(priceMinor: 1200));
+      expect((await savedSugar()).priceMinor, 1000,
+          reason: 'nothing changes before the save');
+
+      await invoices.save(invoice);
+      expect((await savedSugar()).priceMinor, 1200);
+      // The invoice keeps what was charged.
+      expect(
+        (await database.db.query('invoice_items')).single
+            ['orig_unit_price_minor'],
+        1200,
+      );
+    });
+
+    test('with the setting off the product keeps its price', () async {
+      await invoices.save(draft(sugar(priceMinor: 1200), update: false));
+      expect((await savedSugar()).priceMinor, 1000);
+    });
+
+    test('an unchanged price is not an update', () async {
+      // The product was re-priced in the Products screen while the line sat
+      // in the cart at the old list price: the sale must not push it back.
+      await database.db.update('products', {'price_minor': 1500},
+          where: 'id = ?', whereArgs: [sugarId]);
+      await invoices.save(draft(sugar(priceMinor: 1000)));
+      expect((await savedSugar()).priceMinor, 1500);
+    });
+
+    test('a price in another currency never replaces the product price',
+        () async {
+      await invoices.save(draft(sugar(priceMinor: 10, currency: 'USD')));
+      final product = await savedSugar();
+      expect(product.priceMinor, 1000);
+      expect(product.currencyCode, 'SYP');
+    });
+
+    test('giving the item away for 0 does not wipe the price', () async {
+      await invoices.save(draft(sugar(priceMinor: 0)));
+      expect((await savedSugar()).priceMinor, 1000);
+    });
+
+    test('a typed item matching an existing product updates its price too',
+        () async {
+      const line = CartLine(
+        name: 'sugar',
+        unitPriceMinor: 1300,
+        priceCurrencyCode: 'SYP',
+        qtyThousandths: 1000,
+        saveAsProduct: true,
+      );
+      await invoices.save(draft(line));
+      expect((await savedSugar()).priceMinor, 1300);
+
+      await invoices.save(draft(line.copyWith(unitPriceMinor: 1400),
+          update: false));
+      expect((await savedSugar()).priceMinor, 1300);
+    });
+
+    test('CartLine.hasPriceOverride follows the same rule', () {
+      expect(sugar(priceMinor: 1200).hasPriceOverride, isTrue);
+      expect(sugar(priceMinor: 1000).hasPriceOverride, isFalse);
+      expect(sugar(priceMinor: 0).hasPriceOverride, isFalse);
+      expect(sugar(priceMinor: 10, currency: 'USD').hasPriceOverride, isFalse);
     });
   });
 

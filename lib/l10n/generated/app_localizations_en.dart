@@ -290,16 +290,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleFavorites => 'Favorites';
 
   @override
-  String get saleFavoritesHint => 'Star products to get one-tap buttons here';
+  String get saleFavoritesHint =>
+      'Starred products and your best sellers appear here as one-tap buttons';
 
   @override
-  String get saleSearchHint => 'Name or code — press enter for an exact code';
+  String get saleSearchHint => 'Type an item name or code';
 
   @override
   String get cartEmpty => 'Cart is empty';
 
   @override
-  String get cartEmptyHint => 'Tap a favorite or search for an item';
+  String get cartEmptyHint => 'Type an item name to sell it, or tap a favorite';
 
   @override
   String get noMatchingProducts => 'No matching products';
@@ -412,6 +413,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get secondaryTotalNone => 'None';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String addNewItem(String name) {
+    return 'Add «$name»';
+  }
+
+  @override
+  String get newItemDontSave => 'Don\'t save as a product';
+
+  @override
+  String get newItemMore => 'More';
+
+  @override
+  String get newItemLess => 'Less';
+
+  @override
+  String get unitPriceUpdatesProduct =>
+      'A changed price is also saved to the product when the invoice is saved';
+
+  @override
+  String get cartNewProduct => 'New product';
+
+  @override
+  String get cartPriceWillUpdate => 'New price will be saved';
+
+  @override
+  String get sectionSelling => 'Selling';
+
+  @override
+  String get settingSaveNewItems => 'Save new items as products';
+
+  @override
+  String get settingSaveNewItemsHint =>
+      'An item typed during a sale is saved when its invoice is saved';
+
+  @override
+  String get settingUpdatePrices => 'Update product price from sales';
+
+  @override
+  String get settingUpdatePricesHint =>
+      'A price changed during a sale becomes the product\'s saved price';
+
+  @override
+  String get settingAutoFavorites => 'Automatic favorites';
+
+  @override
+  String get settingAutoFavoritesHint =>
+      'After your starred products, the favorites bar shows the best sellers of the last 30 days';
 
   @override
   String get invoiceSavedTitle => 'Invoice saved';

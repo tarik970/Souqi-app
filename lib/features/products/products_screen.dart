@@ -190,10 +190,14 @@ class _ProductTile extends ConsumerWidget {
               color: product.isFavorite ? theme.colorScheme.secondary : null,
             ),
             onPressed: () async {
+              // The tile may be rebuilt away while the write runs: refresh
+              // through the container, not through this tile's `ref`.
+              final container =
+                  ProviderScope.containerOf(context, listen: false);
               await ref
                   .read(productRepositoryProvider)
                   .setFavorite(product.id!, !product.isFavorite);
-              ref.invalidate(productsListProvider);
+              container.invalidate(productsListProvider);
             },
           ),
           PopupMenuButton<void>(
@@ -216,6 +220,10 @@ class _ProductTile extends ConsumerWidget {
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    // Taken before the dialog: a confirmed delete is carried out even if
+    // this tile was rebuilt away meanwhile.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final repository = ref.read(productRepositoryProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -234,9 +242,8 @@ class _ProductTile extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    final result =
-        await ref.read(productRepositoryProvider).delete(product.id!);
-    ref.invalidate(productsListProvider);
+    final result = await repository.delete(product.id!);
+    container.invalidate(productsListProvider);
     if (result == ProductDeleteResult.deactivated) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.productDeactivatedMessage)),

@@ -6,6 +6,7 @@ import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../currencies/currencies_screen.dart';
 import '../invoice/invoice_settings_screen.dart';
+import '../sale/sale_providers.dart';
 import '../setup/setup_screen.dart';
 import '../units/units_screen.dart';
 import 'about_screen.dart';
@@ -24,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final locale = ref.watch(appLocaleProvider);
     final shopType = ref.watch(shopTypeProvider).value ?? shopTypeGrocery;
+    final sale = ref.watch(saleSettingsProvider).value ?? const SaleSettings();
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.navSettings)),
@@ -66,12 +68,54 @@ class SettingsScreen extends ConsumerWidget {
               ],
               onChanged: (value) async {
                 if (value == null) return;
+                final container =
+                    ProviderScope.containerOf(context, listen: false);
                 await ref
                     .read(settingsRepositoryProvider)
                     .setString(SettingsKeys.shopType, value);
-                ref.invalidate(shopTypeProvider);
+                container.invalidate(shopTypeProvider);
               },
             ),
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              l10n.sectionSelling,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+          SwitchListTile(
+            key: const ValueKey('setting-save-new-items'),
+            secondary: const Icon(Icons.playlist_add),
+            title: Text(l10n.settingSaveNewItems),
+            subtitle: Text(l10n.settingSaveNewItemsHint),
+            value: sale.saveNewItems,
+            onChanged: (on) => ref
+                .read(saleSettingsProvider.notifier)
+                .change((s) => s.copyWith(saveNewItems: on)),
+          ),
+          SwitchListTile(
+            key: const ValueKey('setting-update-prices'),
+            secondary: const Icon(Icons.price_change_outlined),
+            title: Text(l10n.settingUpdatePrices),
+            subtitle: Text(l10n.settingUpdatePricesHint),
+            value: sale.updatePrices,
+            onChanged: (on) => ref
+                .read(saleSettingsProvider.notifier)
+                .change((s) => s.copyWith(updatePrices: on)),
+          ),
+          SwitchListTile(
+            key: const ValueKey('setting-auto-favorites'),
+            secondary: const Icon(Icons.auto_awesome_outlined),
+            title: Text(l10n.settingAutoFavorites),
+            subtitle: Text(l10n.settingAutoFavoritesHint),
+            value: sale.autoFavorites,
+            onChanged: (on) => ref
+                .read(saleSettingsProvider.notifier)
+                .change((s) => s.copyWith(autoFavorites: on)),
           ),
           const Divider(),
           ListTile(

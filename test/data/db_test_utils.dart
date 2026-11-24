@@ -53,10 +53,14 @@ Future<int> insertCustomer(DatabaseExecutor db, {String name = 'Ahmad'}) {
   });
 }
 
-Future<int> insertInvoice(DatabaseExecutor db, {required int invoiceNo}) {
+Future<int> insertInvoice(
+  DatabaseExecutor db, {
+  required int invoiceNo,
+  DateTime? createdAt,
+}) {
   return db.insert('invoices', {
     'invoice_no': invoiceNo,
-    'created_at': DateTime.now().millisecondsSinceEpoch,
+    'created_at': (createdAt ?? DateTime.now()).millisecondsSinceEpoch,
     'currency_code': 'SYP',
     'base_currency_code': 'SYP',
     'rate_num': 1,

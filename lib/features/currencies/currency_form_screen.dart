@@ -60,12 +60,17 @@ class _CurrencyFormScreenState extends ConsumerState<CurrencyFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final repo = ref.read(currencyRepositoryProvider);
+    // The list is refreshed through the container: the save must show up
+    // even if this screen was closed while it ran.
+    final container = ProviderScope.containerOf(context, listen: false);
     if (_isNew) {
       final code = _code.text.trim().toUpperCase();
       if (await repo.codeExists(code)) {
+        if (!mounted) return;
         setState(() => _codeError = l10n.currencyCodeExists);
         return;
       }
+      if (!mounted) return;
       setState(() => _saving = true);
       await repo.insert(Currency(
         code: code,
@@ -90,7 +95,7 @@ class _CurrencyFormScreenState extends ConsumerState<CurrencyFormScreen> {
         sortOrder: _initial!.sortOrder,
       ));
     }
-    ref.invalidate(currenciesProvider);
+    container.invalidate(currenciesProvider);
     if (mounted) Navigator.of(context).pop();
   }
 

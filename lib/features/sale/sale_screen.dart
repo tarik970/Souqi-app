@@ -3,14 +3,17 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../config/features.dart';
+import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/utils/normalize.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../invoice/invoice_providers.dart';
+import '../products/products_providers.dart';
 import 'discount_sheet.dart';
 import 'quantity_sheet.dart';
 import 'quick_item_sheet.dart';
@@ -47,26 +50,76 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
   /// first sale after launch.
   Future<CartLine> _lineFor(Product product,
       {int qtyThousandths = 1000}) async {
+    // Read before the await: `ref` must not be used once the screen may be
+    // gone.
+    final locale = _locale;
     final units = await ref.read(saleUnitsProvider.future);
     return CartLine(
       productId: product.id,
       name: product.name,
       code: product.code,
       kind: product.kind,
+      unitId: product.unitId,
       unitName: product.unitId == null
           ? null
-          : units[product.unitId]?.nameFor(_locale),
+          : units[product.unitId]?.nameFor(locale),
       unitPriceMinor: product.priceMinor,
       priceCurrencyCode: product.currencyCode,
       qtyThousandths: qtyThousandths,
+      // What the product costs right now, so the cart can tell when the
+      // seller changes the price ("remember last price").
+      listPriceMinor: product.priceMinor,
+      listCurrencyCode: product.currencyCode,
     );
+  }
+
+  /// "Type-to-sell": sells [name] as a new item. Opens the quantity sheet
+  /// with the price empty and selected, quantity 1, the unit of the previous
+  /// new item, kind GOODS, the base currency. The line goes straight into the
+  /// cart; the product itself is only created when the invoice is saved.
+  Future<void> _startNewItem(String name) async {
+    final settingsRepository = ref.read(settingsRepositoryProvider);
+    final locale = _locale;
+    // All three are requested before the first await (see _lineFor).
+    final (ctx, saleSettings, unit) = await (
+      ref.read(currencyContextProvider.future),
+      ref.read(saleSettingsProvider.future),
+      ref.read(newItemUnitProvider.future),
+    ).wait;
+    if (!mounted) return;
+    final line = await showQuantitySheet(
+      context,
+      line: CartLine(
+        name: name,
+        kind: ProductKind.goods,
+        unitId: unit?.id,
+        unitName: unit?.nameFor(locale),
+        unitPriceMinor: 0,
+        priceCurrencyCode: ctx.baseCode,
+        qtyThousandths: 1000,
+        saveAsProduct: saleSettings.saveNewItems,
+      ),
+      startAtPrice: true,
+    );
+    if (line == null || !mounted) return;
+    ref.read(cartProvider.notifier).add(line);
+    _clearSearch();
+    // Back to the search box: type the next item.
+    _searchFocus.requestFocus();
+    if (line.kind == ProductKind.goods && line.unitId != unit?.id) {
+      await settingsRepository.setString(
+        SettingsKeys.lastNewItemUnitId,
+        '${line.unitId ?? 0}',
+      );
+      if (mounted) ref.invalidate(newItemUnitProvider);
+    }
   }
 
   Future<void> _tapProduct(Product product) async {
     final draft = await _lineFor(product);
     if (!mounted) return;
     final line = await showQuantitySheet(context, line: draft);
-    if (line == null) return;
+    if (line == null || !mounted) return;
     ref.read(cartProvider.notifier).add(line);
     _clearSearch();
   }
@@ -74,7 +127,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
   Future<void> _editLine(CartLine line) async {
     final edited =
         await showQuantitySheet(context, line: line, isEdit: true);
-    if (edited == null) return;
+    if (edited == null || !mounted) return;
     ref.read(cartProvider.notifier).replace(edited);
   }
 
@@ -83,40 +136,62 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     ref.read(saleSearchProvider.notifier).clear();
   }
 
-  /// Enter on the search field: an exact code (or barcode) goes straight into
-  /// the cart with quantity 1 — no sheet, no extra tap.
+  /// Only digits (spaces and dashes aside): the text was meant as a code or
+  /// came from a barcode scanner, not as the name of a new item.
+  static final _digitsOnly = RegExp(r'^[0-9]+$');
+
+  /// Enter on the search field picks the top row:
+  /// - an exact code (or barcode) goes straight into the cart with quantity
+  ///   1 — no sheet, no extra tap;
+  /// - a product with exactly that name opens its quantity sheet;
+  /// - anything else is a new item: the same as tapping "+ Add «text»".
+  ///
+  /// One exception: a number that matches no code is reported as an unknown
+  /// code instead of becoming an item called "6221234567890" — a mistyped
+  /// code or an unknown barcode must not start a new product. The "+ Add" row
+  /// is still there to tap for a product that really is named with digits.
   Future<void> _submitSearch(String raw) async {
-    final query = raw.trim();
-    if (query.isEmpty) return;
+    if (raw.trim().isEmpty) return;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final product =
-        await ref.read(productRepositoryProvider).getByExactCode(query);
-    if (product == null) {
-      final results = ref.read(saleSearchResultsProvider).value;
-      if (results != null && results.length == 1) {
-        await _tapProduct(results.first);
-        return;
-      }
+    final repository = ref.read(productRepositoryProvider);
+
+    final byCode = await repository.getByExactCode(raw);
+    if (!mounted) return;
+    if (byCode != null) {
+      final line = await _lineFor(byCode);
+      if (!mounted) return;
+      ref.read(cartProvider.notifier).add(line);
+      _clearSearch();
+      _searchFocus.requestFocus();
+      return;
+    }
+
+    final results = await searchForSale(repository, raw);
+    if (!mounted) return;
+    final exact = results.exactMatch;
+    if (exact != null) {
+      await _tapProduct(exact);
+      return;
+    }
+    if (_digitsOnly.hasMatch(normalizeCode(results.query))) {
       messenger.showSnackBar(
-        SnackBar(content: Text(l10n.codeNotFound(query))),
+        SnackBar(content: Text(l10n.codeNotFound(results.query))),
       );
       return;
     }
-    ref.read(cartProvider.notifier).add(await _lineFor(product));
-    _clearSearch();
-    _searchFocus.requestFocus();
+    await _startNewItem(results.query);
   }
 
   Future<void> _addQuickItem() async {
     final line = await showQuickItemSheet(context);
-    if (line == null) return;
+    if (line == null || !mounted) return;
     ref.read(cartProvider.notifier).add(line);
   }
 
   Future<void> _editDiscount() async {
     final result = await showDiscountSheet(context);
-    if (result == null) return;
+    if (result == null || !mounted) return;
     ref.read(cartProvider.notifier).setDiscount(result.discount);
   }
 
@@ -139,52 +214,36 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         ],
       ),
     );
-    if (confirmed == true) ref.read(cartProvider.notifier).clear();
+    if (confirmed == true && mounted) {
+      ref.read(cartProvider.notifier).clear();
+    }
   }
 
-  /// One optional extra currency shown under the total, persisted in the same
-  /// setting the invoice settings screen will use (a JSON list, max 2).
-  Future<void> _pickSecondaryTotal(List<Currency> currencies) async {
-    final l10n = AppLocalizations.of(context);
-    final current = ref.read(extraTotalCurrenciesProvider).value ?? const [];
-    final picked = await showDialog<String>(
+  /// The extra currencies shown under the total: the very list the invoice
+  /// settings screen edits (max 2). This shortcut ticks currencies in and out
+  /// of that list one at a time — it never replaces the list, so a
+  /// two-currency choice made in the settings survives a visit here.
+  Future<void> _pickSecondaryTotals() {
+    return showDialog<void>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(l10n.secondaryTotalTitle),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(context).pop(''),
-            child: Text(l10n.secondaryTotalNone),
-          ),
-          for (final currency in currencies)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(currency.code),
-              child: Row(
-                children: [
-                  Expanded(child: Text('${currency.code} · '
-                      '${currency.nameFor(_locale)}')),
-                  if (current.contains(currency.code)) const Icon(Icons.check),
-                ],
-              ),
-            ),
-        ],
-      ),
+      builder: (_) => const _SecondaryTotalsDialog(),
     );
-    if (picked == null) return;
-    await ref.read(invoiceSettingsProvider.notifier).change(
-          (settings) => settings.copyWith(
-            extraCurrencies: picked.isEmpty ? const [] : [picked],
-          ),
-        );
   }
 
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    // The catalog must be refreshed after the save even if this screen is
+    // gone by then, so hold on to the container rather than to `ref`.
+    final container = ProviderScope.containerOf(context, listen: false);
     final cart = ref.read(cartProvider);
     if (cart.isEmpty || _saving) return;
-    final ctx = await ref.read(currencyContextProvider.future);
+    final (ctx, saleSettings) = await (
+      ref.read(currencyContextProvider.future),
+      ref.read(saleSettingsProvider.future),
+    ).wait;
+    if (!mounted) return;
 
     final totals = computeCartTotals(cart, ctx);
     if (totals.currenciesNeedingRate.isNotEmpty) {
@@ -198,14 +257,20 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
 
     setState(() => _saving = true);
     try {
-      final saved = await ref.read(invoiceRepositoryProvider).save(
+      // One transaction: the invoice, the products created from typed items
+      // and the prices the seller changed.
+      final saved = await container.read(invoiceRepositoryProvider).save(
             Invoice.fromCart(
               cart: cart,
               ctx: ctx,
               createdAt: DateTime.now().toUtc(),
+              updateProductPrices: saleSettings.updatePrices,
             ),
           );
-      ref.read(cartProvider.notifier).reset();
+      container.read(cartProvider.notifier).reset();
+      // New products, new prices and new "most sold" numbers.
+      container.invalidate(productsListProvider);
+      container.invalidate(favoriteProductsProvider);
       if (!mounted) return;
       navigator.pushReplacement(MaterialPageRoute(
         builder: (_) => SaleInvoiceScreen(invoice: saved),
@@ -236,7 +301,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                 child: Text(l10n.quickItemTitle),
               ),
               PopupMenuItem<void>(
-                onTap: () => _pickSecondaryTotal(sellable),
+                onTap: _pickSecondaryTotals,
                 child: Text(l10n.secondaryTotalTitle),
               ),
               if (cart.isNotEmpty)
@@ -281,7 +346,10 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                     totals: totals,
                     onEdit: _editLine,
                   )
-                : _SearchResults(onTap: _tapProduct),
+                : _SearchResults(
+                    onTap: _tapProduct,
+                    onAddNew: _startNewItem,
+                  ),
           ),
           _TotalsPanel(
             totals: totals,
@@ -296,7 +364,6 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               if (base == null) return;
               await openRatesQuickAction(
                 context,
-                ref,
                 baseCode: base,
                 currencies: allCurrencies,
               );
@@ -398,29 +465,144 @@ class _FavoritesBar extends ConsumerWidget {
   }
 }
 
-class _SearchResults extends ConsumerWidget {
-  const _SearchResults({required this.onTap});
-
-  final ValueChanged<Product> onTap;
+/// The secondary-total shortcut: one checkbox per currency, bound to the
+/// invoice settings' "also show the total in" list.
+class _SecondaryTotalsDialog extends ConsumerWidget {
+  const _SecondaryTotalsDialog();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = ref.watch(appLocaleProvider).languageCode;
+    final theme = Theme.of(context);
+    final selected =
+        ref.watch(extraTotalCurrenciesProvider).value ?? const <String>[];
+    final sellable = ref.watch(sellableCurrenciesProvider);
+    final all = ref.watch(currenciesProvider).value ?? const <Currency>[];
+
+    String label(String code) {
+      for (final currency in all) {
+        if (currency.code == code) {
+          return '${currency.code} · ${currency.nameFor(locale)}';
+        }
+      }
+      return code;
+    }
+
+    // Every currency that can be converted, plus anything already chosen
+    // that no longer can (disabled since) — so it can still be unticked.
+    final codes = <String>[
+      for (final currency in sellable) currency.code,
+      for (final code in selected)
+        if (!sellable.any((c) => c.code == code)) code,
+    ];
+
+    void toggle(String code, bool on) {
+      ref.read(invoiceSettingsProvider.notifier).change(
+            (settings) => settings.copyWith(
+              extraCurrencies: on
+                  ? [
+                      ...settings.extraCurrencies,
+                      if (!settings.extraCurrencies.contains(code)) code,
+                    ]
+                  : [
+                      for (final other in settings.extraCurrencies)
+                        if (other != code) other,
+                    ],
+            ),
+          );
+    }
+
+    return AlertDialog(
+      title: Text(l10n.secondaryTotalTitle),
+      contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(
+                l10n.extraCurrenciesHint,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.outline),
+              ),
+            ),
+            for (final code in codes)
+              CheckboxListTile(
+                key: ValueKey('secondary-total-$code'),
+                value: selected.contains(code),
+                title: Text(label(code)),
+                // A third currency cannot be added: two at most.
+                onChanged: !selected.contains(code) && selected.length >= 2
+                    ? null
+                    : (on) => toggle(code, on ?? false),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.done),
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchResults extends ConsumerWidget {
+  const _SearchResults({required this.onTap, required this.onAddNew});
+
+  final ValueChanged<Product> onTap;
+
+  /// "+ Add «text»" was tapped: sell the typed text as a new item.
+  final ValueChanged<String> onAddNew;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final theme = Theme.of(context);
     final results = ref.watch(saleSearchResultsProvider);
     final ctx = ref.watch(currencyContextProvider).value;
+    final typed =
+        ref.watch(saleSearchProvider).trim().replaceAll(RegExp(r'\s+'), ' ');
 
     return results.when(
+      // Keep the previous results on screen while the next keystroke is being
+      // searched, instead of flashing a spinner between letters.
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(child: Text('$error')),
-      data: (products) {
-        if (products.isEmpty) {
-          return Center(child: Text(l10n.noMatchingProducts));
-        }
+      data: (found) {
+        final products = found.products;
+        // Offered whenever the typed text is not already a product. While the
+        // results still belong to the previous keystroke the row is offered
+        // too: the duplicate guard on save makes that harmless.
+        final offerNew =
+            typed.isNotEmpty && (found.query != typed || found.offersNewItem);
+        final offset = offerNew ? 1 : 0;
         return ListView.builder(
-          itemCount: products.length,
+          itemCount: products.length + offset,
           itemBuilder: (context, index) {
-            final product = products[index];
+            if (index < offset) {
+              return ListTile(
+                key: const ValueKey('add-new-item'),
+                leading: Icon(Icons.add_circle,
+                    color: theme.colorScheme.primary),
+                title: Text(
+                  l10n.addNewItem(typed),
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () => onAddNew(typed),
+              );
+            }
+            final product = products[index - offset];
             final currency = ctx?.lookup(product.currencyCode);
             return ListTile(
               leading: Icon(product.kind == ProductKind.goods
@@ -488,6 +670,18 @@ class _CartList extends ConsumerWidget {
     final currency = totals.currency;
     final symbol = currency.symbol.isEmpty ? currency.code : currency.symbol;
     final ctx = ref.watch(currencyContextProvider).value;
+    final updatePrices =
+        ref.watch(saleSettingsProvider).value?.updatePrices ?? true;
+
+    /// What saving the invoice will do to the catalog for this line, if
+    /// anything: create the product, or remember the changed price.
+    String? catalogHint(CartLine line) {
+      if (line.createsProduct) return l10n.cartNewProduct;
+      if (updatePrices && line.hasPriceOverride) {
+        return l10n.cartPriceWillUpdate;
+      }
+      return null;
+    }
 
     /// "qty × unit price", the same wording as the printed invoice. A line
     /// priced in another currency shows its ORIGINAL price and currency
@@ -517,6 +711,7 @@ class _CartList extends ConsumerWidget {
       itemBuilder: (context, index) {
         final entry = totals.lines[index];
         final line = entry.line;
+        final hint = catalogHint(line);
         return ListTile(
           onTap: () => onEdit(line),
           leading: Container(
@@ -528,21 +723,51 @@ class _CartList extends ConsumerWidget {
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              // Scaled down rather than wrapped: a long quantity ("12.345")
+              // or unit name ("piece", a custom unit) must not push the box
+              // past the height of the row.
               children: [
-                Text(
-                  formatQuantity(line.qtyThousandths, locale: locale),
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    formatQuantity(line.qtyThousandths, locale: locale),
+                    maxLines: 1,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 if (line.unitName != null)
-                  Text(line.unitName!, style: theme.textTheme.labelSmall),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        line.unitName!,
+                        maxLines: 1,
+                        style: theme.textTheme.labelSmall,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
           title: Text(line.name),
-          subtitle: Text(
-            detail(entry),
-            key: ValueKey('cart-line-detail-${line.id}'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                detail(entry),
+                key: ValueKey('cart-line-detail-${line.id}'),
+              ),
+              if (hint != null)
+                Text(
+                  hint,
+                  key: ValueKey('cart-line-hint-${line.id}'),
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: theme.colorScheme.primary),
+                ),
+            ],
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,

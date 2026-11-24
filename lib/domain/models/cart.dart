@@ -66,28 +66,62 @@ class CartLine {
     required this.name,
     this.code,
     this.kind = ProductKind.goods,
+    this.unitId,
     this.unitName,
     required this.unitPriceMinor,
     required this.priceCurrencyCode,
     required this.qtyThousandths,
+    this.saveAsProduct = false,
+    this.listPriceMinor,
+    this.listCurrencyCode,
   });
 
   /// Stable identity inside one cart (not a database id).
   final int id;
 
-  /// Null for a quick "unsaved item" typed directly into the sale.
+  /// Null for an item typed directly into the sale ("type-to-sell") that is
+  /// not a saved product yet.
   final int? productId;
 
   final String name;
   final String? code;
   final ProductKind kind;
+
+  /// The unit behind [unitName]. Only needed for an item typed into the sale,
+  /// so the product created from it gets the same unit.
+  final int? unitId;
   final String? unitName;
 
-  /// Unit price in minor units of [priceCurrencyCode]. Editable per sale; the
-  /// saved product is never changed.
+  /// Unit price in minor units of [priceCurrencyCode]. Editable per sale.
   final int unitPriceMinor;
   final String priceCurrencyCode;
   final int qtyThousandths;
+
+  /// For a typed item ([productId] null): save it as a product when the
+  /// invoice is saved. False = sold once, nothing is added to the catalog.
+  final bool saveAsProduct;
+
+  /// The saved product's price and currency when the line was added. Null for
+  /// a typed item. Lets the cart tell a price the seller changed from one
+  /// that simply is the product's price.
+  final int? listPriceMinor;
+  final String? listCurrencyCode;
+
+  /// A typed item that becomes a product when the invoice is saved.
+  bool get createsProduct => productId == null && saveAsProduct;
+
+  /// The seller changed the unit price of a saved product, still in the
+  /// product's own currency. With "update product price from sales" on, this
+  /// price replaces the product's saved one when the invoice is saved.
+  ///
+  /// A price of zero never counts: giving an item away must not wipe the
+  /// price the shop normally sells it for.
+  bool get hasPriceOverride =>
+      productId != null &&
+      listPriceMinor != null &&
+      listCurrencyCode == priceCurrencyCode &&
+      unitPriceMinor != listPriceMinor &&
+      unitPriceMinor > 0;
 
   /// Same saved product, same unit price, same currency → quantities merge.
   /// Unsaved items (no [productId]) never merge, so each typed line stays on
@@ -104,10 +138,12 @@ class CartLine {
     String? name,
     String? Function()? code,
     ProductKind? kind,
+    int? Function()? unitId,
     String? Function()? unitName,
     int? unitPriceMinor,
     String? priceCurrencyCode,
     int? qtyThousandths,
+    bool? saveAsProduct,
   }) {
     return CartLine(
       id: id ?? this.id,
@@ -115,10 +151,14 @@ class CartLine {
       name: name ?? this.name,
       code: code != null ? code() : this.code,
       kind: kind ?? this.kind,
+      unitId: unitId != null ? unitId() : this.unitId,
       unitName: unitName != null ? unitName() : this.unitName,
       unitPriceMinor: unitPriceMinor ?? this.unitPriceMinor,
       priceCurrencyCode: priceCurrencyCode ?? this.priceCurrencyCode,
       qtyThousandths: qtyThousandths ?? this.qtyThousandths,
+      saveAsProduct: saveAsProduct ?? this.saveAsProduct,
+      listPriceMinor: listPriceMinor,
+      listCurrencyCode: listCurrencyCode,
     );
   }
 }

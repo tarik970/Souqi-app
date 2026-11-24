@@ -34,12 +34,34 @@ class InvoiceItem {
     required this.origRate,
     required this.unitPriceMinor,
     required this.lineTotalMinor,
+    this.saveAsProduct = false,
+    this.unitId,
+    this.updateProductPrice = false,
   });
 
   final int? id;
 
-  /// Null for a quick unsaved item, or once the product is hard-deleted.
+  /// Null for an item sold without saving a product, or once the product is
+  /// hard-deleted.
   final int? productId;
+
+  // --- Catalog instructions --------------------------------------------
+  // What saving the invoice should do to the product catalog for this line.
+  // They only travel from the cart to InvoiceRepository.save, which carries
+  // them out in the invoice's own transaction; they are never stored and are
+  // always false / null on an invoice read back from the database.
+
+  /// [productId] is null and the item should become a product: on save it is
+  /// linked to an existing product with the same normalized name, or a new
+  /// product is created from this line.
+  final bool saveAsProduct;
+
+  /// Unit of the product to create (GOODS only).
+  final int? unitId;
+
+  /// Set the product's saved price to [origUnitPriceMinor] on save, provided
+  /// the product is priced in [origCurrencyCode].
+  final bool updateProductPrice;
 
   final String productName;
   final String? productCode;
@@ -61,6 +83,23 @@ class InvoiceItem {
   /// single rounding step, NOT [unitPriceMinor] × quantity. Across currencies
   /// the two differ, and this one is the honest amount owed.
   final int lineTotalMinor;
+
+  /// The stored form of this item: its database [id] and the product it ended
+  /// up linked to. The catalog instructions are dropped — they are done.
+  InvoiceItem saved({required int id, required int? productId}) => InvoiceItem(
+        id: id,
+        productId: productId,
+        productName: productName,
+        productCode: productCode,
+        kind: kind,
+        unitName: unitName,
+        qtyThousandths: qtyThousandths,
+        origUnitPriceMinor: origUnitPriceMinor,
+        origCurrencyCode: origCurrencyCode,
+        origRate: origRate,
+        unitPriceMinor: unitPriceMinor,
+        lineTotalMinor: lineTotalMinor,
+      );
 
   Map<String, Object?> toRow({required int invoiceId, required int sortOrder}) =>
       {
@@ -161,12 +200,18 @@ class Invoice {
   /// Builds a draft invoice from a cart. Computes the totals itself so the
   /// saved numbers can never drift from what the sale screen showed.
   ///
+  /// [updateProductPrices] is the "update product price from sales" setting:
+  /// when on, a line whose price the seller changed (and a typed item that
+  /// turns out to match an existing product) carries the instruction to
+  /// update that product's saved price.
+  ///
   /// Throws [StateError] for an empty cart or when a currency in the cart has
   /// no rate yet.
   factory Invoice.fromCart({
     required Cart cart,
     required CurrencyContext ctx,
     required DateTime createdAt,
+    bool updateProductPrices = false,
     int? customerId,
     String? customerName,
     String? customerPhone,
@@ -223,6 +268,11 @@ class Invoice {
             origRate: line.origRate,
             unitPriceMinor: line.unitPriceMinor,
             lineTotalMinor: line.lineTotalMinor,
+            saveAsProduct: line.line.createsProduct,
+            unitId: line.line.unitId,
+            updateProductPrice: updateProductPrices &&
+                (line.line.hasPriceOverride ||
+                    (line.line.createsProduct && line.line.unitPriceMinor > 0)),
           ),
       ],
     );

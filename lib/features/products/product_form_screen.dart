@@ -76,11 +76,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     final code = _code.text.trim().isEmpty ? null : _code.text.trim();
     final repo = ref.read(productRepositoryProvider);
+    // The list is refreshed through the container: the save must show up
+    // even if this screen was closed while it ran.
+    final container = ProviderScope.containerOf(context, listen: false);
     if (code != null &&
         await repo.isCodeTaken(code, excludeId: _initial?.id)) {
+      if (!mounted) return;
       setState(() => _codeError = l10n.productCodeTaken);
       return;
     }
+    if (!mounted) return;
 
     setState(() => _saving = true);
     final product = Product(
@@ -103,7 +108,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } else {
       await repo.update(product);
     }
-    ref.invalidate(productsListProvider);
+    container.invalidate(productsListProvider);
     if (mounted) Navigator.of(context).pop();
   }
 

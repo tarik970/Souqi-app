@@ -14,8 +14,7 @@ import '../currencies/update_rate_dialog.dart';
 /// taps from the sale screen); otherwise a list of the currencies with their
 /// rate and when it was last updated.
 Future<void> openRatesQuickAction(
-  BuildContext context,
-  WidgetRef ref, {
+  BuildContext context, {
   required String baseCode,
   required List<Currency> currencies,
 }) async {
@@ -27,7 +26,6 @@ Future<void> openRatesQuickAction(
   if (others.length == 1) {
     await showUpdateRateDialog(
       context,
-      ref,
       currency: others.first,
       baseCode: baseCode,
     );
@@ -98,7 +96,6 @@ class RatesSheet extends ConsumerWidget {
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: () => showUpdateRateDialog(
                     context,
-                    ref,
                     currency: currency,
                     baseCode: baseCode,
                   ),

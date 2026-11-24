@@ -58,47 +58,31 @@ class UnitsScreen extends ConsumerWidget {
     );
   }
 
+  // Both actions take the repository and the provider container before their
+  // dialog opens, so nothing reads `ref` after an await.
   Future<void> _showForm(
       BuildContext context, WidgetRef ref, Unit? unit) async {
-    final l10n = AppLocalizations.of(context);
-    final controller =
-        TextEditingController(text: unit?.nameFor('en') ?? '');
+    final container = ProviderScope.containerOf(context, listen: false);
+    final repo = ref.read(unitRepositoryProvider);
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(unit == null ? l10n.addUnit : l10n.editUnit),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(labelText: l10n.unitName),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(context).pop(controller.text.trim()),
-            child: Text(l10n.save),
-          ),
-        ],
-      ),
+      builder: (_) => _UnitNameDialog(unit: unit),
     );
     if (name == null || name.isEmpty) return;
-    final repo = ref.read(unitRepositoryProvider);
     if (unit == null) {
       await repo.insertCustom(name);
     } else {
       await repo.updateCustom(unit.id!, name);
     }
-    ref.invalidate(unitsProvider);
+    container.invalidate(unitsProvider);
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref, Unit unit) async {
     final l10n = AppLocalizations.of(context);
     final locale = ref.read(appLocaleProvider).languageCode;
     final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final repo = ref.read(unitRepositoryProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -118,12 +102,60 @@ class UnitsScreen extends ConsumerWidget {
     );
     if (confirmed != true) return;
     try {
-      await ref.read(unitRepositoryProvider).deleteCustom(unit.id!);
-      ref.invalidate(unitsProvider);
+      await repo.deleteCustom(unit.id!);
+      container.invalidate(unitsProvider);
     } on UnitInUseException catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.unitInUse(e.productCount))),
       );
     }
+  }
+}
+
+/// Asks for the name of a custom unit. Pops with the trimmed name, or with
+/// nothing when cancelled. Owns its text controller: it must outlive the
+/// dialog's exit animation, so it is disposed with the dialog, not by the
+/// caller.
+class _UnitNameDialog extends StatefulWidget {
+  const _UnitNameDialog({required this.unit});
+
+  /// Null when adding a unit.
+  final Unit? unit;
+
+  @override
+  State<_UnitNameDialog> createState() => _UnitNameDialogState();
+}
+
+class _UnitNameDialogState extends State<_UnitNameDialog> {
+  late final _controller =
+      TextEditingController(text: widget.unit?.nameFor('en') ?? '');
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_controller.text.trim());
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.unit == null ? l10n.addUnit : l10n.editUnit),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        onSubmitted: (_) => _submit(),
+        decoration: InputDecoration(labelText: l10n.unitName),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(onPressed: _submit, child: Text(l10n.save)),
+      ],
+    );
   }
 }

@@ -116,7 +116,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
 
   Future<void> _choosePrinter() async {
     final device = await showPrinterPicker(context);
-    if (device == null) return;
+    if (device == null || !mounted) return;
     _change((s) => s.copyWith(
           printerAddress: () => device.address,
           printerName: () =>
@@ -141,16 +141,21 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _testing = true);
+    // `ref` is only read before the first await; after it the providers are
+    // reached through the container, which outlives this screen.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final output = ref.read(invoiceOutputProvider);
+    final settings = _settings;
     try {
-      final currencies = await ref.read(currenciesProvider.future);
-      final baseCode = await ref.read(baseCurrencyCodeProvider.future);
-      await ref.read(invoiceOutputProvider).printInvoice(
-            buildSampleInvoice(
-              settings: _settings,
-              currencies: currencies,
-              baseCode: baseCode,
-            ),
-          );
+      final currencies = await container.read(currenciesProvider.future);
+      final baseCode = await container.read(baseCurrencyCodeProvider.future);
+      await output.printInvoice(
+        buildSampleInvoice(
+          settings: settings,
+          currencies: currencies,
+          baseCode: baseCode,
+        ),
+      );
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.printSent)));
@@ -181,6 +186,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
       // A downscaled PNG copy is stored with the settings; the original
       // photo can be moved or deleted afterwards.
       final png = await prepareLogo(await picked.readAsBytes());
+      if (!mounted) return;
       _change((s) => s.copyWith(logoPng: () => png));
     } catch (_) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.logoError)));

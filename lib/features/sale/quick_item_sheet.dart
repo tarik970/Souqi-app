@@ -7,12 +7,13 @@ import '../../domain/models/cart.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../products/products_providers.dart';
 import 'sale_providers.dart';
 
-/// Opens the quick "unsaved item" sheet and returns the line to add, or null
-/// when the user cancels. When "save as product" is ticked the product is
-/// created here and the returned line carries its id.
+/// Opens the quick-item sheet and returns the line to add, or null when the
+/// user cancels. It is the long form of "type-to-sell": every field on one
+/// page, and by default the item is sold once without being saved. When
+/// "save as product" is ticked the returned line asks for a product, which
+/// is created when the invoice is saved.
 Future<CartLine?> showQuickItemSheet(BuildContext context) {
   return showModalBottomSheet<CartLine>(
     context: context,
@@ -246,27 +247,19 @@ class _QuickItemSheetState extends ConsumerState<QuickItemSheet> {
         ? null
         : units.firstWhere((u) => u.id == _unitId, orElse: () => units.first);
 
-    int? productId;
-    if (_saveAsProduct) {
-      productId = await ref.read(productRepositoryProvider).insert(Product(
-            name: name,
-            kind: _kind,
-            unitId: _kind == ProductKind.goods ? _unitId : null,
-            priceMinor: priceMinor,
-            currencyCode: currencyCode,
-          ));
-      ref.invalidate(productsListProvider);
-      ref.invalidate(favoriteProductsProvider);
-    }
-
+    // Nothing is written here. With "save as product" ticked the line only
+    // carries the wish; the product is created with the invoice, in the same
+    // transaction and behind the duplicate guard — so an abandoned cart
+    // leaves no product behind.
     navigator.pop(CartLine(
-      productId: productId,
       name: name,
       kind: _kind,
-      unitName: unit?.nameFor(locale),
+      unitId: _kind == ProductKind.goods ? unit?.id : null,
+      unitName: _kind == ProductKind.goods ? unit?.nameFor(locale) : null,
       unitPriceMinor: priceMinor,
       priceCurrencyCode: currencyCode,
       qtyThousandths: qty,
+      saveAsProduct: _saveAsProduct,
     ));
   }
 }

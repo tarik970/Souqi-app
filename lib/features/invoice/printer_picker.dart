@@ -60,11 +60,13 @@ class _PrinterPickerDialogState extends ConsumerState<_PrinterPickerDialog>
       _devices = null;
       _error = null;
     });
+    // Read before the first await: the dialog can be closed while the system
+    // permission prompt is up, and `ref` must not be used after that.
+    final output = ref.read(invoiceOutputProvider);
+    final bridge = ref.read(nativeBridgeProvider);
     try {
-      await ref
-          .read(invoiceOutputProvider)
-          .ensureBluetoothReady(askPermission: askPermission);
-      final devices = await ref.read(nativeBridgeProvider).pairedDevices();
+      await output.ensureBluetoothReady(askPermission: askPermission);
+      final devices = await bridge.pairedDevices();
       if (!mounted) return;
       setState(() => _devices = devices);
     } on OutputException catch (e) {

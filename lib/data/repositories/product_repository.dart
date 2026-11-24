@@ -16,40 +16,177 @@ class ProductRepository {
 
   final DatabaseExecutor _db;
 
+  /// "Most sold" everywhere in the app means the last 30 days.
+  static const salesWindow = Duration(days: 30);
+
+  /// The favorites bar never grows past this by itself (stars can exceed it).
+  static const favoritesBarLimit = 12;
+
+  /// How often each product was sold since `?` (one bound argument: the
+  /// window start in epoch ms). `times` counts invoice lines — the number of
+  /// sales — rather than adding quantities up, because quantities of
+  /// different units cannot be compared (0.25 kg of coffee, 24 bottles).
+  /// The quantity only breaks ties.
+  static const _salesSubquery = '''
+    SELECT ii.product_id AS pid,
+           COUNT(*) AS times,
+           SUM(ii.qty_thousandths) AS qty
+      FROM invoice_items ii
+      JOIN invoices i ON i.id = ii.invoice_id
+     WHERE ii.product_id IS NOT NULL AND i.created_at >= ?
+     GROUP BY ii.product_id''';
+
+  int _windowStart(DateTime? now) => (now ?? DateTime.now())
+      .toUtc()
+      .subtract(salesWindow)
+      .millisecondsSinceEpoch;
+
+  /// `%` and `_` typed by the user must match themselves.
+  static String _escapeLike(String text) => text
+      .replaceAll('!', '!!')
+      .replaceAll('%', '!%')
+      .replaceAll('_', '!_');
+
   /// Active products matching [query] (name or code) and [kind].
   /// [includeInactive] additionally returns deactivated products.
+  ///
+  /// Without a query: favorites first, then by name. With a query the best
+  /// match comes first — exact code or barcode, then exact name, then names
+  /// (or codes) starting with the text, then names containing it — and within
+  /// each group the most-sold products of the last 30 days lead. The name is
+  /// compared in its normalized form (see [normalizeName]), so "السكر" finds
+  /// "سكر". [now] exists for tests.
   Future<List<Product>> list({
     String query = '',
     ProductKind? kind,
     bool includeInactive = false,
     bool favoritesOnly = false,
+    DateTime? now,
   }) async {
     final where = StringBuffer('1 = 1');
-    final args = <Object?>[];
+    final whereArgs = <Object?>[];
     if (!includeInactive) {
-      where.write(' AND is_active = 1');
+      where.write(' AND p.is_active = 1');
     }
     if (kind != null) {
-      where.write(' AND kind = ?');
-      args.add(kind.db);
+      where.write(' AND p.kind = ?');
+      whereArgs.add(kind.db);
     }
     if (favoritesOnly) {
-      where.write(' AND is_favorite = 1');
+      where.write(' AND p.is_favorite = 1');
     }
     final q = query.trim();
-    if (q.isNotEmpty) {
-      where.write(' AND (name_norm LIKE ? OR code LIKE ? OR barcode = ?)');
-      final nameLike = '%${normalizeName(q)}%';
-      final codeLike = '${normalizeDigits(q)}%';
-      args.addAll([nameLike, codeLike, normalizeCode(q)]);
+    if (q.isEmpty) {
+      final rows = await _db.rawQuery(
+        'SELECT p.* FROM products p WHERE $where '
+        'ORDER BY p.is_active DESC, p.is_favorite DESC, p.name_norm ASC',
+        whereArgs,
+      );
+      return rows.map(Product.fromMap).toList();
     }
-    final rows = await _db.query(
-      'products',
-      where: where.toString(),
-      whereArgs: args,
-      orderBy: 'is_active DESC, is_favorite DESC, name_norm ASC',
+
+    final name = normalizeName(q);
+    final exactCode = normalizeCode(q);
+    final codePrefix = '${_escapeLike(normalizeDigits(q))}%';
+    // A query that normalizes to nothing (only diacritics, say) must not turn
+    // into LIKE '%%' and match every product: '' never equals a name.
+    final namePrefix = name.isEmpty ? '' : '${_escapeLike(name)}%';
+    final nameAnywhere = name.isEmpty ? '' : '%${_escapeLike(name)}%';
+
+    final rows = await _db.rawQuery(
+      '''
+      SELECT p.*,
+             CASE
+               WHEN p.code = ? OR p.barcode = ? THEN 0
+               WHEN p.name_norm = ? THEN 1
+               WHEN p.name_norm LIKE ? ESCAPE '!'
+                    OR p.code LIKE ? ESCAPE '!' THEN 2
+               ELSE 3
+             END AS match_rank
+        FROM products p
+        LEFT JOIN ($_salesSubquery) s ON s.pid = p.id
+       WHERE $where
+         AND (p.name_norm LIKE ? ESCAPE '!'
+              OR p.code LIKE ? ESCAPE '!'
+              OR p.code = ?
+              OR p.barcode = ?)
+       ORDER BY p.is_active DESC,
+                match_rank ASC,
+                COALESCE(s.times, 0) DESC,
+                COALESCE(s.qty, 0) DESC,
+                p.is_favorite DESC,
+                p.name_norm ASC''',
+      [
+        exactCode, exactCode, name, namePrefix, codePrefix, // CASE
+        _windowStart(now), // sales subquery
+        ...whereArgs,
+        nameAnywhere, codePrefix, exactCode, exactCode,
+      ],
     );
     return rows.map(Product.fromMap).toList();
+  }
+
+  /// The sale screen's favorites bar: every starred product first (by name),
+  /// then — when [includeAuto] — the most-sold products of the last 30 days
+  /// that are not starred, until the bar holds [limit] buttons. Stars are
+  /// never cut off: a shop that starred 15 products sees all 15.
+  Future<List<Product>> favoritesBar({
+    bool includeAuto = true,
+    int limit = favoritesBarLimit,
+    DateTime? now,
+  }) async {
+    final starred = await list(favoritesOnly: true);
+    final room = limit - starred.length;
+    if (!includeAuto || room <= 0) return starred;
+    final rows = await _db.rawQuery(
+      '''
+      SELECT p.*
+        FROM products p
+        JOIN ($_salesSubquery) s ON s.pid = p.id
+       WHERE p.is_active = 1 AND p.is_favorite = 0
+       ORDER BY s.times DESC, s.qty DESC, p.name_norm ASC
+       LIMIT ?''',
+      [_windowStart(now), room],
+    );
+    return [...starred, ...rows.map(Product.fromMap)];
+  }
+
+  /// The product whose normalized name equals that of [name], if any — the
+  /// duplicate guard. Inactive products count too (an active one wins), so a
+  /// product the shop once deactivated is reused instead of duplicated.
+  Future<Product?> findByName(String name) async {
+    final normalized = normalizeName(name);
+    if (normalized.isEmpty) return null;
+    final rows = await _db.query(
+      'products',
+      where: 'name_norm = ?',
+      whereArgs: [normalized],
+      orderBy: 'is_active DESC, id ASC',
+      limit: 1,
+    );
+    return rows.isEmpty ? null : Product.fromMap(rows.first);
+  }
+
+  /// "Remember last price": sets the saved price to what the product was just
+  /// sold for. Only when the product is priced in [currencyCode] — a price in
+  /// another currency is a different number, not a new price — and never to
+  /// zero. Returns whether the price changed.
+  Future<bool> updatePriceFromSale(
+    int id, {
+    required int priceMinor,
+    required String currencyCode,
+  }) async {
+    if (priceMinor <= 0) return false;
+    final changed = await _db.update(
+      'products',
+      {
+        'price_minor': priceMinor,
+        'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch,
+      },
+      where: 'id = ? AND currency_code = ? AND price_minor != ?',
+      whereArgs: [id, currencyCode, priceMinor],
+    );
+    return changed > 0;
   }
 
   /// Exact lookup for the sale screen's "type a code and press Enter" flow:
