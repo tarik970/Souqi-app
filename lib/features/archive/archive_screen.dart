@@ -88,7 +88,23 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               ),
               PopupMenuItem<void>(
                 key: const ValueKey('archive-delete-range'),
-                child: Text(l10n.archiveDeleteRange),
+                // Deleting is by period. While a search is narrowing the
+                // list, the action would delete something other than what
+                // is on screen, so it is simply not offered.
+                enabled: !filter.hasSearch,
+                child: filter.hasSearch
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(l10n.archiveDeleteRange),
+                          Text(
+                            l10n.archiveDeleteNeedsNoSearch,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      )
+                    : Text(l10n.archiveDeleteRange),
                 // The dialog must not open inside onTap (the menu is still
                 // closing); a post-frame callback is the documented way.
                 onTap: () => WidgetsBinding.instance.addPostFrameCallback(
@@ -197,13 +213,13 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final locale = ref.read(appLocaleProvider).languageCode;
-    // The criteria are fixed when the dialog opens, and the SAME object is
-    // what gets deleted — never the ids the list happens to hold.
-    final filter = ref.read(archiveFilterProvider);
+    // The PERIOD, and nothing else: not the search box, and not the ids the
+    // list happens to hold. The same object is counted and then deleted.
+    final criteria = ref.read(archiveFilterProvider).datesOnly;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => _DeleteConfirmDialog(filter: filter),
+      builder: (_) => _DeleteConfirmDialog(filter: criteria),
     );
     if (confirmed != true || !mounted) return;
 
@@ -216,7 +232,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     );
     final outcome = await container
         .read(housekeepingProvider.notifier)
-        .deleteMatching(filter);
+        .deleteMatching(criteria);
 
     // ONE message at the end, whatever happened.
     String message() {
@@ -255,9 +271,9 @@ class _DeleteConfirmDialog extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final locale = ref.watch(appLocaleProvider).languageCode;
     final theme = Theme.of(context);
-    // One SQL aggregate over the created_at index — the same one the summary
-    // line above the list uses, so it is usually already in hand.
-    final summary = ref.watch(archiveRangeSummaryProvider).value;
+    // One SQL aggregate over the created_at index, asked for THESE criteria
+    // — the very ones the delete is about to be given.
+    final summary = ref.watch(deleteSummaryProvider(filter)).value;
     final base = ref.watch(baseCurrencyProvider).value;
     final counting = summary == null || base == null;
     final empty = summary != null && summary.count == 0;

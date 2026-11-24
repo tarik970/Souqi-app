@@ -563,5 +563,6 @@
     }
   },
   "housekeepingBusy": "Another cleanup is still running.",
-  "debugSeedingTitle": "Creating test invoices"
+  "debugSeedingTitle": "Creating test invoices",
+  "archiveDeleteNeedsNoSearch": "Clear the search to delete a period"
 }

@@ -1083,4 +1083,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get debugSeedingTitle => 'جارٍ إنشاء فواتير التجربة';
+
+  @override
+  String get archiveDeleteNeedsNoSearch => 'امسح البحث لحذف مدة';
 }

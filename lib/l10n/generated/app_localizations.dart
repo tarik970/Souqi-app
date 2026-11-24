@@ -2036,6 +2036,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Creating test invoices'**
   String get debugSeedingTitle;
+
+  /// No description provided for @archiveDeleteNeedsNoSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the search to delete a period'**
+  String get archiveDeleteNeedsNoSearch;
 }
 
 class _AppLocalizationsDelegate

@@ -1084,4 +1084,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debugSeedingTitle => 'Creating test invoices';
+
+  @override
+  String get archiveDeleteNeedsNoSearch =>
+      'Clear the search to delete a period';
 }

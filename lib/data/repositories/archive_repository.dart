@@ -83,12 +83,23 @@ class ArchiveFilter {
   /// in [from] / [to]; this only remembers the user's choice.
   final ArchivePeriod preset;
 
-  bool get isEmpty =>
-      from == null &&
-      to == null &&
-      invoiceNo == null &&
-      productQuery.trim().isEmpty &&
-      customerQuery.trim().isEmpty;
+  bool get isEmpty => from == null && to == null && !hasSearch;
+
+  /// Whether a typed search is narrowing the list: a product, a customer or
+  /// an invoice number.
+  bool get hasSearch =>
+      invoiceNo != null ||
+      productQuery.trim().isEmpty == false ||
+      customerQuery.trim().isEmpty == false;
+
+  /// Just the period.
+  ///
+  /// Deleting is by PERIOD — a shop owner clearing "last year" does not
+  /// expect whatever is still typed in the search box to quietly narrow it.
+  /// The confirmation counts these criteria and the delete removes exactly
+  /// them, so the number shown is always the number that goes.
+  ArchiveFilter get datesOnly =>
+      ArchiveFilter(from: from, to: to, preset: preset);
 
   ArchiveFilter copyWith({
     DateTime? Function()? from,

@@ -339,5 +339,6 @@
   "archiveDeletePartial": "تم حذف {deleted} فاتورة، وبقيت {remaining}. أعد المحاولة.",
   "archiveDeleteFailed": "توقّف التنظيف: {detail}",
   "housekeepingBusy": "هناك عملية تنظيف أخرى قيد التشغيل.",
-  "debugSeedingTitle": "جارٍ إنشاء فواتير التجربة"
+  "debugSeedingTitle": "جارٍ إنشاء فواتير التجربة",
+  "archiveDeleteNeedsNoSearch": "امسح البحث لحذف مدة"
 }

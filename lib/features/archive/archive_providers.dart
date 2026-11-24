@@ -129,13 +129,24 @@ final archiveListProvider =
   ArchiveListNotifier.new,
 );
 
-/// Count and total of everything the current filter matches — what the
-/// "delete these invoices" confirmation has to state before it deletes.
+/// Count and total of everything the current filter matches — the line above
+/// the list, which does follow the search box.
 final archiveRangeSummaryProvider =
     FutureProvider<ArchiveRangeSummary>((ref) async {
   final filter = ref.watch(archiveFilterProvider);
   return ref.watch(archiveRepositoryProvider).summary(filter);
 });
+
+/// Count and total for ONE explicit set of criteria.
+///
+/// The delete confirmation asks for exactly the criteria the delete will be
+/// given ([ArchiveFilter.datesOnly]), so the figure it shows and the rows
+/// that go cannot drift apart — not even if a screen forgot to gate the
+/// action.
+final deleteSummaryProvider =
+    FutureProvider.family<ArchiveRangeSummary, ArchiveFilter>(
+  (ref, filter) => ref.watch(archiveRepositoryProvider).summary(filter),
+);
 
 /// One invoice with its items, for the detail screen.
 final archivedInvoiceProvider =

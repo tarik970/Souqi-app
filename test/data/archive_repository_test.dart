@@ -370,6 +370,68 @@ void main() {
     });
   });
 
+  group('deleting is by period, never by the search box', () {
+    final searched = ArchiveFilter(
+      from: DateTime(2026, 11, 1),
+      to: DateTime(2026, 12, 1),
+      productQuery: 'سكر',
+      customerQuery: 'أحمد',
+      invoiceNo: 7,
+      preset: ArchivePeriod.thisMonth,
+    );
+
+    test('datesOnly keeps the period and drops every search', () {
+      final criteria = searched.datesOnly;
+      expect(criteria.from, DateTime(2026, 11, 1));
+      expect(criteria.to, DateTime(2026, 12, 1));
+      expect(criteria.preset, ArchivePeriod.thisMonth);
+      expect(criteria.productQuery, isEmpty);
+      expect(criteria.customerQuery, isEmpty);
+      expect(criteria.invoiceNo, isNull);
+      expect(criteria.hasSearch, isFalse);
+    });
+
+    test('hasSearch sees each kind of search on its own', () {
+      expect(const ArchiveFilter().hasSearch, isFalse);
+      expect(ArchiveFilter(from: DateTime(2026)).hasSearch, isFalse,
+          reason: 'a period is not a search');
+      expect(const ArchiveFilter(productQuery: 'سكر').hasSearch, isTrue);
+      expect(const ArchiveFilter(customerQuery: '0944').hasSearch, isTrue);
+      expect(const ArchiveFilter(invoiceNo: 7).hasSearch, isTrue);
+      // Whitespace is not a search.
+      expect(const ArchiveFilter(productQuery: '   ').hasSearch, isFalse);
+    });
+
+    test('the period criteria take everything in the period', () async {
+      // Two invoices in the period, only one of which sold sugar.
+      final sugar = await insertInvoice(
+        db,
+        invoiceNo: 1,
+        createdAt: DateTime(2026, 11, 10),
+      );
+      await insertInvoiceItem(db, invoiceId: sugar, name: 'سكر');
+      final tea = await insertInvoice(
+        db,
+        invoiceNo: 2,
+        createdAt: DateTime(2026, 11, 11),
+      );
+      await insertInvoiceItem(db, invoiceId: tea, name: 'شاي');
+      // And one outside it.
+      await insertInvoice(db, invoiceNo: 3, createdAt: DateTime(2026, 10, 1));
+
+      // The search would have matched one; the period matches two, and the
+      // count the confirmation shows is that same two.
+      expect((await archive.summary(searched)).count, 0,
+          reason: 'the searched filter also demands invoice 7');
+      final criteria = searched.datesOnly;
+      expect((await archive.summary(criteria)).count, 2);
+
+      expect(await archive.deleteMatchingChunk(criteria), 2);
+      final left = await db.query('invoices', columns: ['invoice_no']);
+      expect(left.map((r) => r['invoice_no']), [3]);
+    });
+  });
+
   group('the query plans', () {
     /// What sqlite says it will do. A range query that falls back to a full
     /// table scan is the difference between instant and several seconds on a

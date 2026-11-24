@@ -7,7 +7,6 @@ import 'package:souqi/app.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/archive_repository.dart';
-import 'package:souqi/features/archive/archive_providers.dart';
 import 'package:souqi/features/archive/archive_screen.dart';
 import 'package:souqi/features/archive/invoice_detail_screen.dart';
 import 'package:souqi/features/invoice/invoice_actions.dart';
@@ -293,7 +292,7 @@ void main() {
       expect(find.byType(ListTile), findsNWidgets(3));
     });
 
-    testWidgets('confirming deletes only the filtered range', (tester) async {
+    testWidgets('confirming deletes only the chosen period', (tester) async {
       await seed(tester, () => seedSales(database));
       await pump(tester, const ArchiveScreen());
 
@@ -384,8 +383,8 @@ void main() {
             databaseProvider.overrideWithValue(database),
             appLocaleProvider
                 .overrideWith(() => AppLocaleNotifier(const Locale('en'))),
-            archiveRangeSummaryProvider.overrideWith(
-              (ref) => Completer<ArchiveRangeSummary>().future,
+            archiveRepositoryProvider.overrideWith(
+              (ref) => _NeverCounts(database.db),
             ),
           ],
           child: MaterialApp(
@@ -414,6 +413,67 @@ void main() {
         isNull,
         reason: 'nobody confirms a deletion whose size they were not told',
       );
+    });
+
+    testWidgets('is not offered at all while a search is narrowing the list',
+        (tester) async {
+      // Deleting means a PERIOD. A search that quietly narrowed it would be
+      // a nasty surprise, so the action is withdrawn until the search is
+      // cleared — and it says so.
+      await seed(tester, () => seedSales(database));
+      await pump(tester, const ArchiveScreen());
+
+      await tester.enterText(
+        find.byKey(const ValueKey('archive-search')),
+        'سكر',
+      );
+      await settle(tester);
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await settle(tester);
+
+      expect(
+        tester
+            .widget<PopupMenuItem<void>>(
+              find.byKey(const ValueKey('archive-delete-range')),
+            )
+            .enabled,
+        isFalse,
+      );
+      expect(find.text('Clear the search to delete a period'), findsOneWidget);
+
+      // Tapping it does nothing at all.
+      await tester.tap(find.text('Delete these invoices'), warnIfMissed: false);
+      await settle(tester);
+      expect(
+        find.byKey(const ValueKey('archive-delete-range-dialog')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('comes back once the search is cleared', (tester) async {
+      await seed(tester, () => seedSales(database));
+      await pump(tester, const ArchiveScreen());
+
+      await tester.enterText(
+        find.byKey(const ValueKey('archive-search')),
+        'سكر',
+      );
+      await settle(tester);
+      await tester.enterText(find.byKey(const ValueKey('archive-search')), '');
+      await settle(tester);
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await settle(tester);
+      expect(
+        tester
+            .widget<PopupMenuItem<void>>(
+              find.byKey(const ValueKey('archive-delete-range')),
+            )
+            .enabled,
+        isTrue,
+      );
+      expect(find.text('Clear the search to delete a period'), findsNothing);
     });
 
     testWidgets('a big delete shows progress and clears the whole range',
@@ -672,4 +732,14 @@ void main() {
       expect(find.text('not a product'), findsWidgets);
     });
   });
+}
+
+/// An archive whose counting never comes back, for the "Delete is dead while
+/// the count is still being made" case.
+class _NeverCounts extends ArchiveRepository {
+  _NeverCounts(super.db);
+
+  @override
+  Future<ArchiveRangeSummary> summary(ArchiveFilter filter) =>
+      Completer<ArchiveRangeSummary>().future;
 }
