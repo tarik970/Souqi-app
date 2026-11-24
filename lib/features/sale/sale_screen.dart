@@ -328,12 +328,25 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
           ),
         ],
       ),
+      // FOUR FIXED SLOTS, in this order, in BOTH layouts.
+      //
+      // The slots never appear, disappear or change widget type as the
+      // keyboard comes and goes: a Column matches its old elements to its new
+      // children BY POSITION, so dropping the favorites bar out of the list
+      // used to shift the search field up one index, onto an element of a
+      // different type. Flutter then threw that element away and built a new
+      // TextField: its state went with it, its input connection closed, the
+      // keyboard dropped, `typing` went back to false and the whole thing
+      // flipped back — a loop that made the field impossible to type in on a
+      // phone. Each slot now collapses or swaps its own contents instead.
       body: Column(
         children: [
-          if (!typing) _FavoritesBar(onTap: _tapProduct),
+          _FavoritesSlot(collapsed: typing, onTap: _tapProduct),
           Padding(
+            key: const ValueKey('sale-search'),
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
             child: TextField(
+              key: const ValueKey('sale-search-field'),
               controller: _search,
               focusNode: _searchFocus,
               textInputAction: TextInputAction.done,
@@ -366,10 +379,11 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                     onAddNew: _startNewItem,
                   ),
           ),
-          if (typing)
-            _CompactTotalBar(totals: totals, locale: locale)
-          else
-            _TotalsPanel(
+          _TotalsSlot(
+            compact: typing,
+            compactBuilder: (_) =>
+                _CompactTotalBar(totals: totals, locale: locale),
+            fullBuilder: (_) => _TotalsPanel(
               totals: totals,
               cart: cart,
               locale: locale,
@@ -389,10 +403,45 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               onDiscount: _editDiscount,
               onSave: _save,
             ),
+          ),
         ],
       ),
     );
   }
+}
+
+/// The favorites bar's slot: always the Column's first child, empty while the
+/// keyboard is up. Collapsing it here instead of leaving it out of the
+/// children list is what keeps the search field below it on the same index —
+/// see the note on the Column.
+class _FavoritesSlot extends StatelessWidget {
+  const _FavoritesSlot({required this.collapsed, required this.onTap});
+
+  final bool collapsed;
+  final ValueChanged<Product> onTap;
+
+  @override
+  Widget build(BuildContext context) =>
+      collapsed ? const SizedBox.shrink() : _FavoritesBar(onTap: onTap);
+}
+
+/// The totals slot: the full panel, or the one-line total that leaves the
+/// keyboard room. One stable child of the Column either way; the builders
+/// keep the panel that is not shown from being built at all.
+class _TotalsSlot extends StatelessWidget {
+  const _TotalsSlot({
+    required this.compact,
+    required this.compactBuilder,
+    required this.fullBuilder,
+  });
+
+  final bool compact;
+  final WidgetBuilder compactBuilder;
+  final WidgetBuilder fullBuilder;
+
+  @override
+  Widget build(BuildContext context) =>
+      compact ? compactBuilder(context) : fullBuilder(context);
 }
 
 /// Large one-tap buttons for favorite products.
