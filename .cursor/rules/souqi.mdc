@@ -30,7 +30,7 @@ CORE FEATURES (later phases)
 9. Debt ledger (customer debts) — BUILD IT but HIDE IT behind a compile-time feature flag.
 10. Multiple currencies (fully offline, rates entered manually by the shop owner):
    - Currencies table: code, Arabic name, English name, symbol, decimal places, exchange rate to the base currency, active flag, sort order. Seed SYP (base, 0 decimals) and USD (2 decimals); the user can add any currency (e.g. TRY, EUR, or "old lira" for the Syrian redenomination) and edit/disable them.
-   - One BASE currency (default SYP) used for totals and statistics. The user can change the base currency only with a clear warning and a recalculation step.
+   - One BASE currency (default SYP) used for totals and statistics. The base currency can only be changed while there are no invoices and no debt transactions; after that the setting is locked with an explanation (no recalculation logic).
    - Each product has its own price currency (e.g. sugar priced in SYP, a carton of oil priced in USD). On the sale screen every line is converted to the invoice currency using the current rate.
    - Per sale the user can choose the invoice currency (default = base). The invoice can optionally show the total in up to 2 extra currencies (e.g. "Total: 400 SYP ≈ 0.04 USD"), configurable in invoice settings.
    - Quick "update exchange rate" action reachable from the sale screen in two taps, showing when the rate was last updated.
@@ -51,11 +51,12 @@ FEATURE FLAGS
 
 DATA RULES (important)
 - Money: store as INTEGER minor units of its currency (SYP with 0 decimals = whole pounds, USD with 2 decimals = cents), always together with its currency code. Quantities: store as INTEGER thousandths (500 = 0.5) to avoid floating-point errors. Line total = round(price * qty / 1000).
-- Exchange rates: never use double for stored rates. Store each rate as an INTEGER scaled by 1,000,000 (rate_micro), meaning "1 unit of this currency = rate base units". Do conversions with integer/BigInt math and one explicit rounding step (half-up) at the end, to the target currency's decimal places. Put all money/currency math in one tested module.
+- Exchange rates: never use double for stored rates. Store each rate as an exact fraction of two INTEGERs (rate_num, rate_den, both > 0) meaning "rate_num/rate_den base units per 1 unit of this currency", exactly as the user entered it (e.g. "1 USD = 13000 SYP" → 13000/1). Every rate snapshot (invoices, extra totals, invoice items, debt transactions) uses the same num/den pair. Do conversions with BigInt math and one explicit rounding step (half-up) at the end, to the target currency's decimal places. Put all money/currency math in one tested module.
 - Invoice items store a SNAPSHOT of product name, code, kind, unit and unit price at sale time, so later price changes never alter old invoices. Invoices also store a snapshot of the linked customer (name, phone) and account (number, provider), with nullable foreign keys to the live records.
-- Phone and card/account numbers: store as text exactly as entered, plus a normalized search column (digits only; Arabic-Indic digits ٠-٩ converted to 0-9) with an index, used for search.
+- Phone and card/account numbers: store as text exactly as entered, plus a normalized search column with an index. Phones: digits only (Arabic-Indic digits ٠-٩ converted to 0-9). Account numbers and voucher codes are ALPHANUMERIC: trim, remove spaces and dashes, convert Arabic-Indic digits, uppercase letters — never strip letters.
+- Customers are never hard-deleted (soft delete via active flag); foreign keys from accounts and debt transactions to customers use ON DELETE RESTRICT.
 - Invoice numbers are sequential from a persisted counter and never reuse numbers, even after deletion.
-- Card codes: tables voucher_batches (product, added date, count, cost per card optional, note) and voucher_codes (product, batch, encrypted code, code hash, serial, expiry, status AVAILABLE / SOLD / VOID, sold_at, invoice id, invoice item id). Encrypt the code with AES-GCM using a random key kept in flutter_secure_storage (Android Keystore); store a SHA-256 hash of the normalized code (trimmed, no spaces/dashes, Arabic-Indic digits converted) with a UNIQUE index per product to block duplicates and allow lookup. Taking codes for a sale happens in the SAME transaction as saving the invoice, so two sales can never get the same code. A table audit_log records reveal / reprint-with-codes / void / restore / import / export actions with time and details (never the code itself).
+- Card codes: tables voucher_batches (product, added date, count, cost per card optional, note) and voucher_codes (product, batch, encrypted code, code hash, serial, expiry, status AVAILABLE / SOLD / VOID, status_changed_at, sold_at, invoice id, invoice item id, plus sale snapshots that survive invoice deletion: sold_invoice_no, sold_customer_id (no FK), sold_customer_name, sold_account_number). Products have a nullable low_stock_threshold. Encrypt the code with AES-GCM using a random key kept in flutter_secure_storage (Android Keystore); store a SHA-256 hash of the normalized code (alphanumeric normalization above) with a UNIQUE index per product to block duplicates and allow lookup. Taking codes for a sale happens in the SAME transaction as saving the invoice, so two sales can never get the same code. A table audit_log records reveal / reprint-with-codes / void / restore / import / export actions with time and details (never the code itself).
 - Use versioned migrations (onCreate + onUpgrade with explicit version steps). Never drop user data in a migration.
 - Wrap multi-step writes (saving an invoice + its items) in transactions.
 
@@ -63,7 +64,6 @@ QUALITY
 - Run `flutter analyze` with zero warnings and write unit tests for money/quantity math, migrations and repositories. If you can run commands, run them; if not, tell me the exact commands.
 - Give me complete files, not fragments, and tell me every file you changed.
 - At the end of every phase, list exactly what I should test on a real device.
-- Never remove the maven.aliyun.com repositories from android/settings.gradle.kts and android/build.gradle.kts; Google Maven is blocked on this network.
 
 SECRETS
 - Never create, request, store or commit the licensing PRIVATE key inside this project. Only the public key may appear in the app.

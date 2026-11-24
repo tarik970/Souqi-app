@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "Souqi",
+  "@appTitle": {
+    "description": "Application name, shown in the app bar and task switcher"
+  },
+  "homePlaceholder": "Setup complete. Sales, products and the rest arrive in the next phases.",
+  "@homePlaceholder": {
+    "description": "Temporary message on the phase-1 home screen"
+  }
+}
