@@ -10,6 +10,7 @@ abstract final class SettingsKeys {
   static const appLanguage = 'app_language';
   static const invoiceLanguage = 'invoice_language';
   static const shopType = 'shop_type'; // GROCERY / CARDS / BOTH
+  static const setupDone = 'setup_done';
   static const shopName = 'shop_name';
   static const shopLogoBase64 = 'shop_logo_base64';
 
@@ -28,6 +29,7 @@ abstract final class SettingsKeys {
   static const showInvoiceNumber = 'show_invoice_number';
   static const extraTotalCurrencies = 'extra_total_currencies'; // JSON list, max 2
   static const maskAccountNumber = 'mask_account_number';
+  static const showPoweredBy = 'show_powered_by'; // one text line, no image
   static const printerMac = 'printer_mac';
   static const printerName = 'printer_name';
 
@@ -42,6 +44,7 @@ abstract final class SettingsKeys {
     appLanguage: 'ar',
     invoiceLanguage: 'ar',
     shopType: 'GROCERY',
+    setupDone: '0',
     shopName: '',
     paperWidthMm: '80',
     printerDpi: '203',
@@ -57,6 +60,7 @@ abstract final class SettingsKeys {
     showInvoiceNumber: '1',
     extraTotalCurrencies: '[]',
     maskAccountNumber: '0',
+    showPoweredBy: '1',
     autoDeleteDays: '0',
   };
 }

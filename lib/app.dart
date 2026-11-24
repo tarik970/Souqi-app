@@ -2,7 +2,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'core/providers.dart';
+import 'features/home/home_screen.dart';
+import 'features/setup/setup_screen.dart';
 import 'l10n/generated/app_localizations.dart';
+
+const _primaryGreen = Color(0xFF12332B);
+const _warmAccent = Color(0xFFE2A13B);
+const _cream = Color(0xFFFAF6EC);
+
+ThemeData buildTheme() {
+  final scheme = ColorScheme.fromSeed(seedColor: _primaryGreen).copyWith(
+    primary: _primaryGreen,
+    secondary: _warmAccent,
+    surface: _cream,
+  );
+  return ThemeData(
+    colorScheme: scheme,
+    scaffoldBackgroundColor: _cream,
+    fontFamily: 'Tajawal',
+    appBarTheme: const AppBarTheme(
+      backgroundColor: _primaryGreen,
+      foregroundColor: Colors.white,
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: _warmAccent,
+      foregroundColor: _primaryGreen,
+    ),
+  );
+}
 
 class SouqiApp extends ConsumerWidget {
   const SouqiApp({super.key});
@@ -10,6 +37,7 @@ class SouqiApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(appLocaleProvider);
+    final setupDone = ref.watch(setupDoneProvider);
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       locale: locale,
@@ -23,33 +51,8 @@ class SouqiApp extends ConsumerWidget {
         AppLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,
       ],
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF2E7D32),
-        fontFamily: 'Tajawal',
-      ),
-      home: const _HomePlaceholder(),
-    );
-  }
-}
-
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.appTitle)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            l10n.homePlaceholder,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      ),
+      theme: buildTheme(),
+      home: setupDone ? const HomeScreen() : const SetupScreen(),
     );
   }
 }

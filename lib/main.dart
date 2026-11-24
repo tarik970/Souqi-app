@@ -16,6 +16,7 @@ Future<void> main() async {
   final appDb = await AppDatabase.open();
   final settings = SettingsRepository(appDb.db);
   final language = await settings.getString(SettingsKeys.appLanguage);
+  final setupDone = await settings.getBool(SettingsKeys.setupDone);
 
   runApp(
     ProviderScope(
@@ -23,6 +24,7 @@ Future<void> main() async {
         databaseProvider.overrideWithValue(appDb),
         appLocaleProvider
             .overrideWith(() => AppLocaleNotifier(Locale(language))),
+        setupDoneProvider.overrideWith(() => SetupDoneNotifier(setupDone)),
       ],
       child: const SouqiApp(),
     ),

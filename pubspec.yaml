@@ -24,6 +24,9 @@ dependencies:
   sqflite: ^2.4.2
   path: ^1.9.0
   path_provider: ^2.1.5
+  # 10.x+ required: older versions apply the Kotlin Gradle Plugin, which
+  # fails to build on Flutter 3.50 (Built-in Kotlin).
+  package_info_plus: ^10.2.2
 
   cupertino_icons: ^1.0.8
 
@@ -34,9 +37,45 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   sqflite_common_ffi: ^2.3.6
 
+  # Icon/splash generation (dev-time only; fetched from pub.dev, the Android
+  # side builds through the Aliyun mirrors like everything else).
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
+  # Used by tool/make_brand_icons.dart to derive icon variants.
+  image: ^4.5.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  # Legacy (pre-8.0) icon: the mark composed on cream by tool/make_brand_icons.dart.
+  image_path: assets/branding/souqi_icon_legacy.png
+  adaptive_icon_background: "#FAF6EC"
+  adaptive_icon_foreground: assets/branding/souqi_icon_foreground.png
+  # Android 13+ themed icon: white silhouette generated from the mark.
+  adaptive_icon_monochrome: assets/branding/souqi_icon_monochrome.png
+
+flutter_native_splash:
+  color: "#FAF6EC"
+  image: assets/branding/souqi_logo.png
+  color_dark: "#FAF6EC"
+  image_dark: assets/branding/souqi_logo.png
+  android_12:
+    color: "#FAF6EC"
+    color_dark: "#FAF6EC"
+    # Android 12+ clips the splash to a center circle; the padded icon
+    # foreground fits it, the full logo would be cut off.
+    image: assets/branding/souqi_icon_foreground.png
+    image_dark: assets/branding/souqi_icon_foreground.png
+  android: true
+  ios: false
+  web: false
+
 flutter:
   uses-material-design: true
   generate: true
+
+  assets:
+    - assets/branding/
 
   fonts:
     - family: Tajawal

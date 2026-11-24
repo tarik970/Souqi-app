@@ -67,3 +67,4 @@ QUALITY
 
 SECRETS
 - Never create, request, store or commit the licensing PRIVATE key inside this project. Only the public key may appear in the app.
+- Keep `kotlin.incremental=false` in android/gradle.properties (fixes a Windows Kotlin cache lock bug). Never remove it.

@@ -4,8 +4,138 @@
   "@appTitle": {
     "description": "Application name, shown in the app bar and task switcher"
   },
-  "homePlaceholder": "Setup complete. Sales, products and the rest arrive in the next phases.",
-  "@homePlaceholder": {
-    "description": "Temporary message on the phase-1 home screen"
-  }
+
+  "navSale": "Sale",
+  "navProducts": "Products",
+  "navArchive": "Archive",
+  "navStats": "Statistics",
+  "navSettings": "Settings",
+  "comingSoon": "Coming soon",
+
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "fieldRequired": "This field is required",
+  "activeLabel": "Active",
+
+  "setupWelcome": "Welcome to Souqi",
+  "setupIntro": "Choose the app language and your shop type. You can change both later in Settings.",
+  "setupLanguage": "App language",
+  "languageArabic": "العربية",
+  "languageEnglish": "English",
+  "setupShopType": "Shop type",
+  "shopTypeGrocery": "Grocery",
+  "shopTypeCards": "Cards & subscriptions",
+  "shopTypeBoth": "Both",
+  "setupStart": "Start",
+
+  "searchProductsHint": "Search by name or code",
+  "filterAll": "All",
+  "filterGoods": "Goods",
+  "filterServices": "Cards & services",
+  "addProduct": "Add product",
+  "editProduct": "Edit product",
+  "productName": "Name",
+  "productCode": "Code (optional)",
+  "productCodeTaken": "This code is already used",
+  "productKind": "Type",
+  "kindGoods": "Goods",
+  "kindService": "Card / service",
+  "productUnit": "Unit",
+  "productPrice": "Price",
+  "invalidPrice": "Invalid price",
+  "productCurrency": "Price currency",
+  "favoriteLabel": "Favorite",
+  "requiresAccount": "Requires customer account",
+  "requiresAccountHint": "A sale of this item must be linked to a customer's card or account number",
+  "showInactive": "Show inactive",
+  "inactiveBadge": "Inactive",
+  "deleteProductTitle": "Delete product?",
+  "deleteProductMessage": "Delete \"{name}\"?",
+  "@deleteProductMessage": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "productDeactivatedMessage": "This product is used in invoices, so it was deactivated instead of deleted.",
+  "noProducts": "No products yet",
+
+  "unitsTitle": "Units",
+  "addUnit": "Add unit",
+  "editUnit": "Edit unit",
+  "unitName": "Unit name",
+  "presetBadge": "Preset",
+  "deleteUnitTitle": "Delete unit?",
+  "deleteUnitMessage": "Delete \"{name}\"?",
+  "@deleteUnitMessage": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "unitInUse": "Cannot delete: {count} product(s) use this unit",
+  "@unitInUse": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "settingsCurrencies": "Currencies & exchange rates",
+  "showPoweredBy": "Show \"Powered by Souqi\" on invoices",
+  "poweredByFooter": "Powered by Souqi",
+  "aboutTitle": "About Souqi",
+  "aboutTagline": "Souqi — Sales & invoicing system",
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+
+  "currenciesTitle": "Currencies",
+  "addCurrency": "Add currency",
+  "editCurrency": "Edit currency",
+  "currencyCode": "Code (e.g. USD)",
+  "currencyCodeExists": "This code already exists",
+  "currencyNameAr": "Arabic name",
+  "currencyNameEn": "English name",
+  "currencySymbol": "Symbol",
+  "currencyDecimals": "Decimal places",
+  "exchangeRate": "Exchange rate",
+  "rateHint": "1 {code} = ? {base}",
+  "@rateHint": {
+    "placeholders": {
+      "code": {"type": "String"},
+      "base": {"type": "String"}
+    }
+  },
+  "rateDisplay": "1 {code} = {value} {base}",
+  "@rateDisplay": {
+    "placeholders": {
+      "code": {"type": "String"},
+      "value": {"type": "String"},
+      "base": {"type": "String"}
+    }
+  },
+  "invalidRate": "Invalid exchange rate",
+  "rateUpdatedAt": "Rate updated: {date}",
+  "@rateUpdatedAt": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "rateNeverUpdated": "Rate not set yet",
+  "updateRate": "Update rate",
+  "baseBadge": "Base",
+  "setAsBase": "Set as base currency",
+  "baseChangeTitle": "Change base currency?",
+  "baseChangeWarning": "All totals and statistics use the base currency. Exchange rates of the other currencies must be entered again against {code}.",
+  "@baseChangeWarning": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "baseChangeLocked": "The base currency is locked because invoices or debts already exist.",
+  "cannotDisableBase": "The base currency cannot be disabled."
 }
