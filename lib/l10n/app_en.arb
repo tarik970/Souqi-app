@@ -10,7 +10,6 @@
   "navArchive": "Archive",
   "navStats": "Statistics",
   "navSettings": "Settings",
-  "comingSoon": "Coming soon",
 
   "save": "Save",
   "cancel": "Cancel",
@@ -388,6 +387,146 @@
   "@sizeInMegabytes": {
     "placeholders": {
       "size": {"type": "String"}
+    }
+  }
+,
+  "archiveSearchProductHint": "Product sold",
+  "archiveSearchCustomerHint": "Customer, phone or card number",
+  "archiveInvoiceNoHint": "Invoice no.",
+  "archiveFilters": "Filters",
+  "archiveClearFilters": "Clear filters",
+  "periodAll": "All",
+  "periodToday": "Today",
+  "periodYesterday": "Yesterday",
+  "periodThisWeek": "This week",
+  "periodThisMonth": "This month",
+  "periodCustom": "Custom",
+  "periodRangeLabel": "{from} — {to}",
+  "@periodRangeLabel": {
+    "placeholders": {
+      "from": {"type": "String"},
+      "to": {"type": "String"}
+    }
+  },
+  "archiveNoInvoices": "No invoices yet",
+  "archiveNoMatches": "No invoice matches these filters",
+  "archiveItemsLabel": "Items: {count}",
+  "@archiveItemsLabel": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "archiveMatchCount": "{count} invoices · {total}",
+  "@archiveMatchCount": {
+    "placeholders": {
+      "count": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "archiveDeleteRange": "Delete these invoices",
+  "archiveDeleteRangeTitle": "Delete invoices?",
+  "archiveDeleteRangeMessage": "{count} invoices totalling {total} will be deleted. Products, invoice numbering and sold card codes are kept.",
+  "@archiveDeleteRangeMessage": {
+    "placeholders": {
+      "count": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "archiveDeleteWholeArchive": "No date range is set, so this deletes EVERY invoice in the archive.",
+  "archiveDeleteRangeEmpty": "There are no invoices in this range.",
+  "archiveDeletedMessage": "{count} invoices deleted",
+  "@archiveDeletedMessage": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "deleteInvoiceTitle": "Delete invoice?",
+  "deleteInvoiceMessage": "Invoice {number} will be deleted. Products and sold card codes are kept, and the number is never reused.",
+  "@deleteInvoiceMessage": {
+    "placeholders": {
+      "number": {"type": "String"}
+    }
+  },
+  "invoiceDeletedMessage": "Invoice {number} deleted",
+  "@invoiceDeletedMessage": {
+    "placeholders": {
+      "number": {"type": "String"}
+    }
+  },
+  "invoiceNotFound": "This invoice is no longer in the archive.",
+  "invoiceCopyMark": "COPY",
+  "invoiceCopyNotice": "Anything printed or shared from here is marked as a copy.",
+  "sectionArchive": "Archive",
+  "settingAutoDelete": "Auto-delete old invoices",
+  "settingAutoDeleteHint": "Invoices older than this are deleted on the first launch of each day. Products, invoice numbering and sold card codes are kept.",
+  "retentionOff": "Off",
+  "retentionDays": "After {days} days",
+  "@retentionDays": {
+    "placeholders": {
+      "days": {"type": "String"}
+    }
+  },
+  "retentionCustom": "Custom…",
+  "retentionCustomTitle": "Delete invoices older than",
+  "retentionCustomHint": "Days",
+  "retentionNotice": "{count} invoices older than {days} days were deleted",
+  "@retentionNotice": {
+    "placeholders": {
+      "count": {"type": "String"},
+      "days": {"type": "String"}
+    }
+  },
+  "statsBaseCurrencyNote": "All amounts in {code}, at the exchange rate stored with each invoice.",
+  "@statsBaseCurrencyNote": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "statsTotalSales": "Total sales",
+  "statsInvoiceCount": "Invoices",
+  "statsAverageInvoice": "Average invoice",
+  "statsTotalDiscounts": "Discounts",
+  "statsPreviousValue": "Previous period: {value}",
+  "@statsPreviousValue": {
+    "placeholders": {
+      "value": {"type": "String"}
+    }
+  },
+  "statsTrendUp": "Up {percent}%",
+  "@statsTrendUp": {
+    "placeholders": {
+      "percent": {"type": "String"}
+    }
+  },
+  "statsTrendDown": "Down {percent}%",
+  "@statsTrendDown": {
+    "placeholders": {
+      "percent": {"type": "String"}
+    }
+  },
+  "statsTrendFlat": "Unchanged",
+  "statsTrendNew": "New — there was none in the previous period",
+  "statsTrendGone": "None in this period",
+  "statsTopBySales": "Top 10 by number of sales",
+  "statsTopByAmount": "Top 10 by amount",
+  "statsSalesCount": "{count} sales",
+  "@statsSalesCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "statsUnsavedItemBadge": "not a product",
+  "statsNoData": "No sales in this period",
+  "statsByCurrency": "Sales by invoice currency",
+  "statsShowByCurrency": "Break down by invoice currency",
+  "debugTools": "Developer tools (debug build)",
+  "debugSeedInvoices": "Create test invoices",
+  "debugSeedTitle": "How many invoices?",
+  "debugSeedHint": "Spread over the last 365 days, for performance testing",
+  "debugSeedDone": "{count} test invoices created",
+  "@debugSeedDone": {
+    "placeholders": {
+      "count": {"type": "String"}
     }
   }
 }

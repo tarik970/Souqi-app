@@ -22,8 +22,8 @@ void main() {
   group('schema', () {
     test('user_version is the latest migration', () async {
       final rows = await db.rawQuery('PRAGMA user_version');
-      expect(rows.first.values.first, 2);
-      expect(AppDatabase.schemaVersion, 2);
+      expect(rows.first.values.first, 3);
+      expect(AppDatabase.schemaVersion, 3);
     });
 
     test('foreign keys are enforced', () async {
@@ -216,8 +216,8 @@ void main() {
     });
   });
 
-  group('v1 → v2', () {
-    test('recomputes name_norm with the stronger normalization, keeps names',
+  group('v1 → v3', () {
+    test('recomputes name_norm, backfills the snapshot search columns',
         () async {
       final dir = await databaseFactoryFfi.getDatabasesPath();
       final path = '$dir/souqi_migration_v2_test.db';
@@ -252,14 +252,41 @@ void main() {
         'name_norm': 'أحمد',
         'created_at': now,
       });
-      final invoiceId = await insertInvoice(old, invoiceNo: 1);
-      await insertInvoiceItem(old, invoiceId: invoiceId, productId: sugarId);
+      // Written the way version 1 wrote them: no *_norm columns on the
+      // snapshots at all — those arrive with v3 and must be backfilled.
+      final invoiceId = await old.insert('invoices', {
+        'invoice_no': 1,
+        'created_at': now,
+        'currency_code': 'SYP',
+        'base_currency_code': 'SYP',
+        'rate_num': 1,
+        'rate_den': 1,
+        'subtotal_minor': 1000,
+        'total_minor': 1000,
+        'total_base_minor': 1000,
+        'customer_name': 'أحمد',
+        'customer_phone': '0944 123 456',
+        'account_number': '0011-2233',
+      });
+      await old.insert('invoice_items', {
+        'invoice_id': invoiceId,
+        'product_id': sugarId,
+        'product_name': 'السكر الناعم',
+        'kind': 'GOODS',
+        'qty_thousandths': 1000,
+        'orig_unit_price_minor': 1000,
+        'orig_currency_code': 'SYP',
+        'orig_rate_num': 1,
+        'orig_rate_den': 1,
+        'unit_price_minor': 1000,
+        'line_total_minor': 1000,
+      });
       await old.close();
 
       final upgraded =
           await AppDatabase.open(factory: databaseFactoryFfi, path: path);
       final db = upgraded.db;
-      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 2);
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 3);
 
       Future<Map<String, Object?>> product(int id) async =>
           (await db.query('products', where: 'id = ?', whereArgs: [id])).single;
@@ -272,7 +299,19 @@ void main() {
 
       // Nothing else moved: the invoice and its item are still there.
       expect(await db.query('invoices'), hasLength(1));
-      expect((await db.query('invoice_items')).single['product_id'], sugarId);
+      final item = (await db.query('invoice_items')).single;
+      expect(item['product_id'], sugarId);
+
+      // v3: the snapshots are untouched and are now searchable.
+      expect(item['product_name'], 'السكر الناعم');
+      expect(item['product_name_norm'], 'سكر ناعم');
+      final invoice = (await db.query('invoices')).single;
+      expect(invoice['customer_name'], 'أحمد');
+      expect(invoice['customer_name_norm'], 'احمد');
+      expect(invoice['customer_phone'], '0944 123 456');
+      expect(invoice['customer_phone_norm'], '0944123456');
+      expect(invoice['account_number'], '0011-2233');
+      expect(invoice['account_number_norm'], '00112233');
 
       // And the old product is now found the new way.
       final found = await ProductRepository(db).list(query: 'سكر');

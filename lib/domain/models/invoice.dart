@@ -4,6 +4,7 @@
 library;
 
 import '../../core/money/exchange.dart';
+import '../../core/utils/normalize.dart';
 import 'cart.dart';
 import 'product.dart';
 
@@ -107,6 +108,8 @@ class InvoiceItem {
         'product_id': productId,
         'sort_order': sortOrder,
         'product_name': productName,
+        // The search/grouping index beside the snapshot, never instead of it.
+        'product_name_norm': normalizeName(productName),
         'product_code': productCode,
         'kind': kind.db,
         'unit_name': unitName,
@@ -335,6 +338,13 @@ class Invoice {
       'account_id': accountId,
       'account_number': accountNumber,
       'account_provider': accountProvider,
+      // Search indexes for the archive; the snapshots above stay verbatim.
+      'customer_name_norm':
+          customerName == null ? null : normalizeName(customerName!),
+      'customer_phone_norm':
+          customerPhone == null ? null : normalizePhone(customerPhone!),
+      'account_number_norm':
+          accountNumber == null ? null : normalizeCode(accountNumber!),
       'note': note,
     };
   }

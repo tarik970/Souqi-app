@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'migrations/migration.dart';
 import 'migrations/migration_v1.dart';
 import 'migrations/migration_v2.dart';
+import 'migrations/migration_v3.dart';
 
 /// Owns the sqflite [Database]: opening, PRAGMAs and versioned migrations.
 class AppDatabase {
@@ -19,7 +20,11 @@ class AppDatabase {
 
   /// All migrations in ascending version order. Add new steps at the end;
   /// never edit or remove an existing one.
-  static const List<Migration> migrations = [MigrationV1(), MigrationV2()];
+  static const List<Migration> migrations = [
+    MigrationV1(),
+    MigrationV2(),
+    MigrationV3(),
+  ];
 
   static int get schemaVersion => migrations.last.version;
 

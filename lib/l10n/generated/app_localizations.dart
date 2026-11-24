@@ -135,12 +135,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// No description provided for @comingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming soon'**
-  String get comingSoon;
-
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -1634,6 +1628,366 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{size} MB'**
   String sizeInMegabytes(String size);
+
+  /// No description provided for @archiveSearchProductHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Product sold'**
+  String get archiveSearchProductHint;
+
+  /// No description provided for @archiveSearchCustomerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer, phone or card number'**
+  String get archiveSearchCustomerHint;
+
+  /// No description provided for @archiveInvoiceNoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice no.'**
+  String get archiveInvoiceNoHint;
+
+  /// No description provided for @archiveFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get archiveFilters;
+
+  /// No description provided for @archiveClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get archiveClearFilters;
+
+  /// No description provided for @periodAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get periodAll;
+
+  /// No description provided for @periodToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get periodToday;
+
+  /// No description provided for @periodYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get periodYesterday;
+
+  /// No description provided for @periodThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get periodThisWeek;
+
+  /// No description provided for @periodThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get periodThisMonth;
+
+  /// No description provided for @periodCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get periodCustom;
+
+  /// No description provided for @periodRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} — {to}'**
+  String periodRangeLabel(String from, String to);
+
+  /// No description provided for @archiveNoInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices yet'**
+  String get archiveNoInvoices;
+
+  /// No description provided for @archiveNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoice matches these filters'**
+  String get archiveNoMatches;
+
+  /// No description provided for @archiveItemsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Items: {count}'**
+  String archiveItemsLabel(String count);
+
+  /// No description provided for @archiveMatchCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices · {total}'**
+  String archiveMatchCount(String count, String total);
+
+  /// No description provided for @archiveDeleteRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete these invoices'**
+  String get archiveDeleteRange;
+
+  /// No description provided for @archiveDeleteRangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete invoices?'**
+  String get archiveDeleteRangeTitle;
+
+  /// No description provided for @archiveDeleteRangeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices totalling {total} will be deleted. Products, invoice numbering and sold card codes are kept.'**
+  String archiveDeleteRangeMessage(String count, String total);
+
+  /// No description provided for @archiveDeleteWholeArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'No date range is set, so this deletes EVERY invoice in the archive.'**
+  String get archiveDeleteWholeArchive;
+
+  /// No description provided for @archiveDeleteRangeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no invoices in this range.'**
+  String get archiveDeleteRangeEmpty;
+
+  /// No description provided for @archiveDeletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices deleted'**
+  String archiveDeletedMessage(String count);
+
+  /// No description provided for @deleteInvoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete invoice?'**
+  String get deleteInvoiceTitle;
+
+  /// No description provided for @deleteInvoiceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice {number} will be deleted. Products and sold card codes are kept, and the number is never reused.'**
+  String deleteInvoiceMessage(String number);
+
+  /// No description provided for @invoiceDeletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice {number} deleted'**
+  String invoiceDeletedMessage(String number);
+
+  /// No description provided for @invoiceNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice is no longer in the archive.'**
+  String get invoiceNotFound;
+
+  /// No description provided for @invoiceCopyMark.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY'**
+  String get invoiceCopyMark;
+
+  /// No description provided for @invoiceCopyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything printed or shared from here is marked as a copy.'**
+  String get invoiceCopyNotice;
+
+  /// No description provided for @sectionArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get sectionArchive;
+
+  /// No description provided for @settingAutoDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-delete old invoices'**
+  String get settingAutoDelete;
+
+  /// No description provided for @settingAutoDeleteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices older than this are deleted on the first launch of each day. Products, invoice numbering and sold card codes are kept.'**
+  String get settingAutoDeleteHint;
+
+  /// No description provided for @retentionOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get retentionOff;
+
+  /// No description provided for @retentionDays.
+  ///
+  /// In en, this message translates to:
+  /// **'After {days} days'**
+  String retentionDays(String days);
+
+  /// No description provided for @retentionCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get retentionCustom;
+
+  /// No description provided for @retentionCustomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete invoices older than'**
+  String get retentionCustomTitle;
+
+  /// No description provided for @retentionCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get retentionCustomHint;
+
+  /// No description provided for @retentionNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices older than {days} days were deleted'**
+  String retentionNotice(String count, String days);
+
+  /// No description provided for @statsBaseCurrencyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'All amounts in {code}, at the exchange rate stored with each invoice.'**
+  String statsBaseCurrencyNote(String code);
+
+  /// No description provided for @statsTotalSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Total sales'**
+  String get statsTotalSales;
+
+  /// No description provided for @statsInvoiceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get statsInvoiceCount;
+
+  /// No description provided for @statsAverageInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Average invoice'**
+  String get statsAverageInvoice;
+
+  /// No description provided for @statsTotalDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts'**
+  String get statsTotalDiscounts;
+
+  /// No description provided for @statsPreviousValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period: {value}'**
+  String statsPreviousValue(String value);
+
+  /// No description provided for @statsTrendUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Up {percent}%'**
+  String statsTrendUp(String percent);
+
+  /// No description provided for @statsTrendDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Down {percent}%'**
+  String statsTrendDown(String percent);
+
+  /// No description provided for @statsTrendFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Unchanged'**
+  String get statsTrendFlat;
+
+  /// No description provided for @statsTrendNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New — there was none in the previous period'**
+  String get statsTrendNew;
+
+  /// No description provided for @statsTrendGone.
+  ///
+  /// In en, this message translates to:
+  /// **'None in this period'**
+  String get statsTrendGone;
+
+  /// No description provided for @statsTopBySales.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 10 by number of sales'**
+  String get statsTopBySales;
+
+  /// No description provided for @statsTopByAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 10 by amount'**
+  String get statsTopByAmount;
+
+  /// No description provided for @statsSalesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sales'**
+  String statsSalesCount(String count);
+
+  /// No description provided for @statsUnsavedItemBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'not a product'**
+  String get statsUnsavedItemBadge;
+
+  /// No description provided for @statsNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales in this period'**
+  String get statsNoData;
+
+  /// No description provided for @statsByCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales by invoice currency'**
+  String get statsByCurrency;
+
+  /// No description provided for @statsShowByCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Break down by invoice currency'**
+  String get statsShowByCurrency;
+
+  /// No description provided for @debugTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer tools (debug build)'**
+  String get debugTools;
+
+  /// No description provided for @debugSeedInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Create test invoices'**
+  String get debugSeedInvoices;
+
+  /// No description provided for @debugSeedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How many invoices?'**
+  String get debugSeedTitle;
+
+  /// No description provided for @debugSeedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Spread over the last 365 days, for performance testing'**
+  String get debugSeedHint;
+
+  /// No description provided for @debugSeedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} test invoices created'**
+  String debugSeedDone(String count);
 }
 
 class _AppLocalizationsDelegate

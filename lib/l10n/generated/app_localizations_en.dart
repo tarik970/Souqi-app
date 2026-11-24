@@ -30,9 +30,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get comingSoon => 'Coming soon';
-
-  @override
   String get save => 'Save';
 
   @override
@@ -842,5 +839,219 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String sizeInMegabytes(String size) {
     return '$size MB';
+  }
+
+  @override
+  String get archiveSearchProductHint => 'Product sold';
+
+  @override
+  String get archiveSearchCustomerHint => 'Customer, phone or card number';
+
+  @override
+  String get archiveInvoiceNoHint => 'Invoice no.';
+
+  @override
+  String get archiveFilters => 'Filters';
+
+  @override
+  String get archiveClearFilters => 'Clear filters';
+
+  @override
+  String get periodAll => 'All';
+
+  @override
+  String get periodToday => 'Today';
+
+  @override
+  String get periodYesterday => 'Yesterday';
+
+  @override
+  String get periodThisWeek => 'This week';
+
+  @override
+  String get periodThisMonth => 'This month';
+
+  @override
+  String get periodCustom => 'Custom';
+
+  @override
+  String periodRangeLabel(String from, String to) {
+    return '$from — $to';
+  }
+
+  @override
+  String get archiveNoInvoices => 'No invoices yet';
+
+  @override
+  String get archiveNoMatches => 'No invoice matches these filters';
+
+  @override
+  String archiveItemsLabel(String count) {
+    return 'Items: $count';
+  }
+
+  @override
+  String archiveMatchCount(String count, String total) {
+    return '$count invoices · $total';
+  }
+
+  @override
+  String get archiveDeleteRange => 'Delete these invoices';
+
+  @override
+  String get archiveDeleteRangeTitle => 'Delete invoices?';
+
+  @override
+  String archiveDeleteRangeMessage(String count, String total) {
+    return '$count invoices totalling $total will be deleted. Products, invoice numbering and sold card codes are kept.';
+  }
+
+  @override
+  String get archiveDeleteWholeArchive =>
+      'No date range is set, so this deletes EVERY invoice in the archive.';
+
+  @override
+  String get archiveDeleteRangeEmpty => 'There are no invoices in this range.';
+
+  @override
+  String archiveDeletedMessage(String count) {
+    return '$count invoices deleted';
+  }
+
+  @override
+  String get deleteInvoiceTitle => 'Delete invoice?';
+
+  @override
+  String deleteInvoiceMessage(String number) {
+    return 'Invoice $number will be deleted. Products and sold card codes are kept, and the number is never reused.';
+  }
+
+  @override
+  String invoiceDeletedMessage(String number) {
+    return 'Invoice $number deleted';
+  }
+
+  @override
+  String get invoiceNotFound => 'This invoice is no longer in the archive.';
+
+  @override
+  String get invoiceCopyMark => 'COPY';
+
+  @override
+  String get invoiceCopyNotice =>
+      'Anything printed or shared from here is marked as a copy.';
+
+  @override
+  String get sectionArchive => 'Archive';
+
+  @override
+  String get settingAutoDelete => 'Auto-delete old invoices';
+
+  @override
+  String get settingAutoDeleteHint =>
+      'Invoices older than this are deleted on the first launch of each day. Products, invoice numbering and sold card codes are kept.';
+
+  @override
+  String get retentionOff => 'Off';
+
+  @override
+  String retentionDays(String days) {
+    return 'After $days days';
+  }
+
+  @override
+  String get retentionCustom => 'Custom…';
+
+  @override
+  String get retentionCustomTitle => 'Delete invoices older than';
+
+  @override
+  String get retentionCustomHint => 'Days';
+
+  @override
+  String retentionNotice(String count, String days) {
+    return '$count invoices older than $days days were deleted';
+  }
+
+  @override
+  String statsBaseCurrencyNote(String code) {
+    return 'All amounts in $code, at the exchange rate stored with each invoice.';
+  }
+
+  @override
+  String get statsTotalSales => 'Total sales';
+
+  @override
+  String get statsInvoiceCount => 'Invoices';
+
+  @override
+  String get statsAverageInvoice => 'Average invoice';
+
+  @override
+  String get statsTotalDiscounts => 'Discounts';
+
+  @override
+  String statsPreviousValue(String value) {
+    return 'Previous period: $value';
+  }
+
+  @override
+  String statsTrendUp(String percent) {
+    return 'Up $percent%';
+  }
+
+  @override
+  String statsTrendDown(String percent) {
+    return 'Down $percent%';
+  }
+
+  @override
+  String get statsTrendFlat => 'Unchanged';
+
+  @override
+  String get statsTrendNew => 'New — there was none in the previous period';
+
+  @override
+  String get statsTrendGone => 'None in this period';
+
+  @override
+  String get statsTopBySales => 'Top 10 by number of sales';
+
+  @override
+  String get statsTopByAmount => 'Top 10 by amount';
+
+  @override
+  String statsSalesCount(String count) {
+    return '$count sales';
+  }
+
+  @override
+  String get statsUnsavedItemBadge => 'not a product';
+
+  @override
+  String get statsNoData => 'No sales in this period';
+
+  @override
+  String get statsByCurrency => 'Sales by invoice currency';
+
+  @override
+  String get statsShowByCurrency => 'Break down by invoice currency';
+
+  @override
+  String get debugTools => 'Developer tools (debug build)';
+
+  @override
+  String get debugSeedInvoices => 'Create test invoices';
+
+  @override
+  String get debugSeedTitle => 'How many invoices?';
+
+  @override
+  String get debugSeedHint =>
+      'Spread over the last 365 days, for performance testing';
+
+  @override
+  String debugSeedDone(String count) {
+    return '$count test invoices created';
   }
 }

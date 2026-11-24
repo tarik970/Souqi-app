@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'core/money/money_format.dart';
 import 'core/providers.dart';
 import 'features/home/home_screen.dart';
 import 'features/settings/storage_providers.dart';
@@ -92,6 +95,7 @@ class _HousekeepingState extends ConsumerState<_Housekeeping> {
   @override
   Widget build(BuildContext context) {
     final optimizing = ref.watch(housekeepingProvider);
+    final retention = ref.watch(retentionNoticeProvider);
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
@@ -102,6 +106,13 @@ class _HousekeepingState extends ConsumerState<_Housekeeping> {
             child: _OptimizingPill(
               label: AppLocalizations.of(context).optimizingStorage,
             ),
+          )
+        // One or the other: the VACUUM that may follow the sweep is the
+        // more urgent thing to say while it is running.
+        else if (retention != null)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 32),
+            child: _RetentionNotice(),
           ),
       ],
     );
@@ -139,6 +150,80 @@ class _OptimizingPill extends StatelessWidget {
               style: TextStyle(color: scheme.onPrimary, fontSize: 14),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The one line the retention sweep gets: how many old invoices it dropped.
+///
+/// A pill rather than a SnackBar, because the sweep finishes before any
+/// screen is settled and it must not depend on which Scaffold happens to be
+/// up. It clears itself after a few seconds, or on a tap.
+class _RetentionNotice extends ConsumerStatefulWidget {
+  const _RetentionNotice();
+
+  @override
+  ConsumerState<_RetentionNotice> createState() => _RetentionNoticeState();
+}
+
+class _RetentionNoticeState extends ConsumerState<_RetentionNotice> {
+  static const Duration _visible = Duration(seconds: 6);
+
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(_visible, _dismiss);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _dismiss() {
+    if (!mounted) return;
+    ref.read(retentionNoticeProvider.notifier).clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final deleted = ref.watch(retentionNoticeProvider) ?? 0;
+    final days = ref.watch(retentionDaysProvider).value ?? 0;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: scheme.primary,
+      shape: const StadiumBorder(),
+      elevation: 4,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _dismiss,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_delete_outlined,
+                  size: 16, color: scheme.onPrimary),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  l10n.retentionNotice(
+                    formatMinor(deleted, decimals: 0, locale: locale),
+                    formatMinor(days, decimals: 0, locale: locale),
+                  ),
+                  style: TextStyle(color: scheme.onPrimary, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

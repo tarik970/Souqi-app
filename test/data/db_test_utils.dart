@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:souqi/core/utils/normalize.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -53,38 +54,79 @@ Future<int> insertCustomer(DatabaseExecutor db, {String name = 'Ahmad'}) {
   });
 }
 
+/// An invoice row. Defaults to a 1,000-minor SYP sale; the named arguments
+/// cover the cases the archive and statistics tests need (another currency
+/// with its own rate snapshot, a discount, customer snapshots).
 Future<int> insertInvoice(
   DatabaseExecutor db, {
   required int invoiceNo,
   DateTime? createdAt,
+  String currency = 'SYP',
+  int rateNum = 1,
+  int rateDen = 1,
+  int subtotalMinor = 1000,
+  int discountMinor = 0,
+  int? totalMinor,
+  int? totalBaseMinor,
+  String? customerName,
+  String? customerPhone,
+  String? accountNumber,
 }) {
+  final total = totalMinor ?? (subtotalMinor - discountMinor);
   return db.insert('invoices', {
     'invoice_no': invoiceNo,
-    'created_at': (createdAt ?? DateTime.now()).millisecondsSinceEpoch,
-    'currency_code': 'SYP',
+    'created_at':
+        (createdAt ?? DateTime.now()).toUtc().millisecondsSinceEpoch,
+    'currency_code': currency,
     'base_currency_code': 'SYP',
-    'rate_num': 1,
-    'rate_den': 1,
-    'subtotal_minor': 1000,
-    'total_minor': 1000,
-    'total_base_minor': 1000,
+    'rate_num': rateNum,
+    'rate_den': rateDen,
+    'subtotal_minor': subtotalMinor,
+    'discount_type': discountMinor > 0 ? 'AMOUNT' : null,
+    'discount_value': discountMinor > 0 ? discountMinor : null,
+    'discount_minor': discountMinor,
+    'total_minor': total,
+    'total_base_minor': totalBaseMinor ?? total,
+    'customer_name': customerName,
+    'customer_name_norm':
+        customerName == null ? null : normalizeName(customerName),
+    'customer_phone': customerPhone,
+    'customer_phone_norm':
+        customerPhone == null ? null : normalizePhone(customerPhone),
+    'account_number': accountNumber,
+    'account_number_norm':
+        accountNumber == null ? null : normalizeCode(accountNumber),
   });
 }
 
-Future<int> insertInvoiceItem(DatabaseExecutor db,
-    {required int invoiceId, int? productId}) {
+Future<int> insertInvoiceItem(
+  DatabaseExecutor db, {
+  required int invoiceId,
+  int? productId,
+  String name = 'Sugar',
+  int qtyThousandths = 1000,
+  int unitPriceMinor = 1000,
+  int? lineTotalMinor,
+  String currency = 'SYP',
+  int rateNum = 1,
+  int rateDen = 1,
+  int sortOrder = 0,
+}) {
   return db.insert('invoice_items', {
     'invoice_id': invoiceId,
     'product_id': productId,
-    'product_name': 'Sugar',
+    'sort_order': sortOrder,
+    'product_name': name,
+    'product_name_norm': normalizeName(name),
     'kind': 'GOODS',
-    'qty_thousandths': 1000,
-    'orig_unit_price_minor': 1000,
-    'orig_currency_code': 'SYP',
-    'orig_rate_num': 1,
-    'orig_rate_den': 1,
-    'unit_price_minor': 1000,
-    'line_total_minor': 1000,
+    'qty_thousandths': qtyThousandths,
+    'orig_unit_price_minor': unitPriceMinor,
+    'orig_currency_code': currency,
+    'orig_rate_num': rateNum,
+    'orig_rate_den': rateDen,
+    'unit_price_minor': unitPriceMinor,
+    'line_total_minor': lineTotalMinor ??
+        (unitPriceMinor * qtyThousandths) ~/ 1000,
   });
 }
 

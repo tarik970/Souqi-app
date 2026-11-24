@@ -60,6 +60,7 @@ class InvoiceOutput {
   Future<RgbaImage> renderForPrinter(
     Invoice invoice, {
     InvoiceRenderContext? context,
+    bool copy = false,
   }) async {
     final c = context ?? await _context();
     return captureWidget(
@@ -68,6 +69,7 @@ class InvoiceOutput {
         settings: c.settings,
         currencies: c.currencies,
         logo: c.logo,
+        isCopy: copy,
       ),
       logicalWidth: c.settings.printableDots,
     );
@@ -76,6 +78,7 @@ class InvoiceOutput {
   Future<RgbaImage> renderForShare(
     Invoice invoice, {
     InvoiceRenderContext? context,
+    bool copy = false,
   }) async {
     final c = context ?? await _context();
     return captureWidget(
@@ -84,6 +87,7 @@ class InvoiceOutput {
         settings: c.settings,
         currencies: c.currencies,
         logo: c.logo,
+        isCopy: copy,
         // A shared image has no physical paper margin around it.
         padding: EdgeInsets.all(c.settings.baseFontSize.toDouble()),
       ),
@@ -96,9 +100,10 @@ class InvoiceOutput {
   Future<Uint8List> printJob(
     Invoice invoice, {
     InvoiceRenderContext? context,
+    bool copy = false,
   }) async {
     final c = context ?? await _context();
-    final image = await renderForPrinter(invoice, context: c);
+    final image = await renderForPrinter(invoice, context: c, copy: copy);
     return buildRasterJob(
       toMonochrome(image),
       feedLines: c.settings.feedLines,
@@ -110,8 +115,9 @@ class InvoiceOutput {
   Future<Uint8List> sharePng(
     Invoice invoice, {
     InvoiceRenderContext? context,
+    bool copy = false,
   }) async {
-    final image = await renderForShare(invoice, context: context);
+    final image = await renderForShare(invoice, context: context, copy: copy);
     return encodePngRgb(
       width: image.width,
       height: image.height,
@@ -123,9 +129,10 @@ class InvoiceOutput {
   Future<Uint8List> sharePdf(
     Invoice invoice, {
     InvoiceRenderContext? context,
+    bool copy = false,
   }) async {
     final c = context ?? await _context();
-    final image = await renderForShare(invoice, context: c);
+    final image = await renderForShare(invoice, context: c, copy: copy);
     return buildImagePdf(
       image,
       pageWidthMm: c.settings.sharePageWidthMm,
@@ -135,14 +142,14 @@ class InvoiceOutput {
 
   // ---- Printing --------------------------------------------------------
 
-  Future<void> printInvoice(Invoice invoice) async {
+  Future<void> printInvoice(Invoice invoice, {bool copy = false}) async {
     final c = await _context();
     final address = c.settings.printerAddress;
     if (address == null || address.isEmpty) {
       throw const OutputException(OutputFailure.noPrinterSelected);
     }
     await ensureBluetoothReady();
-    final job = await printJob(invoice, context: c);
+    final job = await printJob(invoice, context: c, copy: copy);
     await _bridge.printBytes(address, job);
   }
 
@@ -166,8 +173,12 @@ class InvoiceOutput {
 
   // ---- Sharing and saving ----------------------------------------------
 
-  String _fileName(Invoice invoice, String extension) =>
-      'invoice-${invoice.invoiceNo}.$extension';
+  /// A reprint gets its own file name, so sharing a copy never overwrites
+  /// the original that is still sitting in the cache.
+  String _fileName(Invoice invoice, String extension, {bool copy = false}) =>
+      copy
+          ? 'invoice-${invoice.invoiceNo}-copy.$extension'
+          : 'invoice-${invoice.invoiceNo}.$extension';
 
   /// A short line that travels with the file: shop name and invoice number,
   /// in the invoice language.
@@ -183,15 +194,29 @@ class InvoiceOutput {
     return File(p.join(directory.path, name)).writeAsBytes(bytes, flush: true);
   }
 
-  Future<File> _pngFile(Invoice invoice, InvoiceRenderContext c) async =>
-      _stage(_fileName(invoice, 'png'), await sharePng(invoice, context: c));
+  Future<File> _pngFile(
+    Invoice invoice,
+    InvoiceRenderContext c, {
+    bool copy = false,
+  }) async =>
+      _stage(
+        _fileName(invoice, 'png', copy: copy),
+        await sharePng(invoice, context: c, copy: copy),
+      );
 
-  Future<File> _pdfFile(Invoice invoice, InvoiceRenderContext c) async =>
-      _stage(_fileName(invoice, 'pdf'), await sharePdf(invoice, context: c));
+  Future<File> _pdfFile(
+    Invoice invoice,
+    InvoiceRenderContext c, {
+    bool copy = false,
+  }) async =>
+      _stage(
+        _fileName(invoice, 'pdf', copy: copy),
+        await sharePdf(invoice, context: c, copy: copy),
+      );
 
-  Future<void> shareImage(Invoice invoice) async {
+  Future<void> shareImage(Invoice invoice, {bool copy = false}) async {
     final c = await _context();
-    final file = await _pngFile(invoice, c);
+    final file = await _pngFile(invoice, c, copy: copy);
     await _bridge.shareFile(
       filePath: file.path,
       mimeType: _pngMime,
@@ -199,9 +224,9 @@ class InvoiceOutput {
     );
   }
 
-  Future<void> sharePdfFile(Invoice invoice) async {
+  Future<void> sharePdfFile(Invoice invoice, {bool copy = false}) async {
     final c = await _context();
-    final file = await _pdfFile(invoice, c);
+    final file = await _pdfFile(invoice, c, copy: copy);
     await _bridge.shareFile(
       filePath: file.path,
       mimeType: _pdfMime,
@@ -216,9 +241,10 @@ class InvoiceOutput {
     Invoice invoice, {
     required String package,
     required String internationalPhone,
+    bool copy = false,
   }) async {
     final c = await _context();
-    final file = await _pngFile(invoice, c);
+    final file = await _pngFile(invoice, c, copy: copy);
     try {
       return await _bridge.sendToWhatsApp(
         package: package,
@@ -233,22 +259,22 @@ class InvoiceOutput {
   }
 
   /// Saves the image to Downloads/Souqi; returns the path to show the user.
-  Future<String> saveImage(Invoice invoice) async {
+  Future<String> saveImage(Invoice invoice, {bool copy = false}) async {
     final c = await _context();
-    final file = await _pngFile(invoice, c);
+    final file = await _pngFile(invoice, c, copy: copy);
     return _bridge.saveToDownloads(
       filePath: file.path,
-      fileName: _fileName(invoice, 'png'),
+      fileName: _fileName(invoice, 'png', copy: copy),
       mimeType: _pngMime,
     );
   }
 
-  Future<String> savePdf(Invoice invoice) async {
+  Future<String> savePdf(Invoice invoice, {bool copy = false}) async {
     final c = await _context();
-    final file = await _pdfFile(invoice, c);
+    final file = await _pdfFile(invoice, c, copy: copy);
     return _bridge.saveToDownloads(
       filePath: file.path,
-      fileName: _fileName(invoice, 'pdf'),
+      fileName: _fileName(invoice, 'pdf', copy: copy),
       mimeType: _pdfMime,
     );
   }

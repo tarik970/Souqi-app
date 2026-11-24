@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -5,7 +6,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/byte_size.dart';
+import '../../data/dev/invoice_seeder.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../archive/archive_providers.dart';
 import 'storage_providers.dart';
 
 class AboutScreen extends ConsumerWidget {
@@ -60,6 +63,20 @@ class AboutScreen extends ConsumerWidget {
             ),
           ),
           const _StorageRows(),
+          // Debug builds only: the seeder that fills the archive for
+          // performance testing. Never compiled into a release.
+          if (kDebugMode) ...[
+            const Divider(height: 32),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Text(
+                l10n.debugTools,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(color: theme.colorScheme.error),
+              ),
+            ),
+            const _SeedInvoicesTile(),
+          ],
         ],
       ),
     );
@@ -108,5 +125,60 @@ class _StorageRows extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+/// Debug-only: fills the archive with test invoices.
+///
+/// The brief asks the archive and the statistics screens to stay smooth at
+/// 50,000 invoices; this is how that is checked on a real phone rather than
+/// hoped for.
+class _SeedInvoicesTile extends ConsumerWidget {
+  const _SeedInvoicesTile();
+
+  static const List<int> counts = [100, 1000, 10000, 50000];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const ValueKey('about-seed-invoices'),
+      leading: const Icon(Icons.science_outlined),
+      title: Text(l10n.debugSeedInvoices),
+      subtitle: Text(l10n.debugSeedHint),
+      trailing: PopupMenuButton<int>(
+        key: const ValueKey('about-seed-count'),
+        icon: const Icon(Icons.add),
+        itemBuilder: (context) => [
+          for (final count in counts)
+            PopupMenuItem(value: count, child: Text('$count')),
+        ],
+        onSelected: (count) => _seed(context, ref, count),
+      ),
+    );
+  }
+
+  Future<void> _seed(BuildContext context, WidgetRef ref, int count) async {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.read(appLocaleProvider).languageCode;
+    final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final database = container.read(databaseProvider);
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.debugSeedTitle)));
+    final created = await seedTestInvoices(database.db, count: count);
+    container
+      ..invalidate(storageStatsProvider)
+      ..invalidate(archiveListProvider)
+      ..invalidate(archiveRangeSummaryProvider);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l10n.debugSeedDone(
+          formatMinor(created, decimals: 0, locale: locale),
+        )),
+      ));
   }
 }

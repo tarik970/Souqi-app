@@ -35,6 +35,7 @@ class InvoiceView extends StatelessWidget {
     required this.currencies,
     this.logo,
     this.padding = const EdgeInsets.symmetric(vertical: 8),
+    this.isCopy = false,
   });
 
   final Invoice invoice;
@@ -50,6 +51,11 @@ class InvoiceView extends StatelessWidget {
   /// White space around the content. The printer needs none at the sides
   /// (the paper margin is physical); a shared image gets some.
   final EdgeInsets padding;
+
+  /// This is a REPRINT or a re-share from the archive, not the original
+  /// receipt handed over at the till. It gets a "COPY / نسخة" mark at the
+  /// top so nobody can present it as a second sale.
+  final bool isCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +148,10 @@ class InvoiceView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (isCopy) ...[
+                    _CopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
+                    SizedBox(height: gap),
+                  ],
                   if (logo != null)
                     Padding(
                       padding: EdgeInsets.only(bottom: gap),
@@ -428,4 +438,40 @@ class _DashPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashPainter oldDelegate) => false;
+}
+
+/// The "COPY / نسخة" mark on a reprint: a boxed, letter-spaced line across
+/// the top of the paper. A box rather than a colour or a shade, because the
+/// only ink a thermal printer has is black and a grey wash comes out as
+/// noise after the 1-bit conversion.
+class _CopyMark extends StatelessWidget {
+  const _CopyMark({
+    required this.label,
+    required this.style,
+    required this.base,
+  });
+
+  final String label;
+  final TextStyle style;
+  final double base;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: _ink, width: base >= 28 ? 3 : 2),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: base * 0.2),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: style.copyWith(
+            fontSize: base * 1.1,
+            letterSpacing: base * 0.15,
+          ),
+        ),
+      ),
+    );
+  }
 }

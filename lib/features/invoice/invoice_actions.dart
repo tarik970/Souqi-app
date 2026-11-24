@@ -30,9 +30,17 @@ enum InvoiceAction {
 /// Reusable: the post-sale screen shows it now, and the archive / reprint
 /// screens of phase 4 drop in the same widget for any stored [Invoice].
 class InvoiceActions extends ConsumerStatefulWidget {
-  const InvoiceActions({super.key, required this.invoice});
+  const InvoiceActions({
+    super.key,
+    required this.invoice,
+    this.copy = false,
+  });
 
   final Invoice invoice;
+
+  /// Every output of this bar is a REPRINT from the archive and carries the
+  /// "COPY / نسخة" mark. The screen right after a sale leaves it false.
+  final bool copy;
 
   @override
   ConsumerState<InvoiceActions> createState() => _InvoiceActionsState();
@@ -42,6 +50,8 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
   InvoiceAction? _running;
 
   Invoice get _invoice => widget.invoice;
+
+  bool get copy => widget.copy;
 
   InvoiceOutput get _output => ref.read(invoiceOutputProvider);
 
@@ -81,21 +91,22 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     // [_snack] checks `mounted` itself.
     final output = _output;
     final invoice = _invoice;
+    final isCopy = copy;
     try {
       switch (action) {
         case InvoiceAction.print:
-          await output.printInvoice(invoice);
+          await output.printInvoice(invoice, copy: isCopy);
           _snack(l10n.printSent);
         case InvoiceAction.shareImage:
-          await output.shareImage(invoice);
+          await output.shareImage(invoice, copy: isCopy);
         case InvoiceAction.sharePdf:
-          await output.sharePdfFile(invoice);
+          await output.sharePdfFile(invoice, copy: isCopy);
         case InvoiceAction.whatsApp:
           await _sendOnWhatsApp(l10n);
         case InvoiceAction.saveImage:
-          _snack(l10n.savedToPhone(await output.saveImage(invoice)));
+          _snack(l10n.savedToPhone(await output.saveImage(invoice, copy: isCopy)));
         case InvoiceAction.savePdf:
-          _snack(l10n.savedToPhone(await output.savePdf(invoice)));
+          _snack(l10n.savedToPhone(await output.savePdf(invoice, copy: isCopy)));
       }
     } on OutputException catch (e) {
       if (mounted) showOutputError(context, ref, e);
@@ -131,6 +142,7 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     final output = _output;
     final bridge = ref.read(nativeBridgeProvider);
     final invoice = _invoice;
+    final isCopy = copy;
     final settings = await ref.read(invoiceSettingsProvider.future);
     if (!mounted) return;
     // No customer phone on the invoice: ask for a number for this one send.
@@ -147,7 +159,7 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     if (!mounted) return;
     if (packages.isEmpty) {
       _snack(l10n.whatsAppNotInstalled);
-      await output.shareImage(invoice);
+      await output.shareImage(invoice, copy: isCopy);
       return;
     }
     final package =
@@ -158,10 +170,11 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
       invoice,
       package: package,
       internationalPhone: phone,
+      copy: isCopy,
     );
     if (!opened) {
       _snack(l10n.whatsAppUnsupported); // checks `mounted` itself
-      await output.shareImage(invoice);
+      await output.shareImage(invoice, copy: isCopy);
     }
   }
 

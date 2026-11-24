@@ -109,6 +109,84 @@ void main() {
     expect(optimizing, [false]);
   });
 
+  group('retention runs at most once a day', () {
+    Future<void> enable(int days) => container
+        .read(settingsRepositoryProvider)
+        .setInt(SettingsKeys.autoDeleteDays, days);
+
+    Future<int> lastRun() => container
+        .read(settingsRepositoryProvider)
+        .getInt(SettingsKeys.autoDeleteLastRunAt);
+
+    test('the second launch of the same day does nothing', () async {
+      final now = DateTime(2026, 11, 24, 8);
+      await seed(3, createdAt: now.subtract(const Duration(days: 400)));
+      await enable(365);
+
+      expect(await controller().applyRetentionDaily(now: now), 3);
+      expect(container.read(retentionNoticeProvider), 3);
+
+      // Same day, later: three more old invoices arrive (a restore, say)
+      // and the sweep still holds off until tomorrow.
+      await seed(2, createdAt: now.subtract(const Duration(days: 500)));
+      expect(
+        await controller()
+            .applyRetentionDaily(now: DateTime(2026, 11, 24, 21)),
+        0,
+      );
+      expect(
+        await container.read(maintenanceRepositoryProvider).invoiceCount(),
+        2,
+      );
+    });
+
+    test('the next day it runs again', () async {
+      await seed(2, createdAt: DateTime(2020, 1, 1));
+      await enable(365);
+      await controller().applyRetentionDaily(now: DateTime(2026, 11, 24, 23));
+
+      await seed(1, createdAt: DateTime(2020, 1, 2));
+      expect(
+        await controller()
+            .applyRetentionDaily(now: DateTime(2026, 11, 25, 0, 30)),
+        1,
+      );
+    });
+
+    test('while it is off nothing is stamped, so turning it on works today',
+        () async {
+      await seed(2, createdAt: DateTime(2020, 1, 1));
+      final now = DateTime(2026, 11, 24, 8);
+
+      expect(await controller().applyRetentionDaily(now: now), 0);
+      expect(await lastRun(), 0, reason: 'nothing ran, nothing to stamp');
+
+      await enable(365);
+      expect(await controller().applyRetentionDaily(now: now), 2);
+    });
+
+    test('a sweep that deletes nothing says nothing', () async {
+      await seed(2, createdAt: DateTime(2026, 11, 20));
+      await enable(365);
+
+      expect(
+        await controller().applyRetentionDaily(now: DateTime(2026, 11, 24)),
+        0,
+      );
+      expect(container.read(retentionNoticeProvider), isNull);
+    });
+
+    test('the day is stamped before the delete', () async {
+      await seed(1, createdAt: DateTime(2020, 1, 1));
+      await enable(30);
+      final now = DateTime(2026, 11, 24, 7, 45);
+
+      await controller().applyRetentionDaily(now: now);
+
+      expect(await lastRun(), now.millisecondsSinceEpoch);
+    });
+  });
+
   test('the stats are re-read after a cleanup', () async {
     await seed(4, createdAt: DateTime(2026, 3, 1));
     expect((await container.read(storageStatsProvider.future)).invoiceCount, 4);

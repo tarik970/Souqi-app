@@ -23,6 +23,7 @@ class InvoicePaperPreview extends StatelessWidget {
     required this.currencies,
     this.logo,
     this.maxWidth = 340,
+    this.isCopy = false,
   });
 
   final Invoice invoice;
@@ -32,6 +33,10 @@ class InvoicePaperPreview extends StatelessWidget {
 
   /// The paper never grows wider than this on screen.
   final double maxWidth;
+
+  /// Shows the "COPY / نسخة" mark, so the archive preview looks exactly
+  /// like the reprint the buttons underneath produce.
+  final bool isCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +65,7 @@ class InvoicePaperPreview extends StatelessWidget {
                   settings: settings,
                   currencies: currencies,
                   logo: logo,
+                  isCopy: isCopy,
                 ),
               ),
             ),

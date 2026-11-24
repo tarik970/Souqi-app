@@ -3,14 +3,17 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/db/app_database.dart';
+import '../data/repositories/archive_repository.dart';
 import '../data/repositories/currency_repository.dart';
 import '../data/repositories/invoice_repository.dart';
 import '../data/repositories/product_repository.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/repositories/stats_repository.dart';
 import '../data/repositories/unit_repository.dart';
 import '../domain/models/currency.dart';
 import '../domain/models/unit.dart';
 import 'constants/settings_keys.dart';
+import 'money/exchange.dart';
 
 /// Overridden in main() with the opened database.
 final databaseProvider = Provider<AppDatabase>(
@@ -31,6 +34,14 @@ final unitRepositoryProvider = Provider<UnitRepository>(
 
 final invoiceRepositoryProvider = Provider<InvoiceRepository>(
   (ref) => InvoiceRepository(ref.watch(databaseProvider).db),
+);
+
+final archiveRepositoryProvider = Provider<ArchiveRepository>(
+  (ref) => ArchiveRepository(ref.watch(databaseProvider).db),
+);
+
+final statsRepositoryProvider = Provider<StatsRepository>(
+  (ref) => StatsRepository(ref.watch(databaseProvider).db),
 );
 
 final currencyRepositoryProvider = Provider<CurrencyRepository>(
@@ -89,3 +100,22 @@ final currenciesProvider = FutureProvider<List<Currency>>(
 final baseCurrencyCodeProvider = FutureProvider<String>(
   (ref) => ref.watch(currencyRepositoryProvider).baseCode(),
 );
+
+/// The base currency itself — statistics need its decimal places to turn
+/// stored rate snapshots into base minor units.
+final baseCurrencyProvider = FutureProvider<Currency>((ref) async {
+  final currencies = await ref.watch(currenciesProvider.future);
+  final code = await ref.watch(baseCurrencyCodeProvider.future);
+  return currencies.firstWhere(
+    (c) => c.code == code,
+    // The base currency cannot be deleted, but a 0-decimal stand-in is a
+    // better answer than a crashed statistics screen.
+    orElse: () => Currency(
+      code: code,
+      nameAr: code,
+      nameEn: code,
+      decimalPlaces: 0,
+      rate: RateFraction.one,
+    ),
+  );
+});

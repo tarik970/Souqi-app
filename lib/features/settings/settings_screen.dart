@@ -10,6 +10,7 @@ import '../sale/sale_providers.dart';
 import '../setup/setup_screen.dart';
 import '../units/units_screen.dart';
 import 'about_screen.dart';
+import 'retention_tile.dart';
 
 final shopTypeProvider = FutureProvider<String>(
   (ref) => ref.watch(settingsRepositoryProvider).getString(
@@ -142,6 +143,17 @@ class SettingsScreen extends ConsumerWidget {
               MaterialPageRoute(builder: (_) => const UnitsScreen()),
             ),
           ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              l10n.sectionArchive,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+          const RetentionTile(),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.info_outline),

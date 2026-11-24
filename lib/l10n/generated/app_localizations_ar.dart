@@ -30,9 +30,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navSettings => 'الإعدادات';
 
   @override
-  String get comingSoon => 'قريباً';
-
-  @override
   String get save => 'حفظ';
 
   @override
@@ -842,5 +839,218 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String sizeInMegabytes(String size) {
     return '$size ميغابايت';
+  }
+
+  @override
+  String get archiveSearchProductHint => 'المادة المبيعة';
+
+  @override
+  String get archiveSearchCustomerHint => 'الاسم أو الهاتف أو رقم البطاقة';
+
+  @override
+  String get archiveInvoiceNoHint => 'رقم الفاتورة';
+
+  @override
+  String get archiveFilters => 'تصفية';
+
+  @override
+  String get archiveClearFilters => 'إلغاء التصفية';
+
+  @override
+  String get periodAll => 'الكل';
+
+  @override
+  String get periodToday => 'اليوم';
+
+  @override
+  String get periodYesterday => 'أمس';
+
+  @override
+  String get periodThisWeek => 'هذا الأسبوع';
+
+  @override
+  String get periodThisMonth => 'هذا الشهر';
+
+  @override
+  String get periodCustom => 'مدة مخصصة';
+
+  @override
+  String periodRangeLabel(String from, String to) {
+    return '$from — $to';
+  }
+
+  @override
+  String get archiveNoInvoices => 'لا توجد فواتير بعد';
+
+  @override
+  String get archiveNoMatches => 'لا فاتورة تطابق هذه التصفية';
+
+  @override
+  String archiveItemsLabel(String count) {
+    return 'المواد: $count';
+  }
+
+  @override
+  String archiveMatchCount(String count, String total) {
+    return '$count فاتورة · $total';
+  }
+
+  @override
+  String get archiveDeleteRange => 'حذف هذه الفواتير';
+
+  @override
+  String get archiveDeleteRangeTitle => 'حذف الفواتير؟';
+
+  @override
+  String archiveDeleteRangeMessage(String count, String total) {
+    return 'سيتم حذف $count فاتورة بمجموع $total. تبقى المواد وترقيم الفواتير وأكواد البطاقات المبيعة كما هي.';
+  }
+
+  @override
+  String get archiveDeleteWholeArchive =>
+      'لم تُحدَّد مدة، لذلك سيُحذف كل ما في السجل من فواتير.';
+
+  @override
+  String get archiveDeleteRangeEmpty => 'لا فواتير في هذه المدة.';
+
+  @override
+  String archiveDeletedMessage(String count) {
+    return 'تم حذف $count فاتورة';
+  }
+
+  @override
+  String get deleteInvoiceTitle => 'حذف الفاتورة؟';
+
+  @override
+  String deleteInvoiceMessage(String number) {
+    return 'سيتم حذف الفاتورة $number. تبقى المواد وأكواد البطاقات المبيعة، ولا يُعاد استخدام رقم الفاتورة.';
+  }
+
+  @override
+  String invoiceDeletedMessage(String number) {
+    return 'تم حذف الفاتورة $number';
+  }
+
+  @override
+  String get invoiceNotFound => 'هذه الفاتورة لم تبقَ في السجل.';
+
+  @override
+  String get invoiceCopyMark => 'نسخة';
+
+  @override
+  String get invoiceCopyNotice =>
+      'كل ما يُطبع أو يُشارك من هنا يحمل علامة «نسخة».';
+
+  @override
+  String get sectionArchive => 'السجل';
+
+  @override
+  String get settingAutoDelete => 'حذف الفواتير القديمة تلقائياً';
+
+  @override
+  String get settingAutoDeleteHint =>
+      'تُحذف الفواتير الأقدم من ذلك عند أول تشغيل في اليوم. تبقى المواد وترقيم الفواتير وأكواد البطاقات المبيعة.';
+
+  @override
+  String get retentionOff => 'معطّل';
+
+  @override
+  String retentionDays(String days) {
+    return 'بعد $days يوم';
+  }
+
+  @override
+  String get retentionCustom => 'عدد آخر…';
+
+  @override
+  String get retentionCustomTitle => 'حذف الفواتير الأقدم من';
+
+  @override
+  String get retentionCustomHint => 'عدد الأيام';
+
+  @override
+  String retentionNotice(String count, String days) {
+    return 'تم حذف $count فاتورة أقدم من $days يوم';
+  }
+
+  @override
+  String statsBaseCurrencyNote(String code) {
+    return 'كل المبالغ بـ $code، بسعر الصرف المحفوظ مع كل فاتورة.';
+  }
+
+  @override
+  String get statsTotalSales => 'إجمالي المبيعات';
+
+  @override
+  String get statsInvoiceCount => 'عدد الفواتير';
+
+  @override
+  String get statsAverageInvoice => 'متوسط الفاتورة';
+
+  @override
+  String get statsTotalDiscounts => 'الحسومات';
+
+  @override
+  String statsPreviousValue(String value) {
+    return 'المدة السابقة: $value';
+  }
+
+  @override
+  String statsTrendUp(String percent) {
+    return 'ارتفاع $percent%';
+  }
+
+  @override
+  String statsTrendDown(String percent) {
+    return 'انخفاض $percent%';
+  }
+
+  @override
+  String get statsTrendFlat => 'بلا تغيير';
+
+  @override
+  String get statsTrendNew => 'جديد — لا شيء في المدة السابقة';
+
+  @override
+  String get statsTrendGone => 'لا شيء في هذه المدة';
+
+  @override
+  String get statsTopBySales => 'أكثر 10 مواد بعدد المبيعات';
+
+  @override
+  String get statsTopByAmount => 'أكثر 10 مواد بالمبلغ';
+
+  @override
+  String statsSalesCount(String count) {
+    return '$count عملية بيع';
+  }
+
+  @override
+  String get statsUnsavedItemBadge => 'غير محفوظة كمادة';
+
+  @override
+  String get statsNoData => 'لا مبيعات في هذه المدة';
+
+  @override
+  String get statsByCurrency => 'المبيعات بحسب عملة الفاتورة';
+
+  @override
+  String get statsShowByCurrency => 'تفصيل بحسب عملة الفاتورة';
+
+  @override
+  String get debugTools => 'أدوات المطوّر (نسخة تطوير)';
+
+  @override
+  String get debugSeedInvoices => 'إنشاء فواتير للتجربة';
+
+  @override
+  String get debugSeedTitle => 'كم فاتورة؟';
+
+  @override
+  String get debugSeedHint => 'موزّعة على آخر 365 يوماً، لاختبار الأداء';
+
+  @override
+  String debugSeedDone(String count) {
+    return 'تم إنشاء $count فاتورة تجربة';
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
+import '../../core/utils/date_ranges.dart';
 import '../../core/utils/temp_files.dart';
 import '../../data/repositories/maintenance_repository.dart';
 import '../invoice/invoice_output.dart';
@@ -73,6 +74,36 @@ class HousekeepingController extends Notifier<bool> {
     return deleted;
   }
 
+  /// [applyRetention], but at most once a calendar day, and it announces
+  /// what it dropped.
+  ///
+  /// Called from [runOnAppStart]. A shop that opens the app twenty times a
+  /// day must not pay for twenty sweeps, and the seller gets ONE notice on
+  /// the first launch of the day rather than one per launch.
+  ///
+  /// The day is stamped BEFORE the delete: if the delete fails halfway the
+  /// invoices simply stay until tomorrow, which is the safe direction.
+  Future<int> applyRetentionDaily({DateTime? now}) async {
+    final settings = ref.read(settingsRepositoryProvider);
+    if (await settings.getInt(SettingsKeys.autoDeleteDays) <= 0) return 0;
+    final moment = now ?? DateTime.now();
+    final last = await settings.getInt(SettingsKeys.autoDeleteLastRunAt);
+    if (last > 0 &&
+        startOfDay(DateTime.fromMillisecondsSinceEpoch(last)) ==
+            startOfDay(moment)) {
+      return 0;
+    }
+    await settings.setInt(
+      SettingsKeys.autoDeleteLastRunAt,
+      moment.millisecondsSinceEpoch,
+    );
+    final deleted = await applyRetention(now: moment);
+    if (deleted > 0 && ref.mounted) {
+      ref.read(retentionNoticeProvider.notifier).report(deleted);
+    }
+    return deleted;
+  }
+
   Future<void> _afterDelete(int deleted) async {
     if (deleted == 0) return;
     _invalidateStats();
@@ -99,7 +130,7 @@ class HousekeepingController extends Notifier<bool> {
   /// own and a failure is simply left for the next launch.
   Future<void> runOnAppStart() async {
     try {
-      await applyRetention();
+      await applyRetentionDaily();
     } on Object {
       // A locked or half-upgraded database: the archive keeps its invoices.
     }
@@ -131,3 +162,31 @@ final housekeepingProvider =
 /// widget test is never surprised by a delete or a file sweep it did not ask
 /// for.
 final housekeepingOnStartProvider = Provider<bool>((ref) => false);
+
+/// How many invoices the last retention sweep deleted, until the notice has
+/// been shown.
+///
+/// Null means "nothing to say". The sweep runs before any screen is up and
+/// outlives whatever screen is, so the count waits in a provider instead of
+/// being pushed at a widget that may not exist yet.
+class RetentionNoticeNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void report(int deleted) => state = deleted;
+
+  /// Called by the notice once the seller has seen (or dismissed) it.
+  void clear() => state = null;
+}
+
+final retentionNoticeProvider =
+    NotifierProvider<RetentionNoticeNotifier, int?>(
+  RetentionNoticeNotifier.new,
+);
+
+/// The `auto_delete_days` retention setting. 0 is off.
+final retentionDaysProvider = FutureProvider<int>(
+  (ref) => ref
+      .watch(settingsRepositoryProvider)
+      .getInt(SettingsKeys.autoDeleteDays),
+);

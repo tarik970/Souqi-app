@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/data/db/app_database.dart';
+import 'package:souqi/features/archive/archive_screen.dart';
+import 'package:souqi/features/archive/invoice_detail_screen.dart';
 import 'package:souqi/features/currencies/currencies_screen.dart';
 import 'package:souqi/features/currencies/currency_form_screen.dart';
 import 'package:souqi/features/currencies/update_rate_dialog.dart';
@@ -16,6 +18,7 @@ import 'package:souqi/features/sale/quantity_sheet.dart';
 import 'package:souqi/features/sale/quick_item_sheet.dart';
 import 'package:souqi/features/sale/rates_sheet.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
+import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/units/units_screen.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -197,6 +200,12 @@ void main() {
       'is_active': 1,
       'sort_order': 2,
     });
+  }
+
+  /// One archived sale, so the archive screen has a row to open.
+  Future<void> archivedSale(AppDatabase database) async {
+    final id = await insertInvoice(database.db, invoiceNo: 1);
+    await insertInvoiceItem(database.db, invoiceId: id, name: 'Sugar');
   }
 
   Future<void> sugar(AppDatabase database) async {
@@ -486,6 +495,68 @@ void main() {
       button: find.byType(BackButton),
       keyboard: true,
       isPage: true,
+    ),
+    // --- Phase 4: the archive, its deletions and the retention picker ---
+    Closable(
+      'delete-range confirmation in the archive',
+      home: const ArchiveScreen(),
+      seed: archivedSale,
+      open: (tester) async {
+        await tester.tap(find.byType(PopupMenuButton<void>));
+        await animated(tester);
+        await tester.tap(find.text('Delete these invoices'));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('archive-delete-range-dialog')),
+      button: cancel,
+      // Not confirmed: the invoice is still in the list.
+      after: (tester) async => expect(
+        find.byKey(const ValueKey('archive-invoice-1')),
+        findsOneWidget,
+      ),
+    ),
+    Closable(
+      'archived invoice detail page',
+      home: const ArchiveScreen(),
+      seed: archivedSale,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('archive-invoice-1')));
+        await animated(tester);
+      },
+      shown: find.byType(InvoiceDetailScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'delete-invoice confirmation',
+      home: const ArchiveScreen(),
+      seed: archivedSale,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('archive-invoice-1')));
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('archive-delete-invoice')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('delete-invoice-dialog')),
+      button: cancel,
+      // Not confirmed: the invoice is still open behind the dialog.
+      after: (tester) async =>
+          expect(find.byType(InvoiceDetailScreen), findsOneWidget),
+    ),
+    Closable(
+      'retention custom-days dialog',
+      home: const SettingsScreen(),
+      open: (tester) async {
+        await tester.tap(
+          find.byKey(const ValueKey('setting-auto-delete-dropdown')),
+        );
+        await animated(tester);
+        await tester.tap(find.text('Custom…').last);
+        await animated(tester);
+      },
+      shown: alert,
+      button: cancel,
+      keyboard: true,
     ),
     Closable(
       'product form',

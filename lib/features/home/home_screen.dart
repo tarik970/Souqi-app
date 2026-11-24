@@ -1,10 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-import '../placeholder/placeholder_screen.dart';
+import '../archive/archive_screen.dart';
 import '../products/products_screen.dart';
 import '../sale/sale_screen.dart';
 import '../settings/settings_screen.dart';
+import '../stats/stats_screen.dart';
 
 // Currencies and units are reachable from Settings; home shows the five
 // main destinations from the brief.
@@ -28,12 +29,12 @@ class HomeScreen extends StatelessWidget {
       _NavItem(
         label: l10n.navArchive,
         icon: Icons.receipt_long,
-        builder: (_) => PlaceholderScreen(title: l10n.navArchive),
+        builder: (_) => const ArchiveScreen(),
       ),
       _NavItem(
         label: l10n.navStats,
         icon: Icons.bar_chart,
-        builder: (_) => PlaceholderScreen(title: l10n.navStats),
+        builder: (_) => const StatsScreen(),
       ),
       _NavItem(
         label: l10n.navSettings,

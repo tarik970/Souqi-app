@@ -65,6 +65,10 @@ abstract final class SettingsKeys {
 
   // Archive / security.
   static const autoDeleteDays = 'auto_delete_days'; // '0' = off
+
+  /// Epoch milliseconds of the last retention sweep. The sweep runs on app
+  /// start at most once a day, and this is what 'already today' is read from.
+  static const autoDeleteLastRunAt = 'auto_delete_last_run_at';
   static const pinHash = 'pin_hash';
   static const pinSalt = 'pin_salt';
 
@@ -111,5 +115,6 @@ abstract final class SettingsKeys {
     autoFavorites: '1',
     lastNewItemUnitId: '',
     autoDeleteDays: '0',
+    autoDeleteLastRunAt: '0',
   };
 }
