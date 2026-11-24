@@ -1,10 +1,16 @@
-You are a senior Flutter engineer. We are building "Souqi" (سوقي), an offline point-of-sale and invoice app for small grocery shops in Syria. Read this whole brief, then wait for the phase prompts I send next. Do not write code yet — reply only with: (1) the folder structure you will use, (2) the packages you will use with one-line reasons, (3) the full SQLite schema, (4) any questions or risks.
+---
+description: Souqi project brief and rules
+alwaysApply: true
+---
+
+You are a senior Flutter engineer. We are building "Souqi" (سوقي), an offline point-of-sale and invoice app for small shops in Syria: grocery stores, internet-card / subscription renewal shops, or any shop that sells products, services or cards. The app must stay GENERIC — nothing specific to one shop is hard-coded; everything shop-specific is a setting. This is the permanent project brief. Follow it in every task; I will send the work phase by phase.
 
 PLATFORM & STACK
 - Android only (phones and tablets). Flutter stable, Dart 3, null-safety, Material 3.
 - 100% offline. No server, no internet, no accounts, no analytics. All data in a local SQLite database (sqflite).
 - State management: flutter_riverpod. Keep a clean layered structure: data (db, repositories) / domain (models) / features (screens, providers).
-- Android package id: com.souqi.app (I may change it later).
+- Android package id: com.souqi.souqi (project name: souqi).
+- Google Maven is blocked on the developer's network: Aliyun mirrors (maven.aliyun.com) are configured in android/settings.gradle.kts, android/build.gradle.kts and the user's ~/.gradle/init.gradle. Never remove them.
 
 LANGUAGES
 - Full Arabic and English UI using flutter_localizations + ARB files (app_ar.arb, app_en.arb). No hard-coded user-facing strings anywhere.
@@ -13,7 +19,7 @@ LANGUAGES
 - Use a font with good Arabic support (e.g. Cairo or Tajawal via bundled asset, not network).
 
 CORE FEATURES (later phases)
-1. Products: name, optional short code (e.g. "101"), unit, price, favorite flag, active flag. Fast search by name or code.
+1. Products: name, optional short code (e.g. "101"), kind, unit, price, favorite flag, active flag. Fast search by name or code. Kind is either GOODS (sold by quantity and unit, e.g. 0.5 kg sugar) or SERVICE/CARD (sold per piece, quantity 1 by default, no unit needed, e.g. "Internet 100 GB package" or "ADSL 4 Mbps monthly renewal"); a SERVICE/CARD product can be marked "requires customer account" so a sale of it must be linked to a customer's card/account number.
 2. Units: preset list (kg, g, bag, piece, box, liter) + user-defined units. Quantities can be decimals (0.5 kg).
 3. Sale screen: add items by tapping favorites, searching, or typing a code; set quantity; live total; save + print invoice.
 4. Invoice settings (fully dynamic, stored in DB): paper width (80 mm default, 58 mm, or custom mm), printer DPI (203 default), side margins, base font size, shop name, logo, header text, footer text, invoice language, and toggles for which fields to show (item code, unit, unit price, date/time, invoice number).
@@ -29,16 +35,27 @@ CORE FEATURES (later phases)
    - Per sale the user can choose the invoice currency (default = base). The invoice can optionally show the total in up to 2 extra currencies (e.g. "Total: 400 SYP ≈ 0.04 USD"), configurable in invoice settings.
    - Quick "update exchange rate" action reachable from the sale screen in two taps, showing when the rate was last updated.
    - Every invoice stores a SNAPSHOT of the currency, the rate(s) used and each line's original price + original currency, so changing rates never changes old invoices.
+11. Customers, cards/accounts & renewals (for internet-card and subscription shops, usable by any shop):
+   - Customers: name, phone (optional), notes. Shared with the debt ledger (one customers table).
+   - Accounts: a customer can have several cards/accounts. Each has: account/card number (text, keep leading zeros), label/type (e.g. "internet card", "ADSL line"), provider (free text with suggestions), default package (a SERVICE/CARD product), renewal period in days (optional), last renewal date, next due date, notes, active flag.
+   - One quick search that matches customer name, phone or card/account number (partial, ignoring spaces and dashes), with a one-tap "Renew" that opens a sale with the customer, account and default package ready.
+   - A "Due for renewal" list (overdue / today / next N days).
+   - Invoices store snapshots of customer name, phone and account number; the invoice can print them (with an option to mask all but the last 4 digits).
+12. Prepaid card codes (scratch/voucher cards): a SERVICE/CARD product can be marked "sold from code stock". The shop owner loads codes (secret PIN + optional serial + optional expiry) in batches; selling N cards automatically takes N available codes (earliest expiry first, then oldest batch), marks them sold, links them to the invoice (and customer if attached) and prints them on the invoice. Codes are treated like cash: encrypted at rest, masked on screen, revealed only with the PIN, and every sensitive action is logged.
+13. Offline licensing: each device needs an activation code signed with the developer's Ed25519 private key (the app holds only the public key). The license carries the shop name and which features are on; there is a trial period; without a valid license the shop's data stays readable and exportable but selling is blocked. Built in phase 5b.
 
 FEATURE FLAGS
-- lib/config/features.dart with `const bool debtEnabled = false; const bool barcodeEnabled = true; const bool discountEnabled = true;`
+- lib/config/features.dart with `const bool debtEnabled = false; const bool barcodeEnabled = true; const bool discountEnabled = true; const bool customersEnabled = true; const bool accountsEnabled = true; const bool voucherStockEnabled = true;` (accounts and debt both require customersEnabled).
+- Also a runtime setting "shop type" (Grocery / Cards & subscriptions / Both) chosen on first launch and changeable in settings. It only changes defaults and what is shown first (e.g. Cards shops open on the quick customer search and the due-for-renewal list; Grocery shops open on the favorites sale screen). It never deletes data.
 - When a flag is false, nothing related to it appears anywhere (menus, buttons, invoice lines, stats). The DB tables still exist from version 1 so enabling later needs no migration.
 
 DATA RULES (important)
 - Money: store as INTEGER minor units of its currency (SYP with 0 decimals = whole pounds, USD with 2 decimals = cents), always together with its currency code. Quantities: store as INTEGER thousandths (500 = 0.5) to avoid floating-point errors. Line total = round(price * qty / 1000).
 - Exchange rates: never use double for stored rates. Store each rate as an INTEGER scaled by 1,000,000 (rate_micro), meaning "1 unit of this currency = rate base units". Do conversions with integer/BigInt math and one explicit rounding step (half-up) at the end, to the target currency's decimal places. Put all money/currency math in one tested module.
-- Invoice items store a SNAPSHOT of product name, code, unit and unit price at sale time, so later price changes never alter old invoices.
+- Invoice items store a SNAPSHOT of product name, code, kind, unit and unit price at sale time, so later price changes never alter old invoices. Invoices also store a snapshot of the linked customer (name, phone) and account (number, provider), with nullable foreign keys to the live records.
+- Phone and card/account numbers: store as text exactly as entered, plus a normalized search column (digits only; Arabic-Indic digits ٠-٩ converted to 0-9) with an index, used for search.
 - Invoice numbers are sequential from a persisted counter and never reuse numbers, even after deletion.
+- Card codes: tables voucher_batches (product, added date, count, cost per card optional, note) and voucher_codes (product, batch, encrypted code, code hash, serial, expiry, status AVAILABLE / SOLD / VOID, sold_at, invoice id, invoice item id). Encrypt the code with AES-GCM using a random key kept in flutter_secure_storage (Android Keystore); store a SHA-256 hash of the normalized code (trimmed, no spaces/dashes, Arabic-Indic digits converted) with a UNIQUE index per product to block duplicates and allow lookup. Taking codes for a sale happens in the SAME transaction as saving the invoice, so two sales can never get the same code. A table audit_log records reveal / reprint-with-codes / void / restore / import / export actions with time and details (never the code itself).
 - Use versioned migrations (onCreate + onUpgrade with explicit version steps). Never drop user data in a migration.
 - Wrap multi-step writes (saving an invoice + its items) in transactions.
 
@@ -46,3 +63,7 @@ QUALITY
 - Run `flutter analyze` with zero warnings and write unit tests for money/quantity math, migrations and repositories. If you can run commands, run them; if not, tell me the exact commands.
 - Give me complete files, not fragments, and tell me every file you changed.
 - At the end of every phase, list exactly what I should test on a real device.
+- Never remove the maven.aliyun.com repositories from android/settings.gradle.kts and android/build.gradle.kts; Google Maven is blocked on this network.
+
+SECRETS
+- Never create, request, store or commit the licensing PRIVATE key inside this project. Only the public key may appear in the app.
