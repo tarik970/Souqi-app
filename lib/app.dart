@@ -14,7 +14,15 @@ class SouqiApp extends ConsumerWidget {
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      // The generated AppLocalizations.localizationsDelegates list carries the
+      // flutter_localizations delegates, which provide the deprecated
+      // package:flutter/material.dart localization types — material_ui
+      // widgets cannot see those and crash with "No MaterialLocalizations
+      // found". Use material_ui's own global delegates instead.
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF2E7D32),
         fontFamily: 'Tajawal',
