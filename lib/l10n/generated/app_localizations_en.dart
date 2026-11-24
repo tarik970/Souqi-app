@@ -1054,4 +1054,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String debugSeedDone(String count) {
     return '$count test invoices created';
   }
+
+  @override
+  String get archiveCounting => 'Counting…';
+
+  @override
+  String get archiveDeletingTitle => 'Deleting invoices';
+
+  @override
+  String get archiveDeletingHint => 'Keep the app open until this finishes.';
+
+  @override
+  String progressCount(String done, String total) {
+    return '$done of $total';
+  }
+
+  @override
+  String archiveDeletePartial(String deleted, String remaining) {
+    return '$deleted invoices deleted, $remaining still there. Try again.';
+  }
+
+  @override
+  String archiveDeleteFailed(String detail) {
+    return 'The cleanup stopped: $detail';
+  }
+
+  @override
+  String get housekeepingBusy => 'Another cleanup is still running.';
+
+  @override
+  String get debugSeedingTitle => 'Creating test invoices';
 }

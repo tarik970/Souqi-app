@@ -37,6 +37,9 @@ const List<String> seedItemNames = [
 /// second currency with its own rate snapshot — so a seeded archive
 /// exercises the same code paths as a real one.
 ///
+/// [onProgress] is called after each chunk with the running total, so the
+/// caller can show how far it has got instead of a frozen screen.
+///
 /// Returns 0 in a release build without touching the database.
 Future<int> seedTestInvoices(
   Database db, {
@@ -44,6 +47,7 @@ Future<int> seedTestInvoices(
   int days = 365,
   int linesPerInvoice = 3,
   DateTime? now,
+  void Function(int done)? onProgress,
 }) async {
   if (!kDebugMode) return 0;
   if (count <= 0) return 0;
@@ -160,6 +164,9 @@ Future<int> seedTestInvoices(
         created++;
       }
     });
+    onProgress?.call(created);
+    // Hand the frame back so the progress dialog actually repaints.
+    await Future<void>.delayed(Duration.zero);
   }
   return created;
 }

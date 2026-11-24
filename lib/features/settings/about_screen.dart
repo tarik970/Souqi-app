@@ -164,15 +164,51 @@ class _SeedInvoicesTile extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final database = container.read(databaseProvider);
+    final navigator = Navigator.of(context);
 
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(l10n.debugSeedTitle)));
-    final created = await seedTestInvoices(database.db, count: count);
+    // Deliberately not disposed: the dialog below can outlive this method
+    // while it animates out, and a text field rebuilding on a disposed
+    // listenable is exactly the crash this app has been bitten by before.
+    // With no listeners left it is collected like any other object.
+    final progress = ValueNotifier<int>(0);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          key: const ValueKey('about-seeding-dialog'),
+          title: Text(l10n.debugSeedingTitle),
+          content: ValueListenableBuilder<int>(
+            valueListenable: progress,
+            builder: (context, done, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.progressCount(
+                  formatMinor(done, decimals: 0, locale: locale),
+                  formatMinor(count, decimals: 0, locale: locale),
+                )),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(value: count == 0 ? null : done / count),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final created = await seedTestInvoices(
+      database.db,
+      count: count,
+      onProgress: (done) => progress.value = done,
+    );
     container
       ..invalidate(storageStatsProvider)
       ..invalidate(archiveListProvider)
       ..invalidate(archiveRangeSummaryProvider);
+    navigator.pop();
+    // The result only once the rows are actually there.
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(

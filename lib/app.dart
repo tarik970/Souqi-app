@@ -94,7 +94,7 @@ class _HousekeepingState extends ConsumerState<_Housekeeping> {
 
   @override
   Widget build(BuildContext context) {
-    final optimizing = ref.watch(housekeepingProvider);
+    final optimizing = ref.watch(housekeepingProvider).optimizing;
     final retention = ref.watch(retentionNoticeProvider);
     return Stack(
       alignment: Alignment.bottomCenter,

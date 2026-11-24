@@ -331,5 +331,13 @@
   "debugSeedInvoices": "إنشاء فواتير للتجربة",
   "debugSeedTitle": "كم فاتورة؟",
   "debugSeedHint": "موزّعة على آخر 365 يوماً، لاختبار الأداء",
-  "debugSeedDone": "تم إنشاء {count} فاتورة تجربة"
+  "debugSeedDone": "تم إنشاء {count} فاتورة تجربة",
+  "archiveCounting": "جارٍ العدّ…",
+  "archiveDeletingTitle": "جارٍ حذف الفواتير",
+  "archiveDeletingHint": "اترك التطبيق مفتوحاً حتى ينتهي.",
+  "progressCount": "{done} من {total}",
+  "archiveDeletePartial": "تم حذف {deleted} فاتورة، وبقيت {remaining}. أعد المحاولة.",
+  "archiveDeleteFailed": "توقّف التنظيف: {detail}",
+  "housekeepingBusy": "هناك عملية تنظيف أخرى قيد التشغيل.",
+  "debugSeedingTitle": "جارٍ إنشاء فواتير التجربة"
 }

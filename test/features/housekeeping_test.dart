@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/data/db/app_database.dart';
+import 'package:souqi/data/repositories/archive_repository.dart';
 import 'package:souqi/features/settings/storage_providers.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -16,18 +17,23 @@ void main() {
   late AppDatabase database;
   late ProviderContainer container;
 
-  /// Whether the "optimizing…" indicator was ever raised, in order.
-  late List<bool> optimizing;
+  /// Every phase the controller passed through, in order.
+  late List<HousekeepingPhase> phases;
 
   setUp(() async {
     database = await openTestDb();
     container = ProviderContainer(
       overrides: [databaseProvider.overrideWithValue(database)],
     );
-    optimizing = [];
+    phases = [];
     container.listen(
       housekeepingProvider,
-      (_, next) => optimizing.add(next),
+      (_, next) {
+        // Progress ticks are many; only the phase changes are interesting.
+        if (phases.isEmpty || phases.last != next.phase) {
+          phases.add(next.phase);
+        }
+      },
       fireImmediately: true,
     );
   });
@@ -39,11 +45,15 @@ void main() {
   HousekeepingController controller() =>
       container.read(housekeepingProvider.notifier);
 
-  Future<void> seed(int count, {required DateTime createdAt}) async {
+  Future<void> seed(
+    int count, {
+    required DateTime createdAt,
+    int firstNo = 1,
+  }) async {
     final batch = database.db.batch();
     for (var i = 0; i < count; i++) {
       batch.insert('invoices', {
-        'invoice_no': i + 1,
+        'invoice_no': firstNo + i,
         'created_at': createdAt.millisecondsSinceEpoch,
         'currency_code': 'SYP',
         'base_currency_code': 'SYP',
@@ -57,19 +67,138 @@ void main() {
     await batch.commit(noResult: true);
   }
 
+  /// Clears the whole archive, the way the archive screen does.
+  Future<DeleteOutcome> deleteAll() =>
+      controller().deleteMatching(const ArchiveFilter());
+
   test('a small date-range delete does not VACUUM', () async {
     await seed(10, createdAt: DateTime(2026, 3, 1));
 
-    expect(await controller().deleteRange(), 10);
-    expect(optimizing, [false]);
+    final outcome = await deleteAll();
+    expect(outcome.deleted, 10);
+    expect(outcome.remaining, 0);
+    expect(outcome.complete, isTrue);
+    expect(phases, [
+      HousekeepingPhase.idle,
+      HousekeepingPhase.deleting,
+      HousekeepingPhase.idle,
+    ]);
   });
 
   test('a delete past the threshold VACUUMs with the indicator up', () async {
     await seed(vacuumInvoiceThreshold + 1, createdAt: DateTime(2026, 3, 1));
 
-    expect(await controller().deleteRange(), vacuumInvoiceThreshold + 1);
-    expect(optimizing, [false, true, false]);
-    expect(container.read(housekeepingProvider), isFalse);
+    expect((await deleteAll()).deleted, vacuumInvoiceThreshold + 1);
+    expect(phases, [
+      HousekeepingPhase.idle,
+      HousekeepingPhase.deleting,
+      // The lock is handed from the delete to the VACUUM, so the seller can
+      // leave the screen while the file is rewritten.
+      HousekeepingPhase.idle,
+      HousekeepingPhase.optimizing,
+      HousekeepingPhase.idle,
+    ]);
+    expect(container.read(housekeepingProvider).busy, isFalse);
+  });
+
+  group('a big delete goes in chunks and finishes the job', () {
+    test('clears every invoice past several chunk boundaries', () async {
+      // Two and a half chunks: the loop has to come round more than twice.
+      const count = ArchiveRepository.deleteChunkSize * 2 + 500;
+      await seed(count, createdAt: DateTime(2026, 3, 1));
+
+      final outcome = await deleteAll();
+
+      expect(outcome.deleted, count);
+      expect(outcome.remaining, 0, reason: 'no partial stop');
+      expect(outcome.complete, isTrue);
+      expect(
+        await container.read(maintenanceRepositoryProvider).invoiceCount(),
+        0,
+      );
+    });
+
+    test('reports progress as it goes, never past the total', () async {
+      const count = ArchiveRepository.deleteChunkSize * 2;
+      await seed(count, createdAt: DateTime(2026, 3, 1));
+      final seen = <int>[];
+      container.listen(housekeepingProvider, (_, next) {
+        if (next.deleting) seen.add(next.done);
+      });
+
+      await deleteAll();
+
+      expect(seen, contains(ArchiveRepository.deleteChunkSize));
+      expect(seen.last, count);
+      expect(seen.every((done) => done <= count), isTrue);
+    });
+
+    test('deletes by the criteria, not by any loaded page of ids', () async {
+      await seed(50, createdAt: DateTime(2026, 3, 1));
+      await seed(10, createdAt: DateTime(2020, 1, 1), firstNo: 51);
+
+      // A page is 30 rows; the delete must still take all 50 of the range.
+      final outcome = await controller().deleteMatching(
+        ArchiveFilter(from: DateTime(2026, 1, 1)),
+      );
+
+      expect(outcome.deleted, 50);
+      expect(
+        await container.read(maintenanceRepositoryProvider).invoiceCount(),
+        10,
+      );
+    });
+  });
+
+  group('the lock', () {
+    test('a second delete during the first is refused, not interleaved',
+        () async {
+      await seed(ArchiveRepository.deleteChunkSize * 2,
+          createdAt: DateTime(2026, 3, 1));
+
+      final first = deleteAll();
+      // Same frame, before the first has yielded: exactly what an impatient
+      // second tap on "Delete" does.
+      final second = await deleteAll();
+
+      expect(second.refused, isTrue);
+      expect(second.deleted, 0);
+      final outcome = await first;
+      expect(outcome.deleted, ArchiveRepository.deleteChunkSize * 2);
+      expect(outcome.remaining, 0);
+    });
+
+    test('retention stands down while a delete is running', () async {
+      await seed(ArchiveRepository.deleteChunkSize + 10,
+          createdAt: DateTime(2020, 1, 1));
+      await container
+          .read(settingsRepositoryProvider)
+          .setInt(SettingsKeys.autoDeleteDays, 30);
+
+      final delete = deleteAll();
+      expect(await controller().applyRetention(), 0);
+      // Refused before the day was stamped, so it may still run later.
+      expect(
+        await container
+            .read(settingsRepositoryProvider)
+            .getInt(SettingsKeys.autoDeleteLastRunAt),
+        0,
+      );
+      await delete;
+    });
+
+    test('a VACUUM during a delete stands down too', () async {
+      await seed(10, createdAt: DateTime(2026, 3, 1));
+      final delete = deleteAll();
+      await controller().vacuum();
+      await delete;
+      // One delete, one idle: the VACUUM never took the lock.
+      expect(phases, [
+        HousekeepingPhase.idle,
+        HousekeepingPhase.deleting,
+        HousekeepingPhase.idle,
+      ]);
+    });
   });
 
   test('retention is off until auto_delete_days is set', () async {
@@ -106,7 +235,7 @@ void main() {
       1,
     );
     // Three invoices is no reason to rewrite the file.
-    expect(optimizing, [false]);
+    expect(phases, isNot(contains(HousekeepingPhase.optimizing)));
   });
 
   group('retention runs at most once a day', () {
@@ -191,7 +320,7 @@ void main() {
     await seed(4, createdAt: DateTime(2026, 3, 1));
     expect((await container.read(storageStatsProvider.future)).invoiceCount, 4);
 
-    await controller().deleteRange();
+    await deleteAll();
 
     expect((await container.read(storageStatsProvider.future)).invoiceCount, 0);
   });

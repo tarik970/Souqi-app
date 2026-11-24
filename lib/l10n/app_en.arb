@@ -528,5 +528,40 @@
     "placeholders": {
       "count": {"type": "String"}
     }
-  }
+  },
+  "archiveCounting": "Counting…",
+  "archiveDeletingTitle": "Deleting invoices",
+  "archiveDeletingHint": "Keep the app open until this finishes.",
+  "progressCount": "{done} of {total}",
+  "@progressCount": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveDeletePartial": "{deleted} invoices deleted, {remaining} still there. Try again.",
+  "@archiveDeletePartial": {
+    "placeholders": {
+      "deleted": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveDeleteFailed": "The cleanup stopped: {detail}",
+  "@archiveDeleteFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "housekeepingBusy": "Another cleanup is still running.",
+  "debugSeedingTitle": "Creating test invoices"
 }

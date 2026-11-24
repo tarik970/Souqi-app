@@ -132,6 +132,27 @@ void main() {
     expect(usd['total_base_minor'] as int, greaterThan(usd['total_minor'] as int));
   });
 
+  test('reports progress per chunk, ending on the real total', () async {
+    final seen = <int>[];
+    final created = await seedTestInvoices(
+      db,
+      count: 1200,
+      onProgress: seen.add,
+    );
+
+    expect(created, 1200);
+    expect(seen, isNotEmpty);
+    expect(seen.last, 1200, reason: 'the last report is the finished count');
+    for (var i = 1; i < seen.length; i++) {
+      expect(seen[i], greaterThan(seen[i - 1]));
+    }
+    // Nothing is announced before the rows are actually there.
+    expect(
+      await db.rawQuery('SELECT COUNT(*) AS n FROM invoices'),
+      [{'n': 1200}],
+    );
+  });
+
   test('the statistics screen has something to show', () async {
     final now = DateTime(2026, 11, 24, 12);
     await seedTestInvoices(db, count: 30, days: 30, now: now);

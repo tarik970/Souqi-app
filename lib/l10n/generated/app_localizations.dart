@@ -1988,6 +1988,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} test invoices created'**
   String debugSeedDone(String count);
+
+  /// No description provided for @archiveCounting.
+  ///
+  /// In en, this message translates to:
+  /// **'Counting…'**
+  String get archiveCounting;
+
+  /// No description provided for @archiveDeletingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting invoices'**
+  String get archiveDeletingTitle;
+
+  /// No description provided for @archiveDeletingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the app open until this finishes.'**
+  String get archiveDeletingHint;
+
+  /// No description provided for @progressCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total}'**
+  String progressCount(String done, String total);
+
+  /// No description provided for @archiveDeletePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'{deleted} invoices deleted, {remaining} still there. Try again.'**
+  String archiveDeletePartial(String deleted, String remaining);
+
+  /// No description provided for @archiveDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The cleanup stopped: {detail}'**
+  String archiveDeleteFailed(String detail);
+
+  /// No description provided for @housekeepingBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'Another cleanup is still running.'**
+  String get housekeepingBusy;
+
+  /// No description provided for @debugSeedingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating test invoices'**
+  String get debugSeedingTitle;
 }
 
 class _AppLocalizationsDelegate

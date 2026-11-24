@@ -185,36 +185,105 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     );
   }
 
-  /// Deletes every invoice the current filter matches, after stating the
-  /// exact count and total.
+  /// Deletes every invoice the current filter matches.
+  ///
+  /// The confirmation opens on THIS frame and counts inside itself: on a
+  /// 50,000-invoice archive the count took seconds, the app looked frozen,
+  /// and an impatient second tap started a second delete. Nothing is
+  /// awaited before the dialog is on screen any more, and the lock in
+  /// [HousekeepingController] turns the second tap away.
   Future<void> _confirmDeleteRange() async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final locale = ref.read(appLocaleProvider).languageCode;
+    // The criteria are fixed when the dialog opens, and the SAME object is
+    // what gets deleted — never the ids the list happens to hold.
     final filter = ref.read(archiveFilterProvider);
-
-    final summary =
-        await container.read(archiveRepositoryProvider).summary(filter);
-    final base = await container.read(baseCurrencyProvider.future);
-    if (!mounted) return;
-
-    if (summary.count == 0) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.archiveDeleteRangeEmpty)));
-      return;
-    }
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        key: const ValueKey('archive-delete-range-dialog'),
-        title: Text(l10n.archiveDeleteRangeTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      builder: (_) => _DeleteConfirmDialog(filter: filter),
+    );
+    if (confirmed != true || !mounted) return;
+
+    // Blocking and un-dismissable: it closes itself when the job leaves the
+    // deleting phase.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const DeletingDialog(),
+    );
+    final outcome = await container
+        .read(housekeepingProvider.notifier)
+        .deleteMatching(filter);
+
+    // ONE message at the end, whatever happened.
+    String message() {
+      if (outcome.refused) return l10n.housekeepingBusy;
+      final error = outcome.error;
+      if (error != null) return l10n.archiveDeleteFailed('$error');
+      if (outcome.remaining > 0) {
+        return l10n.archiveDeletePartial(
+          formatMinor(outcome.deleted, decimals: 0, locale: locale),
+          formatMinor(outcome.remaining, decimals: 0, locale: locale),
+        );
+      }
+      return l10n.archiveDeletedMessage(
+        formatMinor(outcome.deleted, decimals: 0, locale: locale),
+      );
+    }
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message())));
+  }
+}
+
+/// "Delete these invoices?" — open at once, with the count and total filling
+/// in when the aggregate comes back.
+///
+/// Delete stays disabled until the figures are there, so nobody can confirm
+/// a deletion whose size they have not been told.
+class _DeleteConfirmDialog extends ConsumerWidget {
+  const _DeleteConfirmDialog({required this.filter});
+
+  final ArchiveFilter filter;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final theme = Theme.of(context);
+    // One SQL aggregate over the created_at index — the same one the summary
+    // line above the list uses, so it is usually already in hand.
+    final summary = ref.watch(archiveRangeSummaryProvider).value;
+    final base = ref.watch(baseCurrencyProvider).value;
+    final counting = summary == null || base == null;
+    final empty = summary != null && summary.count == 0;
+
+    return AlertDialog(
+      key: const ValueKey('archive-delete-range-dialog'),
+      title: Text(l10n.archiveDeleteRangeTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (counting)
+            Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 12),
+                Text(l10n.archiveCounting),
+              ],
+            )
+          else if (empty)
+            Text(l10n.archiveDeleteRangeEmpty)
+          else ...[
             Text(l10n.archiveDeleteRangeMessage(
               formatMinor(summary.count, decimals: 0, locale: locale),
               formatMinor(
@@ -229,39 +298,88 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               const SizedBox(height: 12),
               Text(
                 l10n.archiveDeleteWholeArchive,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                style: TextStyle(color: theme.colorScheme.error),
               ),
             ],
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.delete),
-          ),
         ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: counting || empty
+              ? null
+              : () => Navigator.of(context).pop(true),
+          child: Text(l10n.delete),
+        ),
+      ],
     );
-    if (confirmed != true) return;
+  }
+}
 
-    // Through the controller, so a big delete gets its VACUUM and the
-    // "optimizing…" pill, exactly as a cleanup started from Settings does.
-    final deleted = await container
-        .read(housekeepingProvider.notifier)
-        .deleteRange(from: filter.from, to: filter.to);
-    container.invalidate(archiveListProvider);
-    container.invalidate(archiveRangeSummaryProvider);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(l10n.archiveDeletedMessage(
-          formatMinor(deleted, decimals: 0, locale: locale),
-        )),
-      ));
+/// "Deleting invoices — 12,000 of 50,000", with a progress bar.
+///
+/// Blocks the back button and the barrier while it is up, so nothing can be
+/// navigated away from or started twice mid-delete, and pops itself as soon
+/// as the job leaves the deleting phase (a VACUUM carries on behind the
+/// "optimizing…" pill, which the seller may walk away from).
+class DeletingDialog extends ConsumerStatefulWidget {
+  const DeletingDialog({super.key});
+
+  @override
+  ConsumerState<DeletingDialog> createState() => _DeletingDialogState();
+}
+
+class _DeletingDialogState extends ConsumerState<DeletingDialog> {
+  bool _popped = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final state = ref.watch(housekeepingProvider);
+
+    if (!state.deleting && !_popped) {
+      // Done (or it never started, on an archive small enough to finish
+      // inside one frame). Pop after this build, never during it.
+      _popped = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).pop();
+      });
+    }
+
+    return PopScope(
+      canPop: false,
+      child: AlertDialog(
+        key: const ValueKey('archive-deleting-dialog'),
+        title: Text(l10n.archiveDeletingTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              state.total <= 0
+                  ? l10n.archiveCounting
+                  : l10n.progressCount(
+                      formatMinor(state.done, decimals: 0, locale: locale),
+                      formatMinor(state.total, decimals: 0, locale: locale),
+                    ),
+              key: const ValueKey('archive-deleting-progress'),
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(value: state.progress),
+            const SizedBox(height: 12),
+            Text(
+              l10n.archiveDeletingHint,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

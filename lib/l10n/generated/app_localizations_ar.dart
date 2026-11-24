@@ -1053,4 +1053,34 @@ class AppLocalizationsAr extends AppLocalizations {
   String debugSeedDone(String count) {
     return 'تم إنشاء $count فاتورة تجربة';
   }
+
+  @override
+  String get archiveCounting => 'جارٍ العدّ…';
+
+  @override
+  String get archiveDeletingTitle => 'جارٍ حذف الفواتير';
+
+  @override
+  String get archiveDeletingHint => 'اترك التطبيق مفتوحاً حتى ينتهي.';
+
+  @override
+  String progressCount(String done, String total) {
+    return '$done من $total';
+  }
+
+  @override
+  String archiveDeletePartial(String deleted, String remaining) {
+    return 'تم حذف $deleted فاتورة، وبقيت $remaining. أعد المحاولة.';
+  }
+
+  @override
+  String archiveDeleteFailed(String detail) {
+    return 'توقّف التنظيف: $detail';
+  }
+
+  @override
+  String get housekeepingBusy => 'هناك عملية تنظيف أخرى قيد التشغيل.';
+
+  @override
+  String get debugSeedingTitle => 'جارٍ إنشاء فواتير التجربة';
 }

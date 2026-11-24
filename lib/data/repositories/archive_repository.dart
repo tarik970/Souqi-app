@@ -157,6 +157,15 @@ class ArchiveRepository {
   /// page before the list runs out.
   static const int pageSize = 30;
 
+  /// Invoices deleted per transaction.
+  ///
+  /// Clearing 50,000 invoices as one statement holds the write lock for the
+  /// whole of it, reports no progress and cannot be interrupted. In chunks
+  /// of this size each transaction is short, the caller can show how far it
+  /// has got, and a failure half way leaves a consistent database with the
+  /// chunks that did land already gone.
+  static const int deleteChunkSize = 2000;
+
   /// One page of the archive, newest first. Pass the previous page's last
   /// [ArchiveEntry.cursor] as [after] to get the page below it.
   Future<List<ArchiveEntry>> page({
@@ -186,20 +195,76 @@ class ArchiveRepository {
     return rows.map(ArchiveEntry.fromRow).toList();
   }
 
-  /// How many invoices match [filter] and what they total in base currency.
-  Future<ArchiveRangeSummary> summary(ArchiveFilter filter) async {
+  /// The ONE aggregate behind both the summary line and the delete
+  /// confirmation: a count and a sum straight out of sqlite over
+  /// `idx_invoices_created`. No invoice row is ever read into Dart for it.
+  ///
+  /// Returned as text so a test can EXPLAIN exactly what runs.
+  (String, List<Object?>) summaryQuery(ArchiveFilter filter) {
     final (where, args) = _where(filter);
-    final rows = await _db.rawQuery(
+    return (
       'SELECT COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total '
       'FROM invoices i '
       '${where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}'}',
       args,
     );
+  }
+
+  /// How many invoices match [filter] and what they total in base currency.
+  Future<ArchiveRangeSummary> summary(ArchiveFilter filter) async {
+    final (sql, args) = summaryQuery(filter);
+    final rows = await _db.rawQuery(sql, args);
     final row = rows.first;
     return ArchiveRangeSummary(
       count: (row['n'] as int?) ?? 0,
       totalBaseMinor: (row['total'] as int?) ?? 0,
     );
+  }
+
+  /// How many invoices match [filter], counted in sqlite.
+  Future<int> countMatching(ArchiveFilter filter) async {
+    final (where, args) = _where(filter);
+    return Sqflite.firstIntValue(
+          await _db.rawQuery(
+            'SELECT COUNT(*) FROM invoices i '
+            '${where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}'}',
+            args,
+          ),
+        ) ??
+        0;
+  }
+
+  /// Deletes up to [limit] of the invoices matching [filter], in one
+  /// statement — and therefore one transaction. Returns how many went.
+  ///
+  /// The rows are chosen by the SAME criteria as the list and the summary,
+  /// never by the ids a screen happens to have loaded, so what the
+  /// confirmation counted is exactly what goes.
+  ///
+  /// Returned as text so a test can EXPLAIN exactly what runs.
+  (String, List<Object?>) deleteChunkQuery(
+    ArchiveFilter filter, {
+    int limit = deleteChunkSize,
+  }) {
+    final (where, args) = _where(filter);
+    return (
+      'DELETE FROM invoices WHERE id IN ('
+      'SELECT i.id FROM invoices i '
+      '${where.isEmpty ? '' : 'WHERE ${where.join(' AND ')} '}'
+      'LIMIT ?)',
+      [...args, limit],
+    );
+  }
+
+  /// Runs one [deleteChunkQuery]. The items of every deleted invoice go with
+  /// it (ON DELETE CASCADE) and sold voucher codes only lose their
+  /// `invoice_id` link (ON DELETE SET NULL), keeping their sale snapshots.
+  Future<int> deleteMatchingChunk(
+    ArchiveFilter filter, {
+    int limit = deleteChunkSize,
+  }) {
+    final (sql, args) = deleteChunkQuery(filter, limit: limit);
+    return _db.rawDelete(sql, args);
   }
 
   /// The whole invoice with its items, for the detail / reprint screen.

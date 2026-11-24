@@ -1,0 +1,8 @@
+# `performance` marks the timing run in
+# test/data/archive_performance_test.dart. It seeds 50,000 invoices into a
+# real file and takes minutes, so it skips itself unless SOUQI_PERF=1 is in
+# the environment:
+#
+#   SOUQI_PERF=1 flutter test test/data/archive_performance_test.dart
+tags:
+  performance:

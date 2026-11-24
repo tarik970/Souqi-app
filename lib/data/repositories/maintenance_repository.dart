@@ -2,9 +2,8 @@ import 'dart:io';
 
 import 'package:sqflite/sqflite.dart';
 
-/// Housekeeping on the archive and on the database file itself: how much
-/// room it takes, dropping invoices by date, and reclaiming the space the
-/// drops freed.
+/// Housekeeping on the database FILE itself: how much room it takes and
+/// reclaiming the space a big delete freed.
 ///
 /// Deleting rows does not shrink an sqlite file: the freed pages stay in it,
 /// ready to be reused. Only [vacuum] rewrites the file without them, so a
@@ -36,39 +35,9 @@ class MaintenanceRepository {
     return total;
   }
 
-  /// Deletes the invoices created from [from] (inclusive) to [to]
-  /// (exclusive) and returns how many went. Either bound may be left out to
-  /// mean "no bound". Their items go with them through the invoice_items
-  /// foreign key's ON DELETE CASCADE; payments and voucher sales keep their
-  /// rows with a null invoice_id (ON DELETE SET NULL), so the money history
-  /// survives the archive being trimmed.
-  Future<int> deleteInvoicesCreatedBetween({DateTime? from, DateTime? to}) {
-    final where = <String>[];
-    final args = <Object?>[];
-    if (from != null) {
-      where.add('created_at >= ?');
-      args.add(from.millisecondsSinceEpoch);
-    }
-    if (to != null) {
-      where.add('created_at < ?');
-      args.add(to.millisecondsSinceEpoch);
-    }
-    return _db.delete(
-      'invoices',
-      where: where.isEmpty ? null : where.join(' AND '),
-      whereArgs: args.isEmpty ? null : args,
-    );
-  }
-
-  /// Retention cleanup: deletes invoices older than [days] days and returns
-  /// how many went. [days] of 0 or less is "keep everything" and deletes
-  /// nothing. [now] exists for tests.
-  Future<int> deleteOlderThan(int days, {DateTime? now}) {
-    if (days <= 0) return Future.value(0);
-    return deleteInvoicesCreatedBetween(
-      to: (now ?? DateTime.now()).subtract(Duration(days: days)),
-    );
-  }
+  // Deleting invoices themselves lives in ArchiveRepository: it owns the
+  // filter criteria the archive screen shows, and a big delete has to go in
+  // chunks (see ArchiveRepository.deleteMatchingChunk).
 
   /// Rewrites the database without its free pages, shrinking the file.
   ///

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/archive_repository.dart';
 import 'package:souqi/data/repositories/counter_repository.dart';
-import 'package:souqi/data/repositories/maintenance_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'db_test_utils.dart';
@@ -359,14 +358,61 @@ void main() {
         await insertInvoiceItem(db, invoiceId: id, productId: productId);
       }
 
-      final deleted = await MaintenanceRepository(db, filePath: ':memory:')
-          .deleteInvoicesCreatedBetween(to: DateTime(2026, 11, 1));
+      final deleted = await archive.deleteMatchingChunk(
+        ArchiveFilter(to: DateTime(2026, 11, 1)),
+      );
 
       expect(deleted, 3);
       expect(await db.query('invoices'), isEmpty);
       expect(await db.query('invoice_items'), isEmpty);
       expect(await db.query('products'), hasLength(1));
       expect(await counters.next(db, CounterRepository.invoiceNo), 4);
+    });
+  });
+
+  group('the query plans', () {
+    /// What sqlite says it will do. A range query that falls back to a full
+    /// table scan is the difference between instant and several seconds on a
+    /// 50,000-invoice archive.
+    Future<String> plan(String sql, List<Object?> args) async {
+      final rows = await db.rawQuery('EXPLAIN QUERY PLAN $sql', args);
+      return rows.map((r) => r['detail']).join(' | ');
+    }
+
+    final ranged = ArchiveFilter(
+      from: DateTime(2026, 11, 1),
+      to: DateTime(2026, 12, 1),
+    );
+
+    test('the summary aggregate goes through the created_at index', () async {
+      final (sql, args) = archive.summaryQuery(ranged);
+      final detail = await plan(sql, args);
+      expect(detail, contains('idx_invoices_created'));
+      expect(detail, isNot(contains('SCAN invoices')));
+    });
+
+    test('the summary is one aggregate row, not a list of invoices', () {
+      final (sql, _) = archive.summaryQuery(ranged);
+      expect(sql, contains('COUNT(*)'));
+      expect(sql, contains('SUM(i.total_base_minor)'));
+    });
+
+    test('the chunk delete picks its ids through the same index', () async {
+      final (sql, args) = archive.deleteChunkQuery(ranged, limit: 2000);
+      final detail = await plan(sql, args);
+      expect(detail, contains('idx_invoices_created'));
+      expect(detail, isNot(contains('SCAN invoices')));
+      // Bounded: never "delete everything matching" in one statement.
+      expect(sql, contains('LIMIT ?'));
+    });
+
+    test('a page goes through the created_at index', () async {
+      final detail = await plan(
+        'SELECT i.id FROM invoices i WHERE i.created_at >= ? '
+        'ORDER BY i.created_at DESC, i.id DESC LIMIT 30',
+        [0],
+      );
+      expect(detail, contains('idx_invoices_created'));
     });
   });
 

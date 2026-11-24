@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/app.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/data/db/app_database.dart';
+import 'package:souqi/data/repositories/archive_repository.dart';
+import 'package:souqi/features/archive/archive_providers.dart';
 import 'package:souqi/features/archive/archive_screen.dart';
 import 'package:souqi/features/archive/invoice_detail_screen.dart';
 import 'package:souqi/features/invoice/invoice_actions.dart';
@@ -315,7 +319,8 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('a range with nothing in it is not deleted', (tester) async {
+    testWidgets('a range with nothing in it cannot be confirmed',
+        (tester) async {
       await pump(tester, const ArchiveScreen());
       await tester.tap(find.byType(PopupMenuButton<void>));
       await settle(tester);
@@ -323,13 +328,162 @@ void main() {
       await settle(tester);
 
       expect(
-        find.byKey(const ValueKey('archive-delete-range-dialog')),
-        findsNothing,
-      );
-      expect(
         find.text('There are no invoices in this range.'),
         findsOneWidget,
       );
+      // Delete is dead: there is nothing to delete.
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Delete'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('the confirmation opens on the same frame, counting inside it',
+        (tester) async {
+      // The bug: the count ran BEFORE the dialog, so a big archive left the
+      // app looking frozen for seconds and invited a second tap.
+      await seed(tester, () => seedSales(database));
+      await pump(tester, const ArchiveScreen());
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await settle(tester);
+
+      await tester.tap(find.text('Delete these invoices'));
+      // Two plain frames and NO runAsync: nothing the database answers can
+      // have resolved yet. If the count were awaited before the dialog, as
+      // it used to be, the dialog would simply not be here.
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('archive-delete-range-dialog')),
+        findsOneWidget,
+      );
+      await settle(tester);
+      expect(find.textContaining('3 invoices totalling'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Delete'))
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('Delete is dead while the count is still being made',
+        (tester) async {
+      // The aggregate never answers, which is what a cold open of a big
+      // archive looks like for its first moments.
+      tester.view.physicalSize = const Size(1200, 2600);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(database),
+            appLocaleProvider
+                .overrideWith(() => AppLocaleNotifier(const Locale('en'))),
+            archiveRangeSummaryProvider.overrideWith(
+              (ref) => Completer<ArchiveRangeSummary>().future,
+            ),
+          ],
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const ArchiveScreen(),
+          ),
+        ),
+      );
+      await settle(tester);
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await settle(tester);
+      await tester.tap(find.text('Delete these invoices'));
+      await settle(tester);
+
+      expect(find.text('Counting…'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Delete'))
+            .onPressed,
+        isNull,
+        reason: 'nobody confirms a deletion whose size they were not told',
+      );
+    });
+
+    testWidgets('a big delete shows progress and clears the whole range',
+        (tester) async {
+      // Past one chunk boundary, so the loop really comes round again.
+      const count = ArchiveRepository.deleteChunkSize + 40;
+      await seed(tester, () async {
+        final batch = database.db.batch();
+        for (var i = 1; i <= count; i++) {
+          batch.insert('invoices', {
+            'invoice_no': i,
+            'created_at':
+                today().add(Duration(hours: 9, seconds: i)).millisecondsSinceEpoch,
+            'currency_code': 'SYP',
+            'base_currency_code': 'SYP',
+            'rate_num': 1,
+            'rate_den': 1,
+            'subtotal_minor': 1000,
+            'total_minor': 1000,
+            'total_base_minor': 1000,
+          });
+        }
+        await batch.commit(noResult: true);
+      });
+      await pump(tester, const ArchiveScreen());
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await settle(tester);
+      await tester.tap(find.text('Delete these invoices'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pump();
+
+      // The progress dialog is up straight away, and it blocks the back
+      // button while it is.
+      expect(
+        find.byKey(const ValueKey('archive-deleting-dialog')),
+        findsOneWidget,
+      );
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+      await settle(tester, 40);
+
+      // It closed itself, the list refreshed, and the archive is empty.
+      expect(
+        find.byKey(const ValueKey('archive-deleting-dialog')),
+        findsNothing,
+      );
+      expect(find.text('No invoices yet'), findsOneWidget);
+      final left = await db(
+        tester,
+        () => database.db.rawQuery('SELECT COUNT(*) AS n FROM invoices'),
+      );
+      expect(left.first['n'], 0);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('one final message, not one per chunk', (tester) async {
+      await seed(tester, () => seedSales(database));
+      await pump(tester, const ArchiveScreen());
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await settle(tester);
+      await tester.tap(find.text('Delete these invoices'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await settle(tester, 40);
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('3 invoices deleted'), findsOneWidget);
     });
   });
 
