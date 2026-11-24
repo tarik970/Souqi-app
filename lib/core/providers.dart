@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/db/app_database.dart';
 import '../data/repositories/currency_repository.dart';
+import '../data/repositories/invoice_repository.dart';
 import '../data/repositories/product_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/unit_repository.dart';
@@ -26,6 +27,10 @@ final productRepositoryProvider = Provider<ProductRepository>(
 
 final unitRepositoryProvider = Provider<UnitRepository>(
   (ref) => UnitRepository(ref.watch(databaseProvider).db),
+);
+
+final invoiceRepositoryProvider = Provider<InvoiceRepository>(
+  (ref) => InvoiceRepository(ref.watch(databaseProvider).db),
 );
 
 final currencyRepositoryProvider = Provider<CurrencyRepository>(

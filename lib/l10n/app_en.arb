@@ -137,5 +137,76 @@
     }
   },
   "baseChangeLocked": "The base currency is locked because invoices or debts already exist.",
-  "cannotDisableBase": "The base currency cannot be disabled."
+  "cannotDisableBase": "The base currency cannot be disabled.",
+
+  "saleFavorites": "Favorites",
+  "saleFavoritesHint": "Star products to get one-tap buttons here",
+  "saleSearchHint": "Name or code — press enter for an exact code",
+  "cartEmpty": "Cart is empty",
+  "cartEmptyHint": "Tap a favorite or search for an item",
+  "noMatchingProducts": "No matching products",
+  "codeNotFound": "No item with code {code}",
+  "@codeNotFound": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "invoiceCurrency": "Invoice currency",
+  "subtotalLabel": "Subtotal",
+  "discountLabel": "Discount",
+  "totalLabel": "Total",
+  "itemsCount": "Items: {count}",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "quantityLabel": "Quantity",
+  "unitPriceLabel": "Unit price",
+  "unitPriceThisSaleOnly": "This sale only — the saved product price does not change",
+  "lineTotalLabel": "Line total",
+  "addToCart": "Add",
+  "updateLine": "Update",
+  "clearCartTitle": "Clear cart?",
+  "clearCartMessage": "All items in this sale will be removed.",
+  "clearCart": "Clear cart",
+  "removeLine": "Remove",
+  "invalidQuantity": "Invalid quantity",
+  "quantityMustBePositive": "Quantity must be greater than zero",
+
+  "discountTitle": "Invoice discount",
+  "discountTypeAmount": "Amount",
+  "discountTypePercent": "Percent",
+  "discountNone": "No discount",
+  "invalidDiscount": "Invalid discount",
+  "discountCappedNote": "The discount cannot exceed the subtotal.",
+
+  "quickItemTitle": "Quick item",
+  "quickItemHint": "Sold once, without saving a product",
+  "quickItemName": "Item name",
+  "saveAsProduct": "Save as a product too",
+  "unitOptional": "Unit (optional)",
+  "unitNone": "No unit",
+
+  "ratesTitle": "Exchange rates",
+  "rateNeeded": "Set the exchange rate for {code} before saving this sale",
+  "@rateNeeded": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "secondaryTotalTitle": "Secondary total",
+  "secondaryTotalNone": "None",
+
+  "invoiceSavedTitle": "Invoice saved",
+  "invoiceNoLabel": "Invoice no. {no}",
+  "@invoiceNoLabel": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "printInvoice": "Print",
+  "sharePdf": "Share PDF",
+  "newSale": "New sale",
+  "backToHome": "Back to home"
 }

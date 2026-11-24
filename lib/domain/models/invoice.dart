@@ -1,0 +1,338 @@
+/// A saved sale. Every row here is a SNAPSHOT: product names, codes, units,
+/// prices, the invoice currency and every exchange rate used. Changing a
+/// product's price or a currency's rate later never alters a saved invoice.
+library;
+
+import '../../core/money/exchange.dart';
+import 'cart.dart';
+import 'product.dart';
+
+/// The invoice total in one extra currency, with the rate used.
+class InvoiceExtraTotal {
+  const InvoiceExtraTotal({
+    required this.currencyCode,
+    required this.rate,
+    required this.totalMinor,
+  });
+
+  final String currencyCode;
+  final RateFraction rate;
+  final int totalMinor;
+}
+
+class InvoiceItem {
+  const InvoiceItem({
+    this.id,
+    this.productId,
+    required this.productName,
+    this.productCode,
+    required this.kind,
+    this.unitName,
+    required this.qtyThousandths,
+    required this.origUnitPriceMinor,
+    required this.origCurrencyCode,
+    required this.origRate,
+    required this.unitPriceMinor,
+    required this.lineTotalMinor,
+  });
+
+  final int? id;
+
+  /// Null for a quick unsaved item, or once the product is hard-deleted.
+  final int? productId;
+
+  final String productName;
+  final String? productCode;
+  final ProductKind kind;
+  final String? unitName;
+  final int qtyThousandths;
+
+  /// The price as entered, in its own currency, with that currency's rate to
+  /// base at sale time.
+  final int origUnitPriceMinor;
+  final String origCurrencyCode;
+  final RateFraction origRate;
+
+  /// The same price converted into the invoice currency and rounded on its
+  /// own — for display and printing only.
+  final int unitPriceMinor;
+
+  /// The line total in the invoice currency: price × quantity × rate with a
+  /// single rounding step, NOT [unitPriceMinor] × quantity. Across currencies
+  /// the two differ, and this one is the honest amount owed.
+  final int lineTotalMinor;
+
+  Map<String, Object?> toRow({required int invoiceId, required int sortOrder}) =>
+      {
+        'invoice_id': invoiceId,
+        'product_id': productId,
+        'sort_order': sortOrder,
+        'product_name': productName,
+        'product_code': productCode,
+        'kind': kind.db,
+        'unit_name': unitName,
+        'qty_thousandths': qtyThousandths,
+        'orig_unit_price_minor': origUnitPriceMinor,
+        'orig_currency_code': origCurrencyCode,
+        'orig_rate_num': origRate.numerator,
+        'orig_rate_den': origRate.denominator,
+        'unit_price_minor': unitPriceMinor,
+        'line_total_minor': lineTotalMinor,
+      };
+
+  static InvoiceItem fromMap(Map<String, Object?> map) => InvoiceItem(
+        id: map['id'] as int?,
+        productId: map['product_id'] as int?,
+        productName: map['product_name'] as String,
+        productCode: map['product_code'] as String?,
+        kind: ProductKind.fromDb(map['kind'] as String),
+        unitName: map['unit_name'] as String?,
+        qtyThousandths: map['qty_thousandths'] as int,
+        origUnitPriceMinor: map['orig_unit_price_minor'] as int,
+        origCurrencyCode: map['orig_currency_code'] as String,
+        origRate: RateFraction(
+          map['orig_rate_num'] as int,
+          map['orig_rate_den'] as int,
+        ),
+        unitPriceMinor: map['unit_price_minor'] as int,
+        lineTotalMinor: map['line_total_minor'] as int,
+      );
+}
+
+class Invoice {
+  const Invoice({
+    this.id,
+    this.invoiceNo = 0,
+    required this.createdAt,
+    required this.currencyCode,
+    required this.baseCurrencyCode,
+    required this.rate,
+    required this.subtotalMinor,
+    this.discountType,
+    this.discountValue,
+    this.discountMinor = 0,
+    required this.totalMinor,
+    required this.totalBaseMinor,
+    this.extraTotals = const [],
+    this.customerId,
+    this.customerName,
+    this.customerPhone,
+    this.accountId,
+    this.accountNumber,
+    this.accountProvider,
+    this.note,
+    this.items = const [],
+  });
+
+  final int? id;
+
+  /// 0 in a draft; the repository assigns the sequential number on save.
+  final int invoiceNo;
+
+  final DateTime createdAt;
+
+  /// The invoice currency and its rate to base, snapshotted.
+  final String currencyCode;
+  final String baseCurrencyCode;
+  final RateFraction rate;
+
+  final int subtotalMinor;
+  final DiscountType? discountType;
+
+  /// What the user entered: minor units for an amount, basis points for a
+  /// percentage. Kept next to the resolved [discountMinor].
+  final int? discountValue;
+  final int discountMinor;
+
+  final int totalMinor;
+  final int totalBaseMinor;
+  final List<InvoiceExtraTotal> extraTotals;
+
+  final int? customerId;
+  final String? customerName;
+  final String? customerPhone;
+  final int? accountId;
+  final String? accountNumber;
+  final String? accountProvider;
+  final String? note;
+
+  final List<InvoiceItem> items;
+
+  /// Builds a draft invoice from a cart. Computes the totals itself so the
+  /// saved numbers can never drift from what the sale screen showed.
+  ///
+  /// Throws [StateError] for an empty cart or when a currency in the cart has
+  /// no rate yet.
+  factory Invoice.fromCart({
+    required Cart cart,
+    required CurrencyContext ctx,
+    required DateTime createdAt,
+    int? customerId,
+    String? customerName,
+    String? customerPhone,
+    int? accountId,
+    String? accountNumber,
+    String? accountProvider,
+    String? note,
+  }) {
+    if (cart.isEmpty) {
+      throw StateError('cannot save an empty cart');
+    }
+    final totals = computeCartTotals(cart, ctx);
+    if (totals.currenciesNeedingRate.isNotEmpty) {
+      final codes = totals.currenciesNeedingRate.map((c) => c.code).join(', ');
+      throw StateError('missing exchange rate for $codes');
+    }
+    return Invoice(
+      createdAt: createdAt,
+      currencyCode: totals.currency.code,
+      baseCurrencyCode: totals.baseCurrency.code,
+      rate: totals.currency.rate,
+      subtotalMinor: totals.subtotalMinor,
+      discountType: cart.discount?.type,
+      discountValue: cart.discount?.value,
+      discountMinor: totals.discountMinor,
+      totalMinor: totals.totalMinor,
+      totalBaseMinor: totals.totalBaseMinor,
+      extraTotals: [
+        for (final extra in totals.extraTotals)
+          InvoiceExtraTotal(
+            currencyCode: extra.currency.code,
+            rate: extra.currency.rate,
+            totalMinor: extra.totalMinor,
+          ),
+      ],
+      customerId: customerId,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      accountId: accountId,
+      accountNumber: accountNumber,
+      accountProvider: accountProvider,
+      note: note,
+      items: [
+        for (final line in totals.lines)
+          InvoiceItem(
+            productId: line.line.productId,
+            productName: line.line.name,
+            productCode: line.line.code,
+            kind: line.line.kind,
+            unitName: line.line.unitName,
+            qtyThousandths: line.line.qtyThousandths,
+            origUnitPriceMinor: line.line.unitPriceMinor,
+            origCurrencyCode: line.line.priceCurrencyCode,
+            origRate: line.origRate,
+            unitPriceMinor: line.unitPriceMinor,
+            lineTotalMinor: line.lineTotalMinor,
+          ),
+      ],
+    );
+  }
+
+  Invoice copyWith({int? id, int? invoiceNo, List<InvoiceItem>? items}) =>
+      Invoice(
+        id: id ?? this.id,
+        invoiceNo: invoiceNo ?? this.invoiceNo,
+        createdAt: createdAt,
+        currencyCode: currencyCode,
+        baseCurrencyCode: baseCurrencyCode,
+        rate: rate,
+        subtotalMinor: subtotalMinor,
+        discountType: discountType,
+        discountValue: discountValue,
+        discountMinor: discountMinor,
+        totalMinor: totalMinor,
+        totalBaseMinor: totalBaseMinor,
+        extraTotals: extraTotals,
+        customerId: customerId,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        accountId: accountId,
+        accountNumber: accountNumber,
+        accountProvider: accountProvider,
+        note: note,
+        items: items ?? this.items,
+      );
+
+  /// Row for the `invoices` table. [invoiceNo] is passed separately because
+  /// the repository draws it from the counter inside the save transaction.
+  Map<String, Object?> toRow({required int invoiceNo}) {
+    final extra1 = extraTotals.isNotEmpty ? extraTotals[0] : null;
+    final extra2 = extraTotals.length > 1 ? extraTotals[1] : null;
+    return {
+      'invoice_no': invoiceNo,
+      'created_at': createdAt.toUtc().millisecondsSinceEpoch,
+      'currency_code': currencyCode,
+      'base_currency_code': baseCurrencyCode,
+      'rate_num': rate.numerator,
+      'rate_den': rate.denominator,
+      'subtotal_minor': subtotalMinor,
+      'discount_type': discountType?.db,
+      'discount_value': discountValue,
+      'discount_minor': discountMinor,
+      'total_minor': totalMinor,
+      'total_base_minor': totalBaseMinor,
+      'extra1_currency_code': extra1?.currencyCode,
+      'extra1_rate_num': extra1?.rate.numerator,
+      'extra1_rate_den': extra1?.rate.denominator,
+      'extra1_total_minor': extra1?.totalMinor,
+      'extra2_currency_code': extra2?.currencyCode,
+      'extra2_rate_num': extra2?.rate.numerator,
+      'extra2_rate_den': extra2?.rate.denominator,
+      'extra2_total_minor': extra2?.totalMinor,
+      'customer_id': customerId,
+      'customer_name': customerName,
+      'customer_phone': customerPhone,
+      'account_id': accountId,
+      'account_number': accountNumber,
+      'account_provider': accountProvider,
+      'note': note,
+    };
+  }
+
+  static Invoice fromMap(
+    Map<String, Object?> map, {
+    List<InvoiceItem> items = const [],
+  }) {
+    final discountType = map['discount_type'] as String?;
+    final extras = <InvoiceExtraTotal>[];
+    for (final prefix in ['extra1', 'extra2']) {
+      final code = map['${prefix}_currency_code'] as String?;
+      if (code == null) continue;
+      extras.add(InvoiceExtraTotal(
+        currencyCode: code,
+        rate: RateFraction(
+          map['${prefix}_rate_num'] as int,
+          map['${prefix}_rate_den'] as int,
+        ),
+        totalMinor: map['${prefix}_total_minor'] as int,
+      ));
+    }
+    return Invoice(
+      id: map['id'] as int?,
+      invoiceNo: map['invoice_no'] as int,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        map['created_at'] as int,
+        isUtc: true,
+      ),
+      currencyCode: map['currency_code'] as String,
+      baseCurrencyCode: map['base_currency_code'] as String,
+      rate: RateFraction(map['rate_num'] as int, map['rate_den'] as int),
+      subtotalMinor: map['subtotal_minor'] as int,
+      discountType:
+          discountType == null ? null : DiscountType.fromDb(discountType),
+      discountValue: map['discount_value'] as int?,
+      discountMinor: (map['discount_minor'] as int?) ?? 0,
+      totalMinor: map['total_minor'] as int,
+      totalBaseMinor: map['total_base_minor'] as int,
+      extraTotals: extras,
+      customerId: map['customer_id'] as int?,
+      customerName: map['customer_name'] as String?,
+      customerPhone: map['customer_phone'] as String?,
+      accountId: map['account_id'] as int?,
+      accountNumber: map['account_number'] as String?,
+      accountProvider: map['account_provider'] as String?,
+      note: map['note'] as String?,
+      items: items,
+    );
+  }
+}

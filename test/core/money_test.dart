@@ -144,6 +144,96 @@ void main() {
       );
     });
 
+    test('convertLineTotalMinor rounds once, not per unit', () {
+      // 5000 SYP × 10 on a USD invoice at 13000 SYP/USD.
+      // Correct: 50000 SYP / 13000 = 3.846… -> 3.85 USD.
+      // Rounding the unit price first would give 10 × 0.38 = 3.80 USD.
+      expect(
+        convertLineTotalMinor(
+          unitPriceMinor: 5000,
+          qtyThousandths: 10000,
+          fromDecimals: sypDecimals,
+          fromRate: RateFraction.one,
+          toDecimals: usdDecimals,
+          toRate: usdRate,
+        ),
+        385,
+      );
+      expect(
+        convertMinor(
+          amountMinor: 5000,
+          fromDecimals: sypDecimals,
+          fromRate: RateFraction.one,
+          toDecimals: usdDecimals,
+          toRate: usdRate,
+        ),
+        38, // the display-only unit price
+      );
+    });
+
+    test('convertLineTotalMinor rounds once for fractional quantities', () {
+      // 1365 SYP is exactly 10.5 cents; half of it is 5.25 -> 5 cents.
+      // Rounding the unit price first gives 11 cents × 0.5 = 5.5 -> 6.
+      expect(
+        convertLineTotalMinor(
+          unitPriceMinor: 1365,
+          qtyThousandths: 500,
+          fromDecimals: sypDecimals,
+          fromRate: RateFraction.one,
+          toDecimals: usdDecimals,
+          toRate: usdRate,
+        ),
+        5,
+      );
+      expect(
+        convertMinor(
+          amountMinor: 1365,
+          fromDecimals: sypDecimals,
+          fromRate: RateFraction.one,
+          toDecimals: usdDecimals,
+          toRate: usdRate,
+        ),
+        11,
+      );
+    });
+
+    test('convertLineTotalMinor matches lineTotalMinor in one currency', () {
+      for (final (price, qty) in [
+        (1500, 333),
+        (100, 335),
+        (750, 1000),
+        (2000, 500),
+        (7, 1),
+      ]) {
+        expect(
+          convertLineTotalMinor(
+            unitPriceMinor: price,
+            qtyThousandths: qty,
+            fromDecimals: usdDecimals,
+            fromRate: usdRate,
+            toDecimals: usdDecimals,
+            toRate: usdRate,
+          ),
+          lineTotalMinor(unitPriceMinor: price, qtyThousandths: qty),
+          reason: 'price $price × qty $qty',
+        );
+      }
+    });
+
+    test('convertLineTotalMinor rejects a negative quantity', () {
+      expect(
+        () => convertLineTotalMinor(
+          unitPriceMinor: 100,
+          qtyThousandths: -1,
+          fromDecimals: sypDecimals,
+          fromRate: RateFraction.one,
+          toDecimals: usdDecimals,
+          toRate: usdRate,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('no double anywhere: huge amounts stay exact', () {
       // 9 billion SYP -> USD cents at 13000: 9e9/13000*100 = 69230769.23 -> 69230769
       expect(

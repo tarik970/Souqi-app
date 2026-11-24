@@ -52,6 +52,23 @@ class ProductRepository {
     return rows.map(Product.fromMap).toList();
   }
 
+  /// Exact lookup for the sale screen's "type a code and press Enter" flow:
+  /// matches the short code first, then the barcode. Active products only.
+  Future<Product?> getByExactCode(String code) async {
+    final normalized = normalizeCode(code);
+    if (normalized.isEmpty) return null;
+    for (final column in ['code', 'barcode']) {
+      final rows = await _db.query(
+        'products',
+        where: 'is_active = 1 AND $column = ?',
+        whereArgs: [normalized],
+        limit: 1,
+      );
+      if (rows.isNotEmpty) return Product.fromMap(rows.first);
+    }
+    return null;
+  }
+
   Future<Product?> getById(int id) async {
     final rows =
         await _db.query('products', where: 'id = ?', whereArgs: [id], limit: 1);

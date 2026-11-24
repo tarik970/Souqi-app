@@ -5,6 +5,7 @@ library;
 import 'package:intl/intl.dart';
 
 import '../utils/normalize.dart';
+import 'exchange.dart';
 
 int _pow10(int exp) {
   var v = 1;
@@ -43,6 +44,106 @@ String _localizeDigits(String asciiDigits, NumberFormat nf) {
   return String.fromCharCodes(
     asciiDigits.codeUnits.map((c) => zero + (c - 0x30)),
   );
+}
+
+/// Replaces the ASCII digits in [text] with [locale]'s digit shapes and the
+/// '.' with its decimal separator. For on-screen keypads and the text the
+/// user is typing into them — display only.
+String localizeDigits(String text, String locale) {
+  final nf = NumberFormat.decimalPattern(locale);
+  final out = StringBuffer();
+  for (final char in text.split('')) {
+    if (char == '.') {
+      out.write(nf.symbols.DECIMAL_SEP);
+    } else if (char.codeUnitAt(0) >= 0x30 && char.codeUnitAt(0) <= 0x39) {
+      out.write(_localizeDigits(char, nf));
+    } else {
+      out.write(char);
+    }
+  }
+  return out.toString();
+}
+
+/// The locale's decimal separator, for the keypad's decimal key.
+String decimalSeparator(String locale) =>
+    NumberFormat.decimalPattern(locale).symbols.DECIMAL_SEP;
+
+/// Formats a quantity held as INTEGER thousandths (500 → "0.5"), dropping
+/// trailing zeros, localized for display.
+String formatQuantity(int qtyThousandths, {required String locale}) {
+  final nf = NumberFormat.decimalPattern(locale);
+  final abs = qtyThousandths.abs();
+  var frac = (abs % 1000).toString().padLeft(3, '0');
+  while (frac.endsWith('0')) {
+    frac = frac.substring(0, frac.length - 1);
+  }
+  var text = nf.format(abs ~/ 1000);
+  if (frac.isNotEmpty) {
+    text = '$text${nf.symbols.DECIMAL_SEP}${_localizeDigits(frac, nf)}';
+  }
+  return qtyThousandths < 0 ? '${nf.symbols.MINUS_SIGN}$text' : text;
+}
+
+/// Plain ASCII text of a quantity for prefilling a keypad buffer ("0.5", "2").
+String quantityToPlainText(int qtyThousandths) {
+  final sign = qtyThousandths < 0 ? '-' : '';
+  final abs = qtyThousandths.abs();
+  var frac = (abs % 1000).toString().padLeft(3, '0');
+  while (frac.endsWith('0')) {
+    frac = frac.substring(0, frac.length - 1);
+  }
+  return frac.isEmpty ? '$sign${abs ~/ 1000}' : '$sign${abs ~/ 1000}.$frac';
+}
+
+/// Parses a user-entered quantity into INTEGER thousandths. Returns null for
+/// invalid input or more than 3 decimal places.
+int? parseQuantityThousandths(String input) =>
+    parseAmountMinor(input, decimals: 3);
+
+/// Renders an exact rate fraction as the decimal number the user entered
+/// ("13000", "0.0000769"), localized. Expanded with exact integer division —
+/// rates never go through double.
+String formatRateValue(RateFraction rate, {required String locale}) {
+  final nf = NumberFormat.decimalPattern(locale);
+  final den = BigInt.from(rate.denominator);
+  final whole = BigInt.from(rate.numerator) ~/ den;
+  var rem = BigInt.from(rate.numerator) % den;
+  final text = nf.format(whole.toInt());
+  if (rem == BigInt.zero) return text;
+  final frac = StringBuffer();
+  final ten = BigInt.from(10);
+  for (var i = 0; i < 12 && rem != BigInt.zero; i++) {
+    rem *= ten;
+    frac.write((rem ~/ den).toString());
+    rem %= den;
+  }
+  var digits = frac.toString();
+  while (digits.endsWith('0')) {
+    digits = digits.substring(0, digits.length - 1);
+  }
+  if (digits.isEmpty) return text;
+  return '$text${nf.symbols.DECIMAL_SEP}${_localizeDigits(digits, nf)}';
+}
+
+/// Plain ASCII text of a rate for prefilling an edit field ("13000", "0.5").
+String rateToPlainText(RateFraction rate) {
+  final den = BigInt.from(rate.denominator);
+  final numerator = BigInt.from(rate.numerator);
+  final whole = numerator ~/ den;
+  var rem = numerator % den;
+  if (rem == BigInt.zero) return '$whole';
+  final frac = StringBuffer();
+  final ten = BigInt.from(10);
+  for (var i = 0; i < 12 && rem != BigInt.zero; i++) {
+    rem *= ten;
+    frac.write((rem ~/ den).toString());
+    rem %= den;
+  }
+  var digits = frac.toString();
+  while (digits.endsWith('0')) {
+    digits = digits.substring(0, digits.length - 1);
+  }
+  return digits.isEmpty ? '$whole' : '$whole.$digits';
 }
 
 /// Plain ASCII text of [minor] for prefilling edit fields ("2.50", "1500").

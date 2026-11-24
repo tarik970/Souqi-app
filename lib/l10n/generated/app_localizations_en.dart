@@ -285,4 +285,151 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotDisableBase => 'The base currency cannot be disabled.';
+
+  @override
+  String get saleFavorites => 'Favorites';
+
+  @override
+  String get saleFavoritesHint => 'Star products to get one-tap buttons here';
+
+  @override
+  String get saleSearchHint => 'Name or code — press enter for an exact code';
+
+  @override
+  String get cartEmpty => 'Cart is empty';
+
+  @override
+  String get cartEmptyHint => 'Tap a favorite or search for an item';
+
+  @override
+  String get noMatchingProducts => 'No matching products';
+
+  @override
+  String codeNotFound(String code) {
+    return 'No item with code $code';
+  }
+
+  @override
+  String get invoiceCurrency => 'Invoice currency';
+
+  @override
+  String get subtotalLabel => 'Subtotal';
+
+  @override
+  String get discountLabel => 'Discount';
+
+  @override
+  String get totalLabel => 'Total';
+
+  @override
+  String itemsCount(int count) {
+    return 'Items: $count';
+  }
+
+  @override
+  String get quantityLabel => 'Quantity';
+
+  @override
+  String get unitPriceLabel => 'Unit price';
+
+  @override
+  String get unitPriceThisSaleOnly =>
+      'This sale only — the saved product price does not change';
+
+  @override
+  String get lineTotalLabel => 'Line total';
+
+  @override
+  String get addToCart => 'Add';
+
+  @override
+  String get updateLine => 'Update';
+
+  @override
+  String get clearCartTitle => 'Clear cart?';
+
+  @override
+  String get clearCartMessage => 'All items in this sale will be removed.';
+
+  @override
+  String get clearCart => 'Clear cart';
+
+  @override
+  String get removeLine => 'Remove';
+
+  @override
+  String get invalidQuantity => 'Invalid quantity';
+
+  @override
+  String get quantityMustBePositive => 'Quantity must be greater than zero';
+
+  @override
+  String get discountTitle => 'Invoice discount';
+
+  @override
+  String get discountTypeAmount => 'Amount';
+
+  @override
+  String get discountTypePercent => 'Percent';
+
+  @override
+  String get discountNone => 'No discount';
+
+  @override
+  String get invalidDiscount => 'Invalid discount';
+
+  @override
+  String get discountCappedNote => 'The discount cannot exceed the subtotal.';
+
+  @override
+  String get quickItemTitle => 'Quick item';
+
+  @override
+  String get quickItemHint => 'Sold once, without saving a product';
+
+  @override
+  String get quickItemName => 'Item name';
+
+  @override
+  String get saveAsProduct => 'Save as a product too';
+
+  @override
+  String get unitOptional => 'Unit (optional)';
+
+  @override
+  String get unitNone => 'No unit';
+
+  @override
+  String get ratesTitle => 'Exchange rates';
+
+  @override
+  String rateNeeded(String code) {
+    return 'Set the exchange rate for $code before saving this sale';
+  }
+
+  @override
+  String get secondaryTotalTitle => 'Secondary total';
+
+  @override
+  String get secondaryTotalNone => 'None';
+
+  @override
+  String get invoiceSavedTitle => 'Invoice saved';
+
+  @override
+  String invoiceNoLabel(String no) {
+    return 'Invoice no. $no';
+  }
+
+  @override
+  String get printInvoice => 'Print';
+
+  @override
+  String get sharePdf => 'Share PDF';
+
+  @override
+  String get newSale => 'New sale';
+
+  @override
+  String get backToHome => 'Back to home';
 }

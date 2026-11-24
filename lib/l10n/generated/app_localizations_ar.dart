@@ -285,4 +285,151 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cannotDisableBase => 'لا يمكن تعطيل العملة الأساسية.';
+
+  @override
+  String get saleFavorites => 'المفضّلة';
+
+  @override
+  String get saleFavoritesHint => 'ضع نجمة على المنتجات لتظهر هنا كأزرار سريعة';
+
+  @override
+  String get saleSearchHint => 'الاسم أو الرمز — اضغط إدخال للرمز المطابق';
+
+  @override
+  String get cartEmpty => 'السلة فارغة';
+
+  @override
+  String get cartEmptyHint => 'اضغط على منتج مفضّل أو ابحث عن صنف';
+
+  @override
+  String get noMatchingProducts => 'لا توجد منتجات مطابقة';
+
+  @override
+  String codeNotFound(String code) {
+    return 'لا يوجد صنف بالرمز $code';
+  }
+
+  @override
+  String get invoiceCurrency => 'عملة الفاتورة';
+
+  @override
+  String get subtotalLabel => 'المجموع قبل الحسم';
+
+  @override
+  String get discountLabel => 'الحسم';
+
+  @override
+  String get totalLabel => 'الإجمالي';
+
+  @override
+  String itemsCount(int count) {
+    return 'الأصناف: $count';
+  }
+
+  @override
+  String get quantityLabel => 'الكمية';
+
+  @override
+  String get unitPriceLabel => 'سعر الوحدة';
+
+  @override
+  String get unitPriceThisSaleOnly =>
+      'لهذه الفاتورة فقط — سعر المنتج المحفوظ لا يتغيّر';
+
+  @override
+  String get lineTotalLabel => 'إجمالي السطر';
+
+  @override
+  String get addToCart => 'إضافة';
+
+  @override
+  String get updateLine => 'تحديث';
+
+  @override
+  String get clearCartTitle => 'تفريغ السلة؟';
+
+  @override
+  String get clearCartMessage => 'ستُحذف كل أصناف هذه الفاتورة.';
+
+  @override
+  String get clearCart => 'تفريغ السلة';
+
+  @override
+  String get removeLine => 'حذف';
+
+  @override
+  String get invalidQuantity => 'كمية غير صالحة';
+
+  @override
+  String get quantityMustBePositive => 'يجب أن تكون الكمية أكبر من صفر';
+
+  @override
+  String get discountTitle => 'حسم على الفاتورة';
+
+  @override
+  String get discountTypeAmount => 'مبلغ';
+
+  @override
+  String get discountTypePercent => 'نسبة %';
+
+  @override
+  String get discountNone => 'بلا حسم';
+
+  @override
+  String get invalidDiscount => 'حسم غير صالح';
+
+  @override
+  String get discountCappedNote => 'لا يمكن أن يتجاوز الحسم المجموع.';
+
+  @override
+  String get quickItemTitle => 'صنف سريع';
+
+  @override
+  String get quickItemHint => 'يُباع مرة واحدة بدون حفظه كمنتج';
+
+  @override
+  String get quickItemName => 'اسم الصنف';
+
+  @override
+  String get saveAsProduct => 'حفظه كمنتج أيضاً';
+
+  @override
+  String get unitOptional => 'الوحدة (اختياري)';
+
+  @override
+  String get unitNone => 'بلا وحدة';
+
+  @override
+  String get ratesTitle => 'أسعار الصرف';
+
+  @override
+  String rateNeeded(String code) {
+    return 'حدّد سعر صرف $code قبل حفظ هذه الفاتورة';
+  }
+
+  @override
+  String get secondaryTotalTitle => 'مجموع بعملة ثانية';
+
+  @override
+  String get secondaryTotalNone => 'بلا';
+
+  @override
+  String get invoiceSavedTitle => 'تم حفظ الفاتورة';
+
+  @override
+  String invoiceNoLabel(String no) {
+    return 'فاتورة رقم $no';
+  }
+
+  @override
+  String get printInvoice => 'طباعة';
+
+  @override
+  String get sharePdf => 'مشاركة PDF';
+
+  @override
+  String get newSale => 'فاتورة جديدة';
+
+  @override
+  String get backToHome => 'العودة للرئيسية';
 }

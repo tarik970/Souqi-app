@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../placeholder/placeholder_screen.dart';
 import '../products/products_screen.dart';
+import '../sale/sale_screen.dart';
 import '../settings/settings_screen.dart';
 
 // Currencies and units are reachable from Settings; home shows the five
@@ -17,7 +18,7 @@ class HomeScreen extends StatelessWidget {
       _NavItem(
         label: l10n.navSale,
         icon: Icons.point_of_sale,
-        builder: (_) => PlaceholderScreen(title: l10n.navSale),
+        builder: (_) => const SaleScreen(),
       ),
       _NavItem(
         label: l10n.navProducts,

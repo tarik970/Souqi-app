@@ -6,7 +6,13 @@ import 'rounding.dart';
 
 const int quantityScale = 1000;
 
-/// Line total in minor units of the price's currency.
+/// Line total in minor units of the price's OWN currency.
+///
+/// Only for a line whose price currency is already the invoice currency. When
+/// the two differ, use `convertLineTotalMinor` in exchange.dart, which folds
+/// the quantity and the rate into one rounding step; converting the unit
+/// price first and multiplying here would scale the rounding error by the
+/// quantity.
 int lineTotalMinor({required int unitPriceMinor, required int qtyThousandths}) {
   if (qtyThousandths < 0) {
     throw ArgumentError.value(qtyThousandths, 'qtyThousandths', 'must be >= 0');

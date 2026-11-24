@@ -2,12 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/money/exchange.dart';
+import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/currency_repository.dart';
 import '../../domain/models/currency.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'currency_form_screen.dart';
+import 'update_rate_dialog.dart';
 
 class CurrenciesScreen extends ConsumerWidget {
   const CurrenciesScreen({super.key});
@@ -59,8 +60,8 @@ class _CurrencyTile extends ConsumerWidget {
 
     final subtitleLines = <String>[];
     if (!_isBase && baseCode != null) {
-      subtitleLines.add(l10n.rateDisplay(
-          currency.code, _rateValueText(currency.rate, locale), baseCode!));
+      subtitleLines.add(l10n.rateDisplay(currency.code,
+          formatRateValue(currency.rate, locale: locale), baseCode!));
       subtitleLines.add(currency.rateUpdatedAt == null
           ? l10n.rateNeverUpdated
           : l10n.rateUpdatedAt(DateFormat.yMd(locale)
@@ -135,60 +136,13 @@ class _CurrencyTile extends ConsumerWidget {
     );
   }
 
-  String _rateValueText(RateFraction rate, String locale) {
-    if (rate.denominator == 1) {
-      return NumberFormat.decimalPattern(locale).format(rate.numerator);
-    }
-    // Reduced denominators only contain factors 2 and 5 (rates are entered
-    // as decimals), so the expansion terminates; double is display-only.
-    var text = (rate.numerator / rate.denominator).toStringAsFixed(10);
-    text = text.replaceFirst(RegExp(r'0+$'), '');
-    if (text.endsWith('.')) text = text.substring(0, text.length - 1);
-    return text;
-  }
-
-  Future<void> _updateRate(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController();
-    String? errorText;
-    final rate = await showDialog<RateFraction>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(l10n.updateRate),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.rateHint(currency.code, baseCode ?? ''),
-              errorText: errorText,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () {
-                try {
-                  Navigator.of(context)
-                      .pop(parseRateFraction(controller.text));
-                } on FormatException {
-                  setState(() => errorText = l10n.invalidRate);
-                }
-              },
-              child: Text(l10n.save),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _updateRate(BuildContext context, WidgetRef ref) {
+    return showUpdateRateDialog(
+      context,
+      ref,
+      currency: currency,
+      baseCode: baseCode ?? '',
     );
-    if (rate == null) return;
-    await ref.read(currencyRepositoryProvider).updateRate(currency.code, rate);
-    ref.invalidate(currenciesProvider);
   }
 
   Future<void> _setAsBase(BuildContext context, WidgetRef ref) async {

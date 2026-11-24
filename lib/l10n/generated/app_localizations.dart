@@ -608,6 +608,282 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The base currency cannot be disabled.'**
   String get cannotDisableBase;
+
+  /// No description provided for @saleFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get saleFavorites;
+
+  /// No description provided for @saleFavoritesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Star products to get one-tap buttons here'**
+  String get saleFavoritesHint;
+
+  /// No description provided for @saleSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name or code — press enter for an exact code'**
+  String get saleSearchHint;
+
+  /// No description provided for @cartEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart is empty'**
+  String get cartEmpty;
+
+  /// No description provided for @cartEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a favorite or search for an item'**
+  String get cartEmptyHint;
+
+  /// No description provided for @noMatchingProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching products'**
+  String get noMatchingProducts;
+
+  /// No description provided for @codeNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No item with code {code}'**
+  String codeNotFound(String code);
+
+  /// No description provided for @invoiceCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice currency'**
+  String get invoiceCurrency;
+
+  /// No description provided for @subtotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get subtotalLabel;
+
+  /// No description provided for @discountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get discountLabel;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalLabel;
+
+  /// No description provided for @itemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Items: {count}'**
+  String itemsCount(int count);
+
+  /// No description provided for @quantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantityLabel;
+
+  /// No description provided for @unitPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit price'**
+  String get unitPriceLabel;
+
+  /// No description provided for @unitPriceThisSaleOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This sale only — the saved product price does not change'**
+  String get unitPriceThisSaleOnly;
+
+  /// No description provided for @lineTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Line total'**
+  String get lineTotalLabel;
+
+  /// No description provided for @addToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addToCart;
+
+  /// No description provided for @updateLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateLine;
+
+  /// No description provided for @clearCartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cart?'**
+  String get clearCartTitle;
+
+  /// No description provided for @clearCartMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All items in this sale will be removed.'**
+  String get clearCartMessage;
+
+  /// No description provided for @clearCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cart'**
+  String get clearCart;
+
+  /// No description provided for @removeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeLine;
+
+  /// No description provided for @invalidQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid quantity'**
+  String get invalidQuantity;
+
+  /// No description provided for @quantityMustBePositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity must be greater than zero'**
+  String get quantityMustBePositive;
+
+  /// No description provided for @discountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice discount'**
+  String get discountTitle;
+
+  /// No description provided for @discountTypeAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get discountTypeAmount;
+
+  /// No description provided for @discountTypePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Percent'**
+  String get discountTypePercent;
+
+  /// No description provided for @discountNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No discount'**
+  String get discountNone;
+
+  /// No description provided for @invalidDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid discount'**
+  String get invalidDiscount;
+
+  /// No description provided for @discountCappedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The discount cannot exceed the subtotal.'**
+  String get discountCappedNote;
+
+  /// No description provided for @quickItemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick item'**
+  String get quickItemTitle;
+
+  /// No description provided for @quickItemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold once, without saving a product'**
+  String get quickItemHint;
+
+  /// No description provided for @quickItemName.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name'**
+  String get quickItemName;
+
+  /// No description provided for @saveAsProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a product too'**
+  String get saveAsProduct;
+
+  /// No description provided for @unitOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit (optional)'**
+  String get unitOptional;
+
+  /// No description provided for @unitNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No unit'**
+  String get unitNone;
+
+  /// No description provided for @ratesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange rates'**
+  String get ratesTitle;
+
+  /// No description provided for @rateNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the exchange rate for {code} before saving this sale'**
+  String rateNeeded(String code);
+
+  /// No description provided for @secondaryTotalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary total'**
+  String get secondaryTotalTitle;
+
+  /// No description provided for @secondaryTotalNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get secondaryTotalNone;
+
+  /// No description provided for @invoiceSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice saved'**
+  String get invoiceSavedTitle;
+
+  /// No description provided for @invoiceNoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice no. {no}'**
+  String invoiceNoLabel(String no);
+
+  /// No description provided for @printInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get printInvoice;
+
+  /// No description provided for @sharePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Share PDF'**
+  String get sharePdf;
+
+  /// No description provided for @newSale.
+  ///
+  /// In en, this message translates to:
+  /// **'New sale'**
+  String get newSale;
+
+  /// No description provided for @backToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to home'**
+  String get backToHome;
 }
 
 class _AppLocalizationsDelegate

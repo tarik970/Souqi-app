@@ -6,6 +6,7 @@
 /// rounding step at the end, to the target currency's decimal places.
 library;
 
+import 'quantity.dart';
 import 'rounding.dart';
 
 import '../utils/normalize.dart';
@@ -56,6 +57,44 @@ int convertMinor({
       BigInt.from(toRate.denominator) *
       _pow10(toDecimals);
   final denominator = BigInt.from(fromRate.denominator) *
+      BigInt.from(toRate.numerator) *
+      _pow10(fromDecimals);
+  return divRoundHalfUp(numerator, denominator);
+}
+
+/// A line total converted into another currency with a SINGLE rounding step.
+///
+/// Price × quantity × the rate all happen inside one BigInt fraction, so the
+/// result is rounded once at the end:
+///
+///   value = unitPriceMinor * qtyThousandths
+///         * fromRate.num * toRate.den * 10^toDecimals
+///         / (1000 * fromRate.den * toRate.num * 10^fromDecimals)
+///
+/// Rounding the converted unit price first and then multiplying by the
+/// quantity would multiply that rounding error by the quantity: 5000 SYP × 10
+/// at 13000 SYP/USD is 3.85 USD, not 10 × 0.38 = 3.80 USD.
+///
+/// With the same currency on both sides this reduces exactly to
+/// [lineTotalMinor] — `round(price * qty / 1000)`.
+int convertLineTotalMinor({
+  required int unitPriceMinor,
+  required int qtyThousandths,
+  required int fromDecimals,
+  required RateFraction fromRate,
+  required int toDecimals,
+  required RateFraction toRate,
+}) {
+  if (qtyThousandths < 0) {
+    throw ArgumentError.value(qtyThousandths, 'qtyThousandths', 'must be >= 0');
+  }
+  final numerator = BigInt.from(unitPriceMinor) *
+      BigInt.from(qtyThousandths) *
+      BigInt.from(fromRate.numerator) *
+      BigInt.from(toRate.denominator) *
+      _pow10(toDecimals);
+  final denominator = BigInt.from(quantityScale) *
+      BigInt.from(fromRate.denominator) *
       BigInt.from(toRate.numerator) *
       _pow10(fromDecimals);
   return divRoundHalfUp(numerator, denominator);
