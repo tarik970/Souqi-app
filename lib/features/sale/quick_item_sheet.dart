@@ -141,7 +141,7 @@ class _QuickItemSheetState extends ConsumerState<QuickItemSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: TextFormField(
                     controller: _price,
                     keyboardType: const TextInputType.numberWithOptions(
@@ -159,8 +159,13 @@ class _QuickItemSheetState extends ConsumerState<QuickItemSheet> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
+                  flex: 2,
                   child: DropdownButtonFormField<String>(
                     initialValue: currencyCode,
+                    // The code plus the arrow must fit a narrow phone at a
+                    // large system font: the field takes the width it is
+                    // given instead of its content's natural width.
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: l10n.productCurrency,
                       border: const OutlineInputBorder(),

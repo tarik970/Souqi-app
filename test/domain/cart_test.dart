@@ -41,12 +41,14 @@ CartLine line({
   String currency = 'SYP',
   int qty = 1000,
   ProductKind kind = ProductKind.goods,
+  int? unitId = 1,
   String? unitName = 'kg',
 }) =>
     CartLine(
       productId: productId,
       name: name,
       kind: kind,
+      unitId: unitId,
       unitName: unitName,
       unitPriceMinor: priceMinor,
       priceCurrencyCode: currency,
@@ -113,6 +115,16 @@ void main() {
           .add(line(productId: 7, priceMinor: 100, currency: 'SYP'))
           .add(line(productId: 7, priceMinor: 100, currency: 'USD'));
       expect(cart.lines, hasLength(2));
+    });
+
+    test('same product sold in a different unit stays a separate line', () {
+      // The quantity sheet can change the unit per line: 2 bags and 3 kg of
+      // the same sugar are two rows, not five of something.
+      final cart = const Cart()
+          .add(line(productId: 7, unitId: 1, unitName: 'kg'))
+          .add(line(productId: 7, unitId: 2, unitName: 'bag'));
+      expect(cart.lines, hasLength(2));
+      expect(cart.lines.map((l) => l.unitName), ['kg', 'bag']);
     });
 
     test('unsaved items never merge', () {

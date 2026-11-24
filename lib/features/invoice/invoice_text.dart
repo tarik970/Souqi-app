@@ -66,21 +66,21 @@ class InvoiceLineText {
   /// The item was priced in a currency other than the invoice's.
   final bool isCrossCurrency;
 
-  /// The whole line as one string, the way it reads on paper.
-  String get plain => unitPrice == null
-      ? '$quantity  $total'
-      : '$quantity × $unitPrice = $total';
+  /// The whole line as one string, the way it reads on paper: no "=" — the
+  /// quantity and price sit at the start of the line, the total at its end.
+  String get plain =>
+      unitPrice == null ? '$quantity  $total' : '$quantity × $unitPrice  $total';
 }
 
 /// Words one item's detail line.
 ///
-/// Same-currency line: "qty × unit price = total", all in the invoice
+/// Same-currency line: "qty × unit price" then the total, all in the invoice
 /// currency (which the Total line names).
 ///
 /// Cross-currency line: the ORIGINAL unit price in its own currency and the
-/// converted total, each with its currency — "10 × 5,000 SYP = 3.85 USD".
+/// converted total, each with its currency — "10 × 5,000 SYP" … "3.85 USD".
 /// The converted unit price is deliberately not printed: it is rounded on
-/// its own, so "10 × 0.38 = 3.85" would not multiply out, while the original
+/// its own, so "10 × 0.38" → "3.85" would not multiply out, while the original
 /// price times the quantity at the printed rate does.
 InvoiceLineText describeInvoiceLine(
   InvoiceItem item, {

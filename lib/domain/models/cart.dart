@@ -123,12 +123,16 @@ class CartLine {
       unitPriceMinor != listPriceMinor &&
       unitPriceMinor > 0;
 
-  /// Same saved product, same unit price, same currency → quantities merge.
-  /// Unsaved items (no [productId]) never merge, so each typed line stays on
-  /// its own row.
+  /// Same saved product, same unit, same unit price, same currency →
+  /// quantities merge. Unsaved items (no [productId]) never merge, so each
+  /// typed line stays on its own row.
+  ///
+  /// The unit is part of it because the quantity sheet can change it per line:
+  /// 2 bags and 3 kg of the same sugar are two rows, not five of something.
   bool mergesWith(CartLine other) =>
       productId != null &&
       other.productId == productId &&
+      other.unitId == unitId &&
       other.unitPriceMinor == unitPriceMinor &&
       other.priceCurrencyCode == priceCurrencyCode;
 

@@ -236,7 +236,7 @@ void main() {
           currencyDisplay: CurrencyDisplay.code,
         ),
       );
-      // "10 kg × 5,000 SYP = 3.85 USD": original price, converted total.
+      // "10 kg × 5,000 SYP" … "3.85 USD": original price, converted total.
       expect(find.text('10 kg'), findsOneWidget);
       expect(find.text('5,000 SYP'), findsOneWidget);
       expect(find.text('3.85 USD'), findsOneWidget);
@@ -249,6 +249,9 @@ void main() {
       expect(find.text('8.85 USD'), findsOneWidget);
       expect(find.text('1 USD'), findsOneWidget);
       expect(find.text('13,000 SYP'), findsOneWidget);
+      // No "=" before a line total: the only one left on the invoice is the
+      // rate line's ("1 USD = 13,000 SYP"), not one per item.
+      expect(find.text('='), findsOneWidget);
     });
 
     testWidgets('toggles hide their fields', (tester) async {

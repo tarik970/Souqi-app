@@ -266,7 +266,9 @@ class InvoiceView extends StatelessWidget {
 }
 
 /// One item: its name (with the code when enabled), then the detail line —
-/// "qty × price" at the start and "= total" at the end.
+/// "qty × price" at the start and the line total at the end. No "=" between
+/// them: on a cross-currency line the two amounts are in different
+/// currencies, and even on a plain line the equals sign only adds ink.
 class _ItemBlock extends StatelessWidget {
   const _ItemBlock({
     required this.item,
@@ -321,10 +323,6 @@ class _ItemBlock extends StatelessWidget {
                 ),
               ),
               SizedBox(width: gap),
-              if (unitPrice != null) ...[
-                const Text('='),
-                SizedBox(width: gap * 0.6),
-              ],
               Text(text.total, style: bold),
             ],
           ),

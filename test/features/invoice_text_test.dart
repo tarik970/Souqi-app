@@ -29,11 +29,13 @@ void main() {
         showUnit: false,
       );
       expect(line.isCrossCurrency, isTrue);
-      expect(line.plain, '10 × 5,000 SYP = 3.85 USD');
+      expect(line.plain, '10 × 5,000 SYP  3.85 USD');
       expect(line.plain, isNot(contains('0.38')));
+      // No "=" anywhere: the total simply sits at the end of the line.
+      expect(line.plain, isNot(contains('=')));
     });
 
-    test('a same-currency line stays "qty × unit price = total"', () {
+    test('a same-currency line is "qty × unit price" then the total', () {
       final invoice = crossCurrencyInvoice();
       final line = describeInvoiceLine(
         invoice.items[1],
@@ -41,7 +43,7 @@ void main() {
         money: money(),
       );
       expect(line.isCrossCurrency, isFalse);
-      expect(line.plain, '2 × 2.50 = 5.00');
+      expect(line.plain, '2 × 2.50  5.00');
     });
 
     test('currencies follow the symbol / code setting', () {
@@ -52,7 +54,7 @@ void main() {
         money: money(display: CurrencyDisplay.symbol),
         showUnit: false,
       );
-      expect(line.plain, r'10 × 5,000 ل.س = 3.85 $');
+      expect(line.plain, r'10 × 5,000 ل.س  3.85 $');
     });
 
     test('the unit is part of the quantity when units are shown', () {
@@ -63,7 +65,7 @@ void main() {
           invoiceCurrencyCode: invoice.currencyCode,
           money: money(),
         ).plain,
-        '10 kg × 5,000 SYP = 3.85 USD',
+        '10 kg × 5,000 SYP  3.85 USD',
       );
     });
 
@@ -92,7 +94,7 @@ void main() {
         ),
         showUnit: false,
       );
-      expect(line.plain, r'10 × 5,000 SYP = 3.85 $');
+      expect(line.plain, r'10 × 5,000 SYP  3.85 $');
     });
   });
 

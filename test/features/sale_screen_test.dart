@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/domain/models/product.dart';
+import 'package:souqi/domain/models/unit.dart';
 import 'package:souqi/features/sale/quantity_sheet.dart';
 import 'package:souqi/features/sale/sale_invoice_screen.dart';
 import 'package:souqi/features/sale/sale_providers.dart';
@@ -531,28 +532,27 @@ void main() {
       expect(sheetOf(tester).startAtPrice, isTrue);
     });
 
-    testWidgets('"more" changes kind and unit; the unit is remembered',
+    testWidgets('"more" changes the kind; a unit chip changes the unit',
         (tester) async {
       await pumpSale(tester);
 
-      // A card: no unit.
+      // A card: no unit, so "more" hides the chips.
       await typeNewItem(tester, 'Top-up card');
+      expect(find.byKey(const ValueKey('unit-chips')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('new-item-more')));
       await settle(tester, 2);
       await tester.tap(find.text('Card / service'));
+      await settle(tester, 2);
+      expect(find.byKey(const ValueKey('unit-chips')), findsNothing);
       await tapKeys(tester, '500');
       await tester.tap(find.widgetWithText(FilledButton, 'Add'));
       await settle(tester);
 
-      // Goods sold by the kilo.
+      // Goods sold by the kilo: one tap on the chip, no "more" needed.
       await typeNewItem(tester, 'Lentils');
       expect(sheetOf(tester).line.unitName, 'piece',
           reason: 'a service does not change the remembered unit');
-      await tester.tap(find.byKey(const ValueKey('new-item-more')));
-      await settle(tester, 2);
-      await tester.tap(find.byKey(const ValueKey('new-item-unit')));
-      await settle(tester);
-      await tester.tap(find.text('kg').last);
+      await tester.tap(find.text('kg'));
       await settle(tester);
       await tapKeys(tester, '900');
       await tester.tap(find.widgetWithText(FilledButton, 'Add'));
@@ -658,6 +658,129 @@ void main() {
       final item = await db(tester,
           () async => (await database.db.query('invoice_items')).single);
       expect(item['orig_unit_price_minor'], 1800);
+    });
+  });
+
+  group('unit chips', () {
+    test('order: the last-used unit, then the line\'s, then the rest', () {
+      const units = [
+        Unit(id: 1, nameAr: 'كغ', nameEn: 'kg', sortOrder: 0),
+        Unit(id: 2, nameAr: 'كيس', nameEn: 'bag', sortOrder: 1),
+        Unit(id: 3, nameAr: 'قطعة', nameEn: 'piece', sortOrder: 2),
+      ];
+      expect(
+        orderUnitsForPicker(units, lastUsedId: 3, lineUnitId: 2)
+            .map((u) => u.nameEn),
+        ['piece', 'bag', 'kg'],
+      );
+      // The same unit twice stays one chip; unknown ids are ignored.
+      expect(
+        orderUnitsForPicker(units, lastUsedId: 2, lineUnitId: 2)
+            .map((u) => u.nameEn),
+        ['bag', 'kg', 'piece'],
+      );
+      expect(
+        orderUnitsForPicker(units, lastUsedId: 99).map((u) => u.nameEn),
+        ['kg', 'bag', 'piece'],
+      );
+      expect(orderUnitsForPicker(const []), isEmpty);
+    });
+
+    testWidgets('a saved product sold in another unit: this line only',
+        (tester) async {
+      final unitId = await db(tester, () => insertUnit(database.db)); // kg
+      final productId = await db(
+        tester,
+        () => insertFavorite('Sugar', priceMinor: 1500, unitId: unitId),
+      );
+      final bagId = await db(
+        tester,
+        () async => (await database.db.query('units',
+                where: "name_en = 'bag'"))
+            .single['id']! as int,
+      );
+      await pumpSale(tester);
+
+      await tester.tap(find.text('Sugar'));
+      await settle(tester, 24);
+      // The chips are right there — no "More" on a saved product's line.
+      expect(find.byKey(const ValueKey('unit-chips')), findsOneWidget);
+      expect(find.byKey(const ValueKey('new-item-more')), findsNothing);
+
+      await tester.tap(find.byKey(ValueKey('unit-chip-$bagId')));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await settle(tester);
+
+      // The invoice says "bag"; the product is still sold by the kilo.
+      final item = await db(
+          tester, () async => (await database.db.query('invoice_items')).single);
+      expect(item['unit_name'], 'bag');
+      final product = await db(
+        tester,
+        () async => (await database.db
+                .query('products', where: 'id = ?', whereArgs: [productId]))
+            .single,
+      );
+      expect(product['unit_id'], unitId, reason: 'the catalog is untouched');
+    });
+
+    testWidgets('the same product in two units stays two lines',
+        (tester) async {
+      final unitId = await db(tester, () => insertUnit(database.db));
+      await db(
+        tester,
+        () => insertFavorite('Sugar',
+            priceMinor: 1500, code: '101', unitId: unitId),
+      );
+      final bagId = await db(
+        tester,
+        () async => (await database.db.query('units',
+                where: "name_en = 'bag'"))
+            .single['id']! as int,
+      );
+      await pumpSale(tester);
+
+      await submitCode(tester, '101'); // 1 kg
+      await tester.tap(find.text('Sugar').first);
+      await settle(tester, 24);
+      await tester.tap(find.byKey(ValueKey('unit-chip-$bagId')));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await settle(tester);
+
+      expect(find.widgetWithText(ListTile, 'Sugar'), findsNWidgets(2));
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await settle(tester);
+      final items = await db(tester,
+          () => database.db.query('invoice_items', orderBy: 'sort_order'));
+      expect(items.map((r) => r['unit_name']), ['kg', 'bag']);
+    });
+
+    testWidgets('a service has no unit row', (tester) async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db(
+        tester,
+        () => database.db.insert('products', {
+          'name': 'Top-up',
+          'name_norm': 'top-up',
+          'kind': 'SERVICE',
+          'price_minor': 5000,
+          'currency_code': 'SYP',
+          'is_favorite': 1,
+          'is_active': 1,
+          'created_at': now,
+          'updated_at': now,
+        }),
+      );
+      await pumpSale(tester);
+
+      await tester.tap(find.text('Top-up'));
+      await settle(tester, 24);
+      expect(find.byType(QuantitySheet), findsOneWidget);
+      expect(find.byKey(const ValueKey('unit-chips')), findsNothing);
     });
   });
 

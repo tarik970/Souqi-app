@@ -36,14 +36,47 @@ Future<CartLine?> showQuantitySheet(
 /// Which of the two big fields the keypad is typing into.
 enum _Field { qty, price }
 
+/// The order the unit chips are offered in: the unit used for the last new
+/// item first (the one this shop keeps reaching for), then the unit this line
+/// already has, then the rest in their own order. Each unit appears once.
+///
+/// Pure, so the order is unit-tested without the sheet.
+List<Unit> orderUnitsForPicker(
+  List<Unit> units, {
+  int? lastUsedId,
+  int? lineUnitId,
+}) {
+  final taken = <int>{};
+  final ordered = <Unit>[];
+  void first(int? id) {
+    if (id == null) return;
+    for (final unit in units) {
+      if (unit.id == id && taken.add(id)) ordered.add(unit);
+    }
+  }
+
+  first(lastUsedId);
+  first(lineUnitId);
+  for (final unit in units) {
+    if (unit.id != null && taken.add(unit.id!)) ordered.add(unit);
+  }
+  return ordered;
+}
+
 /// Fast quantity + price entry: a numeric keypad (no OS keyboard), quick
-/// quantity buttons, the product's unit, an editable unit price and the line
+/// quantity buttons, a row of unit chips, an editable unit price and the line
 /// total updating live.
+///
+/// The unit chips are there for every GOODS line, saved product or not: the
+/// unit is what a seller re-picks most often (the same sugar sold by the kilo
+/// and by the bag), so it must not hide behind "more". Changing it on a saved
+/// product's line changes THAT LINE only — the product keeps its own unit; on
+/// an item typed into the sale it is the unit the new product gets.
 ///
 /// For an item typed into the sale (a line with no product id) the same sheet
 /// also carries a "don't save as a product" checkbox and a "more" link that
-/// unfolds unit / type / currency, so a new product is described without
-/// leaving the sale.
+/// unfolds type / currency, so a new product is described without leaving the
+/// sale.
 class QuantitySheet extends ConsumerStatefulWidget {
   const QuantitySheet({
     super.key,
@@ -70,20 +103,24 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
   /// prefilled from the line.
   late bool _priceInitialized = widget.startAtPrice;
 
-  // Only used for an item typed into the sale.
-  late ProductKind _kind = widget.line.kind;
+  /// The unit of THIS line, picked from the chips.
   late int? _unitId = widget.line.unitId;
   late String? _unitName = widget.line.unitName;
+
+  // Only used for an item typed into the sale.
+  late ProductKind _kind = widget.line.kind;
   late bool _dontSave = !widget.line.saveAsProduct;
   bool _showMore = false;
 
   /// An item typed into the sale, not a saved product (yet).
   bool get _isTypedItem => widget.line.productId == null;
 
+  /// The kind in force: only a typed item can change it.
+  ProductKind get _effectiveKind => _isTypedItem ? _kind : widget.line.kind;
+
   /// The unit shown next to the quantity: services have none.
-  String? get _shownUnit => !_isTypedItem
-      ? widget.line.unitName
-      : (_kind == ProductKind.goods ? _unitName : null);
+  String? get _shownUnit =>
+      _effectiveKind == ProductKind.goods ? _unitName : null;
 
   /// A field still showing its prefilled value: the first digit typed
   /// replaces it instead of appending, the way a cashier expects (opening a
@@ -170,7 +207,7 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     final priceMinor =
         parseAmountMinor(_priceText, decimals: priceCurrency.decimalPlaces);
     final valid = qty != null && qty > 0 && priceMinor != null;
-    final kind = _isTypedItem ? _kind : widget.line.kind;
+    final kind = _effectiveKind;
     final unitName = _shownUnit;
     final updatesProductPrice =
         ref.watch(saleSettingsProvider).value?.updatePrices ?? true;
@@ -188,273 +225,53 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     final lineTotal = valid ? preview.lines.first.lineTotalMinor : 0;
 
     final sellable = ref.watch(sellableCurrenciesProvider);
-    final units = _isTypedItem
-        ? ref.watch(unitsProvider).value ?? const <Unit>[]
+    // Every GOODS line gets the chips, so the unit table is always needed.
+    final units = kind == ProductKind.goods
+        ? orderUnitsForPicker(
+            ref.watch(unitsProvider).value ?? const <Unit>[],
+            lastUsedId: ref.watch(newItemUnitProvider).value?.id,
+            lineUnitId: widget.line.unitId,
+          )
         : const <Unit>[];
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        16 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 44,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: theme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
+    // Cancel / Add stay pinned at the foot of the sheet while everything
+    // above them scrolls: on a small phone at a large system font the keypad
+    // alone is taller than what is left of the screen, and the seller must
+    // never have to scroll to reach the button that adds the line.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: _form(
+              l10n: l10n,
+              theme: theme,
+              locale: locale,
+              ctx: ctx,
+              priceCurrency: priceCurrency,
+              invoiceCurrency: invoiceCurrency,
+              sellable: sellable,
+              units: units,
+              kind: kind,
+              unitName: unitName,
+              qty: qty,
+              priceMinor: priceMinor,
+              lineTotal: lineTotal,
+              updatesProductPrice: updatesProductPrice,
             ),
           ),
-          Text(
-            widget.line.name,
-            style: theme.textTheme.titleLarge,
-            textAlign: TextAlign.center,
+        ),
+        Padding(
+          // The keyboard's inset sits under the buttons, so the footer stays
+          // just above an OS keyboard raised over the sheet.
+          padding: EdgeInsets.fromLTRB(
+            16,
+            4,
+            16,
+            12 + MediaQuery.viewInsetsOf(context).bottom,
           ),
-          if (unitName != null || widget.line.code != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                [
-                  ?unitName,
-                  if (widget.line.code != null) '#${widget.line.code}',
-                ].join(' · '),
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.outline),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _ValueField(
-                  label: l10n.quantityLabel,
-                  value: _qtyText.isEmpty
-                      ? '0'
-                      : localizeDigits(_qtyText, locale),
-                  suffix: unitName,
-                  selected: _active == _Field.qty,
-                  invalid: qty == null || qty <= 0,
-                  onTap: () => setState(() => _active = _Field.qty),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ValueField(
-                  label: l10n.unitPriceLabel,
-                  value: _priceText.isEmpty
-                      ? '0'
-                      : localizeDigits(_priceText, locale),
-                  suffix: priceCurrency.symbol.isEmpty
-                      ? priceCurrency.code
-                      : priceCurrency.symbol,
-                  selected: _active == _Field.price,
-                  // An empty price is not wrong, just not typed yet: no red
-                  // border, but "Add" stays disabled.
-                  muted: _priceText.isEmpty,
-                  invalid: priceMinor == null && _priceText.isNotEmpty,
-                  onTap: () => setState(() => _active = _Field.price),
-                ),
-              ),
-            ],
-          ),
-          if (_isTypedItem) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    key: const ValueKey('new-item-dont-save'),
-                    onTap: () => setState(() => _dontSave = !_dontSave),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: _dontSave,
-                          onChanged: (value) =>
-                              setState(() => _dontSave = value ?? false),
-                        ),
-                        Flexible(
-                          child: Text(
-                            l10n.newItemDontSave,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                TextButton(
-                  key: const ValueKey('new-item-more'),
-                  onPressed: () => setState(() => _showMore = !_showMore),
-                  child: Text(_showMore ? l10n.newItemLess : l10n.newItemMore),
-                ),
-              ],
-            ),
-            if (_showMore) ...[
-              SegmentedButton<ProductKind>(
-                key: const ValueKey('new-item-kind'),
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                      value: ProductKind.goods, label: Text(l10n.kindGoods)),
-                  ButtonSegment(
-                      value: ProductKind.service,
-                      label: Text(l10n.kindService)),
-                ],
-                selected: {_kind},
-                onSelectionChanged: (selection) =>
-                    setState(() => _kind = selection.first),
-              ),
-              if (_kind == ProductKind.goods) ...[
-                const SizedBox(height: 10),
-                DropdownButtonFormField<int?>(
-                  key: const ValueKey('new-item-unit'),
-                  // A unit that was deleted meanwhile is not in the list.
-                  initialValue:
-                      units.any((u) => u.id == _unitId) ? _unitId : null,
-                  decoration: InputDecoration(
-                    labelText: l10n.productUnit,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: [
-                    DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text(l10n.unitNone),
-                    ),
-                    for (final unit in units)
-                      DropdownMenuItem<int?>(
-                        value: unit.id,
-                        child: Text(unit.nameFor(locale)),
-                      ),
-                  ],
-                  onChanged: (id) => setState(() {
-                    _unitId = id;
-                    _unitName = id == null
-                        ? null
-                        : units.firstWhere((u) => u.id == id).nameFor(locale);
-                  }),
-                ),
-              ],
-            ],
-          ],
-          if (sellable.length > 1 && (!_isTypedItem || _showMore)) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: _CurrencyPicker(
-                currencies: sellable,
-                selected: priceCurrency.code,
-                locale: locale,
-                // The typed number is kept and re-read in the new currency:
-                // the user is restating the price, not converting it.
-                onChanged: (code) => setState(() {
-                  final decimals = ctx.require(code).decimalPlaces;
-                  final dot = _priceText.indexOf('.');
-                  if (dot >= 0 && _priceText.length - dot - 1 > decimals) {
-                    _priceText = decimals == 0
-                        ? _priceText.substring(0, dot)
-                        : _priceText.substring(0, dot + 1 + decimals);
-                  }
-                  _priceCurrencyCode = code;
-                }),
-              ),
-            ),
-          ],
-          if (!_isTypedItem)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                updatesProductPrice
-                    ? l10n.unitPriceUpdatesProduct
-                    : l10n.unitPriceThisSaleOnly,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.outline),
-              ),
-            ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(l10n.lineTotalLabel,
-                          style: theme.textTheme.bodySmall),
-                      if (priceCurrency.code != invoiceCurrency.code &&
-                          priceMinor != null)
-                        Text(
-                          formatMinor(
-                            priceMinor,
-                            decimals: priceCurrency.decimalPlaces,
-                            locale: locale,
-                            symbol: priceCurrency.code,
-                          ),
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.outline),
-                        ),
-                    ],
-                  ),
-                ),
-                Text(
-                  formatMinor(
-                    lineTotal,
-                    decimals: invoiceCurrency.decimalPlaces,
-                    locale: locale,
-                    symbol: invoiceCurrency.symbol.isEmpty
-                        ? invoiceCurrency.code
-                        : invoiceCurrency.symbol,
-                  ),
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final preset in kind == ProductKind.goods
-                  ? const [250, 500, 1000, 2000]
-                  : const [1000, 2000, 3000, 5000])
-                OutlinedButton(
-                  key: ValueKey('qty-preset-$preset'),
-                  onPressed: () => setState(() {
-                    _active = _Field.qty;
-                    _pristine[_Field.qty] = false;
-                    _qtyText = quantityToPlainText(preset);
-                  }),
-                  child: Text(formatQuantity(preset, locale: locale)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _Keypad(
-            locale: locale,
-            separatorEnabled: _maxDecimals > 0,
-            onDigit: _tapDigit,
-            onSeparator: _tapSeparator,
-            onBackspace: _backspace,
-            onClear: () => _setBuffer(''),
-          ),
-          const SizedBox(height: 12),
-          Row(
+          child: Row(
             children: [
               Expanded(
                 child: OutlinedButton(
@@ -472,11 +289,12 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
                             unitPriceMinor: priceMinor,
                             priceCurrencyCode: priceCurrency.code,
                             kind: kind,
-                            unitId: _isTypedItem
-                                ? () =>
-                                    kind == ProductKind.goods ? _unitId : null
-                                : null,
-                            unitName: _isTypedItem ? () => unitName : null,
+                            // Also for a saved product: the unit travels with
+                            // THIS line (and with its invoice item), never
+                            // back into the catalog.
+                            unitId: () =>
+                                kind == ProductKind.goods ? _unitId : null,
+                            unitName: () => unitName,
                             saveAsProduct: _isTypedItem ? !_dontSave : null,
                           ))
                       : null,
@@ -485,6 +303,318 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The scrolling part: name, unit chips, the two big fields, the "more"
+  /// block, the live line total, the quantity presets and the keypad.
+  Widget _form({
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required String locale,
+    required CurrencyContext ctx,
+    required Currency priceCurrency,
+    required Currency invoiceCurrency,
+    required List<Currency> sellable,
+    required List<Unit> units,
+    required ProductKind kind,
+    required String? unitName,
+    required int? qty,
+    required int? priceMinor,
+    required int lineTotal,
+    required bool updatesProductPrice,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: Container(
+            width: 44,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: theme.dividerColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        Text(
+          widget.line.name,
+          style: theme.textTheme.titleLarge,
+          textAlign: TextAlign.center,
+        ),
+        if (widget.line.code != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '#${widget.line.code}',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.outline),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        // The unit, right under the name and one tap away. A service or a
+        // top-up card has no unit at all, so the row is not shown for it.
+        if (kind == ProductKind.goods && units.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _UnitChips(
+            units: units,
+            selectedId: _unitId,
+            locale: locale,
+            noneLabel: l10n.unitNone,
+            onChanged: (unit) => setState(() {
+              _unitId = unit?.id;
+              _unitName = unit?.nameFor(locale);
+            }),
+          ),
+        ],
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _ValueField(
+                label: l10n.quantityLabel,
+                value: _qtyText.isEmpty
+                    ? '0'
+                    : localizeDigits(_qtyText, locale),
+                suffix: unitName,
+                selected: _active == _Field.qty,
+                invalid: qty == null || qty <= 0,
+                onTap: () => setState(() => _active = _Field.qty),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _ValueField(
+                label: l10n.unitPriceLabel,
+                value: _priceText.isEmpty
+                    ? '0'
+                    : localizeDigits(_priceText, locale),
+                suffix: priceCurrency.symbol.isEmpty
+                    ? priceCurrency.code
+                    : priceCurrency.symbol,
+                selected: _active == _Field.price,
+                // An empty price is not wrong, just not typed yet: no red
+                // border, but "Add" stays disabled.
+                muted: _priceText.isEmpty,
+                invalid: priceMinor == null && _priceText.isNotEmpty,
+                onTap: () => setState(() => _active = _Field.price),
+              ),
+            ),
+          ],
+        ),
+        if (_isTypedItem) ...[
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  key: const ValueKey('new-item-dont-save'),
+                  onTap: () => setState(() => _dontSave = !_dontSave),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _dontSave,
+                        onChanged: (value) =>
+                            setState(() => _dontSave = value ?? false),
+                      ),
+                      Flexible(
+                        child: Text(
+                          l10n.newItemDontSave,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              TextButton(
+                key: const ValueKey('new-item-more'),
+                onPressed: () => setState(() => _showMore = !_showMore),
+                child: Text(_showMore ? l10n.newItemLess : l10n.newItemMore),
+              ),
+            ],
+          ),
+          if (_showMore)
+            SegmentedButton<ProductKind>(
+              key: const ValueKey('new-item-kind'),
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(
+                    value: ProductKind.goods, label: Text(l10n.kindGoods)),
+                ButtonSegment(
+                    value: ProductKind.service,
+                    label: Text(l10n.kindService)),
+              ],
+              selected: {_kind},
+              onSelectionChanged: (selection) =>
+                  setState(() => _kind = selection.first),
+            ),
+        ],
+        if (sellable.length > 1 && (!_isTypedItem || _showMore)) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: _CurrencyPicker(
+              currencies: sellable,
+              selected: priceCurrency.code,
+              locale: locale,
+              // The typed number is kept and re-read in the new currency:
+              // the user is restating the price, not converting it.
+              onChanged: (code) => setState(() {
+                final decimals = ctx.require(code).decimalPlaces;
+                final dot = _priceText.indexOf('.');
+                if (dot >= 0 && _priceText.length - dot - 1 > decimals) {
+                  _priceText = decimals == 0
+                      ? _priceText.substring(0, dot)
+                      : _priceText.substring(0, dot + 1 + decimals);
+                }
+                _priceCurrencyCode = code;
+              }),
+            ),
+          ),
+        ],
+        if (!_isTypedItem)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              updatesProductPrice
+                  ? l10n.unitPriceUpdatesProduct
+                  : l10n.unitPriceThisSaleOnly,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.outline),
+            ),
+          ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.lineTotalLabel,
+                        style: theme.textTheme.bodySmall),
+                    if (priceCurrency.code != invoiceCurrency.code &&
+                        priceMinor != null)
+                      Text(
+                        formatMinor(
+                          priceMinor,
+                          decimals: priceCurrency.decimalPlaces,
+                          locale: locale,
+                          symbol: priceCurrency.code,
+                        ),
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.outline),
+                      ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  formatMinor(
+                    lineTotal,
+                    decimals: invoiceCurrency.decimalPlaces,
+                    locale: locale,
+                    symbol: invoiceCurrency.symbol.isEmpty
+                        ? invoiceCurrency.code
+                        : invoiceCurrency.symbol,
+                  ),
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final preset in kind == ProductKind.goods
+                ? const [250, 500, 1000, 2000]
+                : const [1000, 2000, 3000, 5000])
+              OutlinedButton(
+                key: ValueKey('qty-preset-$preset'),
+                onPressed: () => setState(() {
+                  _active = _Field.qty;
+                  _pristine[_Field.qty] = false;
+                  _qtyText = quantityToPlainText(preset);
+                }),
+                child: Text(formatQuantity(preset, locale: locale)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _Keypad(
+          locale: locale,
+          separatorEnabled: _maxDecimals > 0,
+          onDigit: _tapDigit,
+          onSeparator: _tapSeparator,
+          onBackspace: _backspace,
+          onClear: () => _setBuffer(''),
+        ),
+      ],
+    );
+  }
+}
+
+/// The units as one horizontally scrollable row of chips, the selected one
+/// highlighted. The last chip clears the unit (a line with nothing to write
+/// in the unit column of the invoice).
+class _UnitChips extends StatelessWidget {
+  const _UnitChips({
+    required this.units,
+    required this.selectedId,
+    required this.locale,
+    required this.noneLabel,
+    required this.onChanged,
+  });
+
+  final List<Unit> units;
+  final int? selectedId;
+  final String locale;
+  final String noneLabel;
+
+  /// Null = no unit.
+  final ValueChanged<Unit?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    // No fixed height: a large system font makes the chips taller and the row
+    // grows with them (the sheet itself scrolls).
+    return SingleChildScrollView(
+      key: const ValueKey('unit-chips'),
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(
+        children: [
+          for (final unit in units) ...[
+            ChoiceChip(
+              key: ValueKey('unit-chip-${unit.id}'),
+              label: Text(unit.nameFor(locale)),
+              selected: unit.id == selectedId,
+              onSelected: (_) => onChanged(unit),
+            ),
+            const SizedBox(width: 8),
+          ],
+          ChoiceChip(
+            key: const ValueKey('unit-chip-none'),
+            label: Text(noneLabel),
+            selected: selectedId == null,
+            onSelected: (_) => onChanged(null),
           ),
         ],
       ),
@@ -552,7 +682,14 @@ class _ValueField extends StatelessWidget {
                 ),
                 if (suffix != null) ...[
                   const SizedBox(width: 6),
-                  Text(suffix!, style: theme.textTheme.bodySmall),
+                  Flexible(
+                    child: Text(
+                      suffix!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -581,11 +718,18 @@ class _CurrencyPicker extends StatelessWidget {
     return DropdownButton<String>(
       value: currencies.any((c) => c.code == selected) ? selected : null,
       underline: const SizedBox.shrink(),
+      // The name of a currency plus the arrow is wider than a narrow phone at
+      // a large system font: the menu's rows ellipsize instead of overflowing.
+      isExpanded: true,
       items: [
         for (final currency in currencies)
           DropdownMenuItem(
             value: currency.code,
-            child: Text('${currency.code} · ${currency.nameFor(locale)}'),
+            child: Text(
+              '${currency.code} · ${currency.nameFor(locale)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
       ],
       onChanged: (code) {

@@ -290,6 +290,21 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final sellable = ref.watch(sellableCurrenciesProvider);
     final allCurrencies = ref.watch(currenciesProvider).value ?? const [];
 
+    // The keyboard is up — on this screen that means the seller is typing in
+    // the search box. On a small phone the favorites bar, the search box and
+    // the full totals panel together are then taller than what is left of the
+    // screen, and the Column overflowed ("BOTTOM OVERFLOWED BY 41 PIXELS").
+    // None of that is what the seller is looking at while typing, so the
+    // favorites bar goes away and the panel shrinks to a one-line total,
+    // leaving the results (or the cart) as the only flexible part.
+    //
+    // The inset is read HERE, above the Scaffold: the Scaffold hides it from
+    // its own body (that is how it makes room for the keyboard). Focus is
+    // deliberately not part of the test — the space is gone whenever the
+    // keyboard is up, including while a sheet with a field is open over this
+    // screen.
+    final typing = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.navSale),
@@ -315,7 +330,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       ),
       body: Column(
         children: [
-          _FavoritesBar(onTap: _tapProduct),
+          if (!typing) _FavoritesBar(onTap: _tapProduct),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
             child: TextField(
@@ -351,26 +366,29 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                     onAddNew: _startNewItem,
                   ),
           ),
-          _TotalsPanel(
-            totals: totals,
-            cart: cart,
-            locale: locale,
-            sellable: sellable,
-            saving: _saving,
-            onCurrencyChanged: (code) =>
-                ref.read(cartProvider.notifier).setInvoiceCurrency(code),
-            onUpdateRate: () async {
-              final base = _ctx?.baseCode;
-              if (base == null) return;
-              await openRatesQuickAction(
-                context,
-                baseCode: base,
-                currencies: allCurrencies,
-              );
-            },
-            onDiscount: _editDiscount,
-            onSave: _save,
-          ),
+          if (typing)
+            _CompactTotalBar(totals: totals, locale: locale)
+          else
+            _TotalsPanel(
+              totals: totals,
+              cart: cart,
+              locale: locale,
+              sellable: sellable,
+              saving: _saving,
+              onCurrencyChanged: (code) =>
+                  ref.read(cartProvider.notifier).setInvoiceCurrency(code),
+              onUpdateRate: () async {
+                final base = _ctx?.baseCode;
+                if (base == null) return;
+                await openRatesQuickAction(
+                  context,
+                  baseCode: base,
+                  currencies: allCurrencies,
+                );
+              },
+              onDiscount: _editDiscount,
+              onSave: _save,
+            ),
         ],
       ),
     );
@@ -390,9 +408,12 @@ class _FavoritesBar extends ConsumerWidget {
     final theme = Theme.of(context);
     final favorites = ref.watch(favoriteProductsProvider).value;
     final currencies = ref.watch(currencyContextProvider).value;
+    // The bar is one fixed-height row, so a large system font has to grow it
+    // — otherwise the name and the price inside a button overflow it.
+    final height = MediaQuery.textScalerOf(context).scale(96).clamp(96.0, 160.0);
 
     if (favorites == null) {
-      return const SizedBox(height: 96);
+      return SizedBox(height: height);
     }
     if (favorites.isEmpty) {
       return Padding(
@@ -414,7 +435,7 @@ class _FavoritesBar extends ConsumerWidget {
     }
 
     return SizedBox(
-      height: 96,
+      height: height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -648,21 +669,28 @@ class _CartList extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
     if (totals.isEmpty) {
+      // Scrollable and min-size: with the keyboard up at a large system font
+      // there is barely any room left here, and the empty-cart art overflowed
+      // it by a pixel.
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shopping_cart_outlined,
-                size: 56, color: theme.colorScheme.outline),
-            const SizedBox(height: 12),
-            Text(l10n.cartEmpty, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              l10n.cartEmptyHint,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline),
-            ),
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.shopping_cart_outlined,
+                  size: 56, color: theme.colorScheme.outline),
+              const SizedBox(height: 12),
+              Text(l10n.cartEmpty, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                l10n.cartEmptyHint,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.outline),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -795,6 +823,67 @@ class _CartList extends ConsumerWidget {
   }
 }
 
+/// The totals panel while the keyboard is up: item count and total on one
+/// line, nothing else. Save and the rest come back as soon as the keyboard
+/// closes (the panel below is the same data, unshrunk).
+class _CompactTotalBar extends StatelessWidget {
+  const _CompactTotalBar({required this.totals, required this.locale});
+
+  final CartTotals? totals;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final totals = this.totals;
+    if (totals == null) return const SizedBox.shrink();
+    final currency = totals.currency;
+
+    return Material(
+      elevation: 8,
+      color: theme.colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Text(
+                totals.isEmpty
+                    ? l10n.totalLabel
+                    : l10n.itemsCount(totals.lines.length),
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  formatMinor(
+                    totals.totalMinor,
+                    decimals: currency.decimalPlaces,
+                    locale: locale,
+                    symbol: currency.symbol.isEmpty
+                        ? currency.code
+                        : currency.symbol,
+                  ),
+                  key: const ValueKey('cart-total'),
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Invoice currency, rate shortcut, discount, the big total and Save.
 class _TotalsPanel extends ConsumerWidget {
   const _TotalsPanel({
@@ -865,7 +954,13 @@ class _TotalsPanel extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
+              // A Wrap, not a Row: at a large system font the rate shortcut
+              // is wider than what is left beside the currency picker, and it
+              // then takes a line of its own instead of overflowing.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
                 children: [
                   if (sellable.length > 1)
                     DropdownButton<String>(
@@ -887,7 +982,6 @@ class _TotalsPanel extends ConsumerWidget {
                   else
                     Text('${l10n.invoiceCurrency}: ${currency.code}',
                         style: theme.textTheme.bodySmall),
-                  const Spacer(),
                   if (focus != null)
                     TextButton.icon(
                       onPressed: onUpdateRate,
@@ -901,6 +995,8 @@ class _TotalsPanel extends ConsumerWidget {
                               formatRateValue(focus.rate, locale: locale),
                               ctx.baseCode,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelMedium,
                           ),
                           Text(
@@ -908,6 +1004,8 @@ class _TotalsPanel extends ConsumerWidget {
                                 ? l10n.rateNeverUpdated
                                 : DateFormat.yMd(locale).add_jm().format(
                                     focus.rateUpdatedAt!.toLocal()),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: focus.rateUpdatedAt == null
                                   ? theme.colorScheme.error
@@ -939,13 +1037,21 @@ class _TotalsPanel extends ConsumerWidget {
               if (discountEnabled && totals.isNotEmpty)
                 Row(
                   children: [
-                    TextButton.icon(
-                      onPressed: onDiscount,
-                      icon: const Icon(Icons.percent, size: 18),
-                      label: Text(totals.discountMinor == 0
-                          ? l10n.discountTitle
-                          : '${l10n.discountLabel} − '
-                              '${money(totals.discountMinor)}'),
+                    // Flexible: at a large system font the discount button's
+                    // own label is wider than the row.
+                    Flexible(
+                      child: TextButton.icon(
+                        onPressed: onDiscount,
+                        icon: const Icon(Icons.percent, size: 18),
+                        label: Text(
+                          totals.discountMinor == 0
+                              ? l10n.discountTitle
+                              : '${l10n.discountLabel} − '
+                                  '${money(totals.discountMinor)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
                     if (totals.discountMinor != 0)
                       IconButton(
@@ -960,8 +1066,11 @@ class _TotalsPanel extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(l10n.totalLabel, style: theme.textTheme.titleMedium),
-                  const Spacer(),
-                  Flexible(
+                  const SizedBox(width: 8),
+                  // One flexible child, not a Spacer plus a Flexible: two
+                  // flex children split the free space and the rounding of
+                  // that division overflowed the row by a fraction of a pixel.
+                  Expanded(
                     child: Text(
                       money(totals.totalMinor),
                       key: const ValueKey('cart-total'),

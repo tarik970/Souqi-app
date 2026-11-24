@@ -222,9 +222,18 @@ class _Row extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: style),
+          // The label gives way, the amount never does: at a large system
+          // font "Subtotal" plus the amount is wider than a narrow phone.
+          Expanded(
+            child: Text(
+              label,
+              style: style,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 12),
           Text(value, style: style),
         ],
       ),
