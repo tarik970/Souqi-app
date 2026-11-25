@@ -195,6 +195,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
             ),
           ),
+          const RecoveryMissingBanner(),
           const PinSettingsTile(),
           const AuditLogTile(),
           const Divider(),

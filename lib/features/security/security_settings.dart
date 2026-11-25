@@ -94,7 +94,7 @@ class PinSettingsTile extends ConsumerWidget {
         await container
             .read(auditRepositoryProvider)
             .log(AuditAction.pinRemove);
-        container.invalidate(pinIsSetProvider);
+        refreshPinState(container);
         say(l10n.pinRemoved);
     }
   }
@@ -110,6 +110,63 @@ class PinSettingsTile extends ConsumerWidget {
       subtitle: Text(isSet ? l10n.pinIsSet : l10n.pinNotSet),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _open(context, isSet),
+    );
+  }
+}
+
+/// Settings → Security, above the PIN tile: shown for as long as a PIN is set
+/// that has no recovery code — one chosen before recovery codes existed.
+/// "Create a recovery code now" asks for the PIN and then shows the code.
+/// Nothing at all once the PIN has one.
+class RecoveryMissingBanner extends ConsumerWidget {
+  const RecoveryMissingBanner({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    if (!(ref.watch(pinLacksRecoveryProvider).value ?? false)) {
+      return const SizedBox.shrink();
+    }
+    return Card(
+      key: const ValueKey('recovery-missing-banner'),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      color: theme.colorScheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.warning_amber,
+                  size: 20,
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${l10n.recoveryMissingTitle}. '
+                    '${l10n.recoveryMissingMessage}',
+                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            FilledButton.tonal(
+              key: const ValueKey('recovery-create-now'),
+              onPressed: () => showDialog<bool>(
+                context: context,
+                builder: (_) => const PinEntryDialog(createRecoveryCode: true),
+              ),
+              child: Text(l10n.recoveryCreateNow, textAlign: TextAlign.center),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

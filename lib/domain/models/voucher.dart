@@ -299,7 +299,16 @@ enum AuditAction {
   invoiceReprint('INVOICE_REPRINT'),
   pinSet('PIN_SET'),
   pinChange('PIN_CHANGE'),
-  pinRemove('PIN_REMOVE');
+  pinRemove('PIN_REMOVE'),
+
+  /// A recovery code made for the current PIN (which did not have one).
+  recoveryCodeCreate('RECOVERY_CODE_CREATE'),
+
+  /// A forgotten PIN replaced with the recovery code.
+  pinRecover('PIN_RECOVER'),
+
+  /// A forgotten PIN replaced with a developer-signed reset code (phase 5b).
+  pinResetSigned('PIN_RESET_SIGNED');
 
   const AuditAction(this.db);
 

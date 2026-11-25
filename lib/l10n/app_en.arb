@@ -818,7 +818,7 @@
     }
   },
   "pinConfirmAction": "Continue",
-  "pinForgetWarning": "There is no way to recover a forgotten PIN. Write it down somewhere safe.",
+  "pinForgetWarning": "Next you will get a recovery code: the only way back in if the PIN is forgotten.",
   "pinChangeAction": "Change PIN",
   "pinRemoveAction": "Remove PIN",
   "pinRemoveTitle": "Remove the PIN?",
@@ -1138,5 +1138,32 @@
 
   "batchSaveFailed": "The batch could not be saved. Nothing was added.",
 
-  "importPreviewTitle": "Preview (first 5)"
+  "importPreviewTitle": "Preview (first 5)",
+
+  "recoveryCodeTitle": "Recovery code",
+  "recoveryCodeIntro": "If the PIN is ever forgotten, this code is the only way to choose a new one. It is shown once, now. Print it or save it, and keep it away from this phone.",
+  "recoveryCodeSaved": "I saved it",
+  "recoveryPrint": "Print",
+  "recoveryShare": "Share",
+  "recoverySlipTitle": "PIN recovery code",
+  "recoverySlipHint": "Keep this safe. With this code the PIN can be reset.",
+  "pinForgot": "Forgot PIN?",
+  "recoveryEnterTitle": "Reset the PIN",
+  "recoveryEnterIntro": "Enter the recovery code you were given when the PIN was chosen.",
+  "recoveryEnterIntroSigned": "Enter the recovery code you were given when the PIN was chosen, or a reset code from the developer.",
+  "recoveryInvalid": "A recovery code has 12 letters and digits",
+  "recoveryWrong": "Wrong recovery code. {count, plural, =0{No attempts left} =1{1 attempt left} other{{count} attempts left}}",
+  "@recoveryWrong": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "recoveryRefused": "This code is not valid",
+  "auditPinRecover": "PIN reset with the recovery code",
+  "auditPinResetSigned": "PIN reset with a developer code",
+  "recoveryMissingTitle": "This PIN has no recovery code",
+  "recoveryMissingMessage": "If the PIN is forgotten there will be no way back in.",
+  "recoveryCreateNow": "Create a recovery code now",
+  "recoveryCreateArmed": "Enter the PIN. The recovery code is shown next.",
+  "auditRecoveryCodeCreate": "Recovery code created"
 }

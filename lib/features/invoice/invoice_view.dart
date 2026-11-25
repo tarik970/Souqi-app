@@ -824,3 +824,93 @@ class CodeSlipView extends StatelessWidget {
     );
   }
 }
+
+/// The PIN recovery code on a slip of paper, to be kept away from the phone:
+/// the shop name, what the code is, the code itself in the same large
+/// fixed-pitch block a card code gets (three groups of four), and the date.
+///
+/// Self-contained exactly like [InvoiceView]: it goes through the same
+/// off-screen capture. Worded in the INVOICE language, like everything else
+/// that comes out of the printer.
+class RecoverySlipView extends StatelessWidget {
+  const RecoverySlipView({
+    super.key,
+    required this.code,
+    required this.settings,
+    required this.printedAt,
+    this.padding = const EdgeInsets.symmetric(vertical: 8),
+  });
+
+  /// The recovery code, with or without its dashes.
+  final String code;
+  final InvoiceSettings settings;
+  final DateTime printedAt;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = settings;
+    final l10n = lookupAppLocalizations(Locale(s.language));
+    final base = s.baseFontSize.toDouble();
+    final body = TextStyle(
+      fontFamily: 'Tajawal',
+      fontSize: base,
+      height: 1.3,
+      color: _ink,
+      fontWeight: FontWeight.w500,
+      decoration: TextDecoration.none,
+    );
+    final bold = body.copyWith(fontWeight: FontWeight.w700);
+    final rule = _DashedRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
+    final shopName = s.shopName.trim();
+
+    return MediaQuery(
+      data: const MediaQueryData(),
+      child: Directionality(
+        textDirection: s.isRtl ? TextDirection.rtl : TextDirection.ltr,
+        child: ColoredBox(
+          color: _paper,
+          child: DefaultTextStyle(
+            style: body,
+            child: Padding(
+              padding: padding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (shopName.isNotEmpty)
+                    Text(
+                      shopName,
+                      textAlign: TextAlign.center,
+                      style: bold.copyWith(fontSize: base * 1.2, height: 1.25),
+                    ),
+                  rule,
+                  InvoiceCodeBlock(
+                    code: InvoiceCode(
+                      id: 0,
+                      productName: l10n.recoverySlipTitle,
+                      code: code,
+                      masked: '',
+                    ),
+                    base: base,
+                    language: s.language,
+                    showQr: false,
+                  ),
+                  rule,
+                  Text(l10n.recoverySlipHint, textAlign: TextAlign.center),
+                  SizedBox(height: base * 0.3),
+                  Text(
+                    formatInvoiceDateTime(printedAt, locale: s.language),
+                    textAlign: TextAlign.center,
+                    textDirection: TextDirection.ltr,
+                    style: TextStyle(fontSize: base * 0.8),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

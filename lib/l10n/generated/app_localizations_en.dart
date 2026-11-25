@@ -1556,7 +1556,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pinForgetWarning =>
-      'There is no way to recover a forgotten PIN. Write it down somewhere safe.';
+      'Next you will get a recovery code: the only way back in if the PIN is forgotten.';
 
   @override
   String get pinChangeAction => 'Change PIN';
@@ -2102,4 +2102,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importPreviewTitle => 'Preview (first 5)';
+
+  @override
+  String get recoveryCodeTitle => 'Recovery code';
+
+  @override
+  String get recoveryCodeIntro =>
+      'If the PIN is ever forgotten, this code is the only way to choose a new one. It is shown once, now. Print it or save it, and keep it away from this phone.';
+
+  @override
+  String get recoveryCodeSaved => 'I saved it';
+
+  @override
+  String get recoveryPrint => 'Print';
+
+  @override
+  String get recoveryShare => 'Share';
+
+  @override
+  String get recoverySlipTitle => 'PIN recovery code';
+
+  @override
+  String get recoverySlipHint =>
+      'Keep this safe. With this code the PIN can be reset.';
+
+  @override
+  String get pinForgot => 'Forgot PIN?';
+
+  @override
+  String get recoveryEnterTitle => 'Reset the PIN';
+
+  @override
+  String get recoveryEnterIntro =>
+      'Enter the recovery code you were given when the PIN was chosen.';
+
+  @override
+  String get recoveryEnterIntroSigned =>
+      'Enter the recovery code you were given when the PIN was chosen, or a reset code from the developer.';
+
+  @override
+  String get recoveryInvalid => 'A recovery code has 12 letters and digits';
+
+  @override
+  String recoveryWrong(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attempts left',
+      one: '1 attempt left',
+      zero: 'No attempts left',
+    );
+    return 'Wrong recovery code. $_temp0';
+  }
+
+  @override
+  String get recoveryRefused => 'This code is not valid';
+
+  @override
+  String get auditPinRecover => 'PIN reset with the recovery code';
+
+  @override
+  String get auditPinResetSigned => 'PIN reset with a developer code';
+
+  @override
+  String get recoveryMissingTitle => 'This PIN has no recovery code';
+
+  @override
+  String get recoveryMissingMessage =>
+      'If the PIN is forgotten there will be no way back in.';
+
+  @override
+  String get recoveryCreateNow => 'Create a recovery code now';
+
+  @override
+  String get recoveryCreateArmed =>
+      'Enter the PIN. The recovery code is shown next.';
+
+  @override
+  String get auditRecoveryCodeCreate => 'Recovery code created';
 }

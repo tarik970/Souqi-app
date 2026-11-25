@@ -74,6 +74,13 @@ final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(ref.watch(settingsRepositoryProvider)),
 );
 
+/// PHASE 5b HOOK: the check of a developer-signed, device-bound "PIN reset"
+/// code against the licensing public key — for a shop that lost both its PIN
+/// and its recovery code. Null until licensing exists: "Forgot PIN?" then
+/// takes the recovery code only. Phase 5b overrides this with its
+/// [SignedPinReset]; nothing else has to change.
+final signedPinResetProvider = Provider<SignedPinReset?>((ref) => null);
+
 final archiveRepositoryProvider = Provider<ArchiveRepository>(
   (ref) => ArchiveRepository(ref.watch(databaseProvider).db),
 );

@@ -2730,7 +2730,7 @@ abstract class AppLocalizations {
   /// No description provided for @pinForgetWarning.
   ///
   /// In en, this message translates to:
-  /// **'There is no way to recover a forgotten PIN. Write it down somewhere safe.'**
+  /// **'Next you will get a recovery code: the only way back in if the PIN is forgotten.'**
   String get pinForgetWarning;
 
   /// No description provided for @pinChangeAction.
@@ -3620,6 +3620,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview (first 5)'**
   String get importPreviewTitle;
+
+  /// No description provided for @recoveryCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code'**
+  String get recoveryCodeTitle;
+
+  /// No description provided for @recoveryCodeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'If the PIN is ever forgotten, this code is the only way to choose a new one. It is shown once, now. Print it or save it, and keep it away from this phone.'**
+  String get recoveryCodeIntro;
+
+  /// No description provided for @recoveryCodeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'I saved it'**
+  String get recoveryCodeSaved;
+
+  /// No description provided for @recoveryPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get recoveryPrint;
+
+  /// No description provided for @recoveryShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get recoveryShare;
+
+  /// No description provided for @recoverySlipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN recovery code'**
+  String get recoverySlipTitle;
+
+  /// No description provided for @recoverySlipHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this safe. With this code the PIN can be reset.'**
+  String get recoverySlipHint;
+
+  /// No description provided for @pinForgot.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot PIN?'**
+  String get pinForgot;
+
+  /// No description provided for @recoveryEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset the PIN'**
+  String get recoveryEnterTitle;
+
+  /// No description provided for @recoveryEnterIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the recovery code you were given when the PIN was chosen.'**
+  String get recoveryEnterIntro;
+
+  /// No description provided for @recoveryEnterIntroSigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the recovery code you were given when the PIN was chosen, or a reset code from the developer.'**
+  String get recoveryEnterIntroSigned;
+
+  /// No description provided for @recoveryInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'A recovery code has 12 letters and digits'**
+  String get recoveryInvalid;
+
+  /// No description provided for @recoveryWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong recovery code. {count, plural, =0{No attempts left} =1{1 attempt left} other{{count} attempts left}}'**
+  String recoveryWrong(int count);
+
+  /// No description provided for @recoveryRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'This code is not valid'**
+  String get recoveryRefused;
+
+  /// No description provided for @auditPinRecover.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN reset with the recovery code'**
+  String get auditPinRecover;
+
+  /// No description provided for @auditPinResetSigned.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN reset with a developer code'**
+  String get auditPinResetSigned;
+
+  /// No description provided for @recoveryMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This PIN has no recovery code'**
+  String get recoveryMissingTitle;
+
+  /// No description provided for @recoveryMissingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'If the PIN is forgotten there will be no way back in.'**
+  String get recoveryMissingMessage;
+
+  /// No description provided for @recoveryCreateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a recovery code now'**
+  String get recoveryCreateNow;
+
+  /// No description provided for @recoveryCreateArmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN. The recovery code is shown next.'**
+  String get recoveryCreateArmed;
+
+  /// No description provided for @auditRecoveryCodeCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code created'**
+  String get auditRecoveryCodeCreate;
 }
 
 class _AppLocalizationsDelegate

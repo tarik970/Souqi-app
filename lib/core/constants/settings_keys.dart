@@ -78,6 +78,20 @@ abstract final class SettingsKeys {
   static const pinFailedAttempts = 'pin_failed_attempts';
   static const pinLockedUntil = 'pin_locked_until';
 
+  /// The one-time recovery code made with every new PIN, stored like the PIN
+  /// itself: a salted hash, never the code. '' = none. Wrong recovery
+  /// attempts have their own counter and lock-out, with the PIN's rules.
+  static const pinRecoveryHash = 'pin_recovery_hash';
+  static const pinRecoverySalt = 'pin_recovery_salt'; // base64
+  static const pinRecoveryFailedAttempts = 'pin_recovery_failed_attempts';
+  static const pinRecoveryLockedUntil = 'pin_recovery_locked_until';
+
+  /// '1' once a PIN prompt has offered "create a recovery code now" to a PIN
+  /// that has none (one chosen before recovery codes existed). The offer on
+  /// the prompt is made once; the banner in the settings stays until a code
+  /// exists.
+  static const pinRecoveryOfferShown = 'pin_recovery_offer_shown';
+
   // Prepaid card codes on the invoice.
   /// Print a QR code of each sold card code under its digits.
   static const printCodeQr = 'print_code_qr';
@@ -142,6 +156,11 @@ abstract final class SettingsKeys {
     pinSalt: '',
     pinFailedAttempts: '0',
     pinLockedUntil: '0',
+    pinRecoveryHash: '',
+    pinRecoverySalt: '',
+    pinRecoveryFailedAttempts: '0',
+    pinRecoveryLockedUntil: '0',
+    pinRecoveryOfferShown: '0',
     printCodeQr: '0',
     codesOnSeparateSlips: '0',
     dueSoonDays: '3',

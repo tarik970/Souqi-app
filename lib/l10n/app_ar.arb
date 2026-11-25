@@ -465,7 +465,7 @@
   "pinWrong": "الرمز غير صحيح. {count, plural, =0{لا محاولات متبقية} =1{بقيت محاولة واحدة} =2{بقيت محاولتان} few{بقيت {count} محاولات} other{بقيت {count} محاولة}}",
   "pinLocked": "محاولات خاطئة كثيرة. حاول مجدداً بعد {time}.",
   "pinConfirmAction": "متابعة",
-  "pinForgetWarning": "لا يمكن استرجاع الرمز إذا نُسي. اكتبه في مكان آمن.",
+  "pinForgetWarning": "ستحصل بعد ذلك على رمز استرجاع، وهو الطريقة الوحيدة للدخول إذا نُسي رمز القفل.",
   "pinChangeAction": "تغيير الرمز",
   "pinRemoveAction": "إزالة الرمز",
   "pinRemoveTitle": "إزالة رمز القفل؟",
@@ -615,5 +615,27 @@
 
   "batchSaveFailed": "تعذّر حفظ الدفعة ولم يُضَف شيء.",
 
-  "importPreviewTitle": "معاينة (أول 5)"
+  "importPreviewTitle": "معاينة (أول 5)",
+
+  "recoveryCodeTitle": "رمز الاسترجاع",
+  "recoveryCodeIntro": "إذا نُسي رمز القفل فهذا الرمز هو الطريقة الوحيدة لاختيار رمز جديد. يظهر مرة واحدة فقط، الآن. اطبعه أو احفظه، وأبقِه بعيداً عن هذا الهاتف.",
+  "recoveryCodeSaved": "حفظتُه",
+  "recoveryPrint": "طباعة",
+  "recoveryShare": "مشاركة",
+  "recoverySlipTitle": "رمز استرجاع رمز القفل",
+  "recoverySlipHint": "احتفظ بهذا الرمز في مكان آمن. به يمكن إعادة تعيين رمز القفل.",
+  "pinForgot": "نسيت الرمز؟",
+  "recoveryEnterTitle": "إعادة تعيين رمز القفل",
+  "recoveryEnterIntro": "أدخل رمز الاسترجاع الذي حصلت عليه عند اختيار رمز القفل.",
+  "recoveryEnterIntroSigned": "أدخل رمز الاسترجاع الذي حصلت عليه عند اختيار رمز القفل، أو رمز إعادة التعيين من المطوّر.",
+  "recoveryInvalid": "رمز الاسترجاع مكوّن من 12 حرفاً ورقماً",
+  "recoveryWrong": "رمز الاسترجاع غير صحيح. {count, plural, =0{لا محاولات متبقية} =1{بقيت محاولة واحدة} =2{بقيت محاولتان} few{بقيت {count} محاولات} other{بقيت {count} محاولة}}",
+  "recoveryRefused": "هذا الرمز غير صالح",
+  "auditPinRecover": "إعادة تعيين رمز القفل برمز الاسترجاع",
+  "auditPinResetSigned": "إعادة تعيين رمز القفل برمز من المطوّر",
+  "recoveryMissingTitle": "رمز القفل هذا بلا رمز استرجاع",
+  "recoveryMissingMessage": "إذا نُسي رمز القفل فلن تكون هناك طريقة للدخول.",
+  "recoveryCreateNow": "إنشاء رمز استرجاع الآن",
+  "recoveryCreateArmed": "أدخل رمز القفل، وسيظهر رمز الاسترجاع بعده.",
+  "auditRecoveryCodeCreate": "إنشاء رمز استرجاع"
 }

@@ -1563,7 +1563,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pinForgetWarning =>
-      'لا يمكن استرجاع الرمز إذا نُسي. اكتبه في مكان آمن.';
+      'ستحصل بعد ذلك على رمز استرجاع، وهو الطريقة الوحيدة للدخول إذا نُسي رمز القفل.';
 
   @override
   String get pinChangeAction => 'تغيير الرمز';
@@ -2111,4 +2111,84 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get importPreviewTitle => 'معاينة (أول 5)';
+
+  @override
+  String get recoveryCodeTitle => 'رمز الاسترجاع';
+
+  @override
+  String get recoveryCodeIntro =>
+      'إذا نُسي رمز القفل فهذا الرمز هو الطريقة الوحيدة لاختيار رمز جديد. يظهر مرة واحدة فقط، الآن. اطبعه أو احفظه، وأبقِه بعيداً عن هذا الهاتف.';
+
+  @override
+  String get recoveryCodeSaved => 'حفظتُه';
+
+  @override
+  String get recoveryPrint => 'طباعة';
+
+  @override
+  String get recoveryShare => 'مشاركة';
+
+  @override
+  String get recoverySlipTitle => 'رمز استرجاع رمز القفل';
+
+  @override
+  String get recoverySlipHint =>
+      'احتفظ بهذا الرمز في مكان آمن. به يمكن إعادة تعيين رمز القفل.';
+
+  @override
+  String get pinForgot => 'نسيت الرمز؟';
+
+  @override
+  String get recoveryEnterTitle => 'إعادة تعيين رمز القفل';
+
+  @override
+  String get recoveryEnterIntro =>
+      'أدخل رمز الاسترجاع الذي حصلت عليه عند اختيار رمز القفل.';
+
+  @override
+  String get recoveryEnterIntroSigned =>
+      'أدخل رمز الاسترجاع الذي حصلت عليه عند اختيار رمز القفل، أو رمز إعادة التعيين من المطوّر.';
+
+  @override
+  String get recoveryInvalid => 'رمز الاسترجاع مكوّن من 12 حرفاً ورقماً';
+
+  @override
+  String recoveryWrong(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'بقيت $count محاولة',
+      few: 'بقيت $count محاولات',
+      two: 'بقيت محاولتان',
+      one: 'بقيت محاولة واحدة',
+      zero: 'لا محاولات متبقية',
+    );
+    return 'رمز الاسترجاع غير صحيح. $_temp0';
+  }
+
+  @override
+  String get recoveryRefused => 'هذا الرمز غير صالح';
+
+  @override
+  String get auditPinRecover => 'إعادة تعيين رمز القفل برمز الاسترجاع';
+
+  @override
+  String get auditPinResetSigned => 'إعادة تعيين رمز القفل برمز من المطوّر';
+
+  @override
+  String get recoveryMissingTitle => 'رمز القفل هذا بلا رمز استرجاع';
+
+  @override
+  String get recoveryMissingMessage =>
+      'إذا نُسي رمز القفل فلن تكون هناك طريقة للدخول.';
+
+  @override
+  String get recoveryCreateNow => 'إنشاء رمز استرجاع الآن';
+
+  @override
+  String get recoveryCreateArmed =>
+      'أدخل رمز القفل، وسيظهر رمز الاسترجاع بعده.';
+
+  @override
+  String get auditRecoveryCodeCreate => 'إنشاء رمز استرجاع';
 }

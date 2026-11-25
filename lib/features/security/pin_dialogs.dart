@@ -7,11 +7,25 @@ import '../../core/security/pin_hash.dart';
 import '../../data/repositories/pin_repository.dart';
 import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'pin_recovery.dart';
 
 /// Whether a PIN is set — for the settings tile.
 final pinIsSetProvider = FutureProvider<bool>(
   (ref) => ref.watch(pinRepositoryProvider).isSet(),
 );
+
+/// A PIN is set but has no recovery code (it was chosen before recovery
+/// codes existed) — for the banner in the settings.
+final pinLacksRecoveryProvider = FutureProvider<bool>(
+  (ref) => ref.watch(pinRepositoryProvider).lacksRecoveryCode(),
+);
+
+/// Call after the PIN or its recovery code was set, changed or removed.
+void refreshPinState(ProviderContainer container) {
+  container
+    ..invalidate(pinIsSetProvider)
+    ..invalidate(pinLacksRecoveryProvider);
+}
 
 /// The gate in front of every sensitive action: revealing a code, reprinting
 /// an invoice that carries codes, voiding, exporting, the audit log.
@@ -109,10 +123,27 @@ class _PinField extends StatelessWidget {
 
 /// Asks for the current PIN. Pops `true` when it is right; stays open on a
 /// wrong one, saying how many attempts are left or how long the lock lasts.
+///
+/// "Forgot PIN?" sits next to the title, in the part of the dialog that does
+/// not scroll: on a small phone with the keyboard up the content does, and
+/// the way back in must not be something to scroll for.
+///
+/// A PIN WITHOUT A RECOVERY CODE (one chosen before recovery codes existed)
+/// gets an offer here, once: "Create a recovery code now". Taking it turns
+/// this prompt into the confirmation — the PIN is entered as usual and the
+/// recovery code is shown before the dialog closes. [createRecoveryCode]
+/// opens the dialog with that already chosen (the banner in the settings).
 class PinEntryDialog extends ConsumerStatefulWidget {
-  const PinEntryDialog({super.key, this.reason});
+  const PinEntryDialog({
+    super.key,
+    this.reason,
+    this.createRecoveryCode = false,
+  });
 
   final String? reason;
+
+  /// Entering the PIN creates a recovery code for it and shows it.
+  final bool createRecoveryCode;
 
   @override
   ConsumerState<PinEntryDialog> createState() => _PinEntryDialogState();
@@ -123,10 +154,28 @@ class _PinEntryDialogState extends ConsumerState<PinEntryDialog> {
   String? _error;
   bool _checking = false;
 
+  /// This PIN has no recovery code and no prompt has offered one yet.
+  bool _offer = false;
+
+  /// The correct PIN will be followed by a new recovery code.
+  late bool _createRecovery = widget.createRecoveryCode;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.createRecoveryCode) _loadOffer();
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadOffer() async {
+    // Asking IS taking: the offer is made on one prompt only.
+    final offer = await ref.read(pinRepositoryProvider).takeRecoveryOffer();
+    if (offer && mounted) setState(() => _offer = true);
   }
 
   Future<void> _submit() async {
@@ -137,23 +186,39 @@ class _PinEntryDialogState extends ConsumerState<PinEntryDialog> {
       setState(() => _error = l10n.pinInvalid);
       return;
     }
-    final pins = ref.read(pinRepositoryProvider);
+    // Taken before the first await: the recovery code that may follow is
+    // shown and logged even if this dialog is gone by then.
+    final navigator = Navigator.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final pins = container.read(pinRepositoryProvider);
+    final createRecovery = _createRecovery;
     setState(() {
       _checking = true;
       _error = null;
     });
     final result = await pins.verify(pin);
-    if (!mounted) return;
     switch (result) {
       case PinCorrect():
-        Navigator.of(context).pop(true);
+        if (createRecovery) {
+          final code = await pins.issueRecoveryCode(pin);
+          if (code != null) {
+            await container
+                .read(auditRepositoryProvider)
+                .log(AuditAction.recoveryCodeCreate);
+            refreshPinState(container);
+            await showRecoveryCode(navigator, code);
+          }
+        }
+        if (mounted) Navigator.of(context).pop(true);
       case PinWrong(:final attemptsLeft):
+        if (!mounted) return;
         _controller.clear();
         setState(() {
           _checking = false;
           _error = l10n.pinWrong(attemptsLeft);
         });
       case PinLocked(:final until):
+        if (!mounted) return;
         _controller.clear();
         setState(() {
           _checking = false;
@@ -164,34 +229,97 @@ class _PinEntryDialogState extends ConsumerState<PinEntryDialog> {
     }
   }
 
+  /// "Forgot PIN?": the recovery code, then a new PIN. A PIN that was just
+  /// chosen that way counts as entered — the action that asked goes ahead.
+  Future<void> _forgot() async {
+    final navigator = Navigator.of(context);
+    final reset = await showDialog<bool>(
+      context: context,
+      builder: (_) => const PinRecoveryDialog(),
+    );
+    if (reset == true && mounted) navigator.pop(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final reason = widget.reason;
     return AlertDialog(
       key: const ValueKey('pin-entry-dialog'),
-      scrollable: true,
-      title: Text(l10n.pinEnterTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      // NOT `scrollable: true`: that would put the title — and "Forgot
+      // PIN?" beside it — into the scrolling part. The title stays put, the
+      // buttons stay put, and only the content between them scrolls.
+      //
+      // Tight paddings, and a title that is always ONE line (scaled down
+      // when a large system font makes it wider than the dialog): on a
+      // 360×640 phone with the keyboard up there are under 300 px for the
+      // whole dialog, and what the title and the buttons do not take is
+      // what is left for the PIN field.
+      titlePadding: const EdgeInsetsDirectional.fromSTEB(24, 16, 16, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      title: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
         children: [
-          if (reason != null && reason.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(reason),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(l10n.pinEnterTitle, maxLines: 1),
+          ),
+          // Beside the title when there is room, under it when there is
+          // not (a large system font) — never out of sight.
+          TextButton(
+            key: const ValueKey('pin-forgot'),
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
-          _PinField(
-            key: const ValueKey('pin-entry-field'),
-            controller: _controller,
-            label: l10n.pinLabel,
-            errorText: _error,
-            autofocus: true,
-            enabled: !_checking,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _submit(),
+            onPressed: _checking ? null : _forgot,
+            child: Text(l10n.pinForgot),
           ),
         ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (reason != null && reason.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(reason),
+              ),
+            if (_createRecovery)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  l10n.recoveryCreateArmed,
+                  key: const ValueKey('pin-recovery-armed'),
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
+              )
+            else if (_offer)
+              _RecoveryOffer(
+                onAccept: _checking
+                    ? null
+                    : () => setState(() => _createRecovery = true),
+              ),
+            _PinField(
+              key: const ValueKey('pin-entry-field'),
+              controller: _controller,
+              label: l10n.pinLabel,
+              errorText: _error,
+              autofocus: true,
+              enabled: !_checking,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -208,7 +336,59 @@ class _PinEntryDialogState extends ConsumerState<PinEntryDialog> {
   }
 }
 
-/// Chooses a PIN: typed twice, 4 to 6 digits. Saves it and pops `true`.
+/// The one-time offer on a PIN prompt: this PIN has no recovery code — make
+/// one now?
+class _RecoveryOffer extends StatelessWidget {
+  const _RecoveryOffer({required this.onAccept});
+
+  final VoidCallback? onAccept;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: DecoratedBox(
+        key: const ValueKey('pin-recovery-offer'),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${l10n.recoveryMissingTitle}. ${l10n.recoveryMissingMessage}',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onErrorContainer),
+              ),
+              TextButton(
+                key: const ValueKey('pin-recovery-create'),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: onAccept,
+                child: Text(
+                  l10n.recoveryCreateNow,
+                  textAlign: TextAlign.start,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Chooses a PIN: typed twice, 4 to 6 digits. Saves it, shows the recovery
+/// code that goes with the new PIN (once — see [RecoveryCodeDialog]) and
+/// pops `true`.
 ///
 /// [firstUse]: opened because an action needs a PIN and there is none yet,
 /// rather than from the settings.
@@ -217,6 +397,7 @@ class SetPinDialog extends ConsumerStatefulWidget {
     super.key,
     this.firstUse = false,
     this.isChange = false,
+    this.reset,
     this.reason,
   });
 
@@ -224,6 +405,10 @@ class SetPinDialog extends ConsumerStatefulWidget {
 
   /// Replaces an existing PIN (the old one was already asked for).
   final bool isChange;
+
+  /// Replaces a FORGOTTEN PIN: the code that authorises it. The repository
+  /// checks the code again when the new PIN is saved.
+  final PinReset? reset;
   final String? reason;
 
   @override
@@ -271,11 +456,45 @@ class _SetPinDialogState extends ConsumerState<SetPinDialog> {
       _pinError = null;
       _againError = null;
     });
-    await container.read(pinRepositoryProvider).set(pin);
-    await container.read(auditRepositoryProvider).log(
-          widget.isChange ? AuditAction.pinChange : AuditAction.pinSet,
-        );
-    container.invalidate(pinIsSetProvider);
+    // The recovery code is shown through the NAVIGATOR, not through this
+    // dialog: once the PIN is saved, the one chance to see its recovery code
+    // must not depend on this dialog still being on screen.
+    final navigator = Navigator.of(context);
+    final pins = container.read(pinRepositoryProvider);
+    final reset = widget.reset;
+    final String? recovery;
+    switch (reset?.kind) {
+      case null:
+        recovery = await pins.set(pin);
+      case PinResetKind.recoveryCode:
+        recovery = await pins.resetWithRecovery(code: reset!.code, newPin: pin);
+      case PinResetKind.signedCode:
+        final authority = container.read(signedPinResetProvider);
+        recovery = authority == null
+            ? null
+            : await pins.resetWithSignedCode(
+                code: reset!.code,
+                newPin: pin,
+                authority: authority,
+              );
+    }
+    if (recovery == null) {
+      // The code that opened this dialog was refused after all (used up, or
+      // locked out meanwhile): nothing was changed.
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _pinError = l10n.recoveryRefused;
+      });
+      return;
+    }
+    await container.read(auditRepositoryProvider).log(switch (reset?.kind) {
+          PinResetKind.recoveryCode => AuditAction.pinRecover,
+          PinResetKind.signedCode => AuditAction.pinResetSigned,
+          null => widget.isChange ? AuditAction.pinChange : AuditAction.pinSet,
+        });
+    refreshPinState(container);
+    await showRecoveryCode(navigator, recovery);
     if (mounted) Navigator.of(context).pop(true);
   }
 
@@ -286,7 +505,11 @@ class _SetPinDialogState extends ConsumerState<SetPinDialog> {
     return AlertDialog(
       key: const ValueKey('pin-set-dialog'),
       scrollable: true,
-      title: Text(widget.isChange ? l10n.pinChangeTitle : l10n.pinSetTitle),
+      title: Text(
+        widget.isChange || widget.reset != null
+            ? l10n.pinChangeTitle
+            : l10n.pinSetTitle,
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

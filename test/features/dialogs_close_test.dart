@@ -36,6 +36,7 @@ import 'package:souqi/features/sale/rates_sheet.dart';
 import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
 import 'package:souqi/features/security/pin_dialogs.dart';
+import 'package:souqi/features/security/pin_recovery.dart';
 import 'package:souqi/features/settings/renewal_settings.dart';
 import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/units/units_screen.dart';
@@ -869,6 +870,32 @@ void main() {
       keyboard: true,
     ),
     Closable(
+      '"Forgot PIN?" dialog, on top of the PIN dialog',
+      home: host((context) => requirePin(context)),
+      seed: withPin,
+      open: (tester) async {
+        await openHost(tester);
+        await tester.tap(find.byKey(const ValueKey('pin-forgot')));
+        await animated(tester);
+      },
+      shown: find.byType(PinRecoveryDialog),
+      button: find.descendant(
+        of: find.byType(PinRecoveryDialog),
+        matching: cancel,
+      ),
+      keyboard: true,
+      // The PIN dialog it was opened from is still there, and closes too.
+      after: (tester) async {
+        expect(find.byType(PinEntryDialog), findsOneWidget);
+        await tester.tap(cancel);
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        await animated(tester);
+        expect(find.byType(PinEntryDialog), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    ),
+    Closable(
       'choose-a-PIN dialog, when an action needs one',
       home: host((context) => requirePin(context)),
       open: openHost,
@@ -1051,6 +1078,49 @@ void main() {
       }
     });
   }
+
+  group('the recovery-code dialog', () {
+    // Not in the matrix above on purpose: it is the one dialog that must NOT
+    // close by a tap outside or by the back button — it holds the only copy
+    // of the way back in — and has no Cancel.
+    testWidgets('stays open until "I saved it", then closes cleanly',
+        (tester) async {
+      await pumpHome(
+        tester,
+        host((context) => showRecoveryCode(
+              Navigator.of(context),
+              '7K3M9QXA2B4D',
+            )),
+      );
+      final dialog = find.byType(RecoveryCodeDialog);
+      final proceed = find.byKey(const ValueKey('recovery-continue'));
+
+      for (var round = 0; round < 2; round++) {
+        await openHost(tester);
+        expect(dialog, findsOneWidget);
+        expect(find.text('7K3M'), findsOneWidget);
+
+        await tester.tapAt(const Offset(6, 6));
+        await animated(tester);
+        expect(dialog, findsOneWidget, reason: 'tap outside');
+        await tester.binding.handlePopRoute();
+        await animated(tester);
+        expect(dialog, findsOneWidget, reason: 'back button');
+        expect(tester.takeException(), isNull);
+        expect(tester.widget<FilledButton>(proceed).onPressed, isNull);
+
+        await tester.tap(find.byKey(const ValueKey('recovery-saved')));
+        await settle(tester);
+        await tester.tap(proceed);
+        // First frame of the exit animation, then the rest of it.
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        await animated(tester);
+        expect(dialog, findsNothing);
+        expect(tester.takeException(), isNull);
+      }
+    });
+  });
 
   group('the dialogs still do their job', () {
     final dialogSave = find.descendant(

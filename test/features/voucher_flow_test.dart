@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/core/platform/native_bridge.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/core/security/code_cipher.dart';
+import 'package:souqi/core/security/pin_hash.dart';
 import 'package:souqi/core/vouchers/code_import.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/invoice_repository.dart';
@@ -222,7 +224,11 @@ void main() {
           if (row['action'] != 'CODE_IMPORT') row,
       ];
 
-  Future<void> pump(WidgetTester tester, Widget home) async {
+  Future<void> pump(
+    WidgetTester tester,
+    Widget home, {
+    SignedPinReset? signedReset,
+  }) async {
     // A phone-shaped viewport, 600×1200 logical pixels.
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 2;
@@ -237,6 +243,8 @@ void main() {
           nativeBridgeProvider.overrideWithValue(bridge),
           secretKeyStoreProvider.overrideWithValue(keyStore),
           outputDirectoryProvider.overrideWithValue(() async => outputDir),
+          if (signedReset != null)
+            signedPinResetProvider.overrideWithValue(signedReset),
         ],
         child: MaterialApp(
           locale: const Locale('en'),
@@ -274,13 +282,41 @@ void main() {
   }
 
   /// Chooses [pin] in the "choose a PIN" dialog.
+  /// The recovery code on screen, without its grouping.
+  String shownRecoveryCode(WidgetTester tester) => [
+        for (final text in tester.widgetList<Text>(find.descendant(
+          of: find.byKey(const ValueKey('recovery-code')),
+          matching: find.byType(Text),
+        )))
+          text.data ?? '',
+      ].join();
+
+  /// Waits for the recovery code a new PIN ends on, ticks "I saved it" and
+  /// continues. Returns the code that was shown.
+  Future<String> passRecoveryCode(WidgetTester tester) async {
+    final dialog = find.byKey(const ValueKey('recovery-code-dialog'));
+    await until(tester, () => dialog.evaluate().isNotEmpty);
+    await animated(tester);
+    final code = shownRecoveryCode(tester);
+    await tester.tap(find.byKey(const ValueKey('recovery-saved')));
+    await settle(tester);
+    await tester.tap(find.byKey(const ValueKey('recovery-continue')));
+    await until(
+      tester,
+      () => dialog.evaluate().isEmpty && pinSetDialog.evaluate().isEmpty,
+    );
+    await animated(tester);
+    return code;
+  }
+
+  /// Chooses [pin] in the "choose a PIN" dialog and confirms that its
+  /// recovery code was saved.
   Future<void> choosePin(WidgetTester tester) async {
     expect(pinSetDialog, findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('pin-new-field')), pin);
     await tester.enterText(find.byKey(const ValueKey('pin-again-field')), pin);
     await tester.tap(find.byKey(const ValueKey('pin-set-save')));
-    await until(tester, () => pinSetDialog.evaluate().isEmpty);
-    await animated(tester);
+    await passRecoveryCode(tester);
   }
 
   /// Every piece of text currently built, in one string — to prove a code
@@ -1341,8 +1377,7 @@ void main() {
 
       await tester.enterText(again, '2580');
       await tester.tap(save);
-      await until(tester, () => pinSetDialog.evaluate().isEmpty);
-      await animated(tester);
+      await passRecoveryCode(tester);
       expect(find.text('A PIN is set'), findsOneWidget);
       expect(find.text('PIN saved'), findsOneWidget);
       expect(
@@ -1368,8 +1403,7 @@ void main() {
       await tester.enterText(
           find.byKey(const ValueKey('pin-again-field')), '135790');
       await tester.tap(find.byKey(const ValueKey('pin-set-save')));
-      await until(tester, () => pinSetDialog.evaluate().isEmpty);
-      await animated(tester);
+      await passRecoveryCode(tester);
       final pins = PinRepository(SettingsRepository(database.db));
       expect(await db(tester, () => pins.verify('135790')), isA<PinCorrect>());
 
@@ -1527,4 +1561,555 @@ void main() {
       expect(find.byKey(const ValueKey('stats-cards')), findsNothing);
     });
   });
+
+  group('PIN recovery', () {
+    final recoveryDialog = find.byKey(const ValueKey('recovery-code-dialog'));
+    final forgotDialog = find.byKey(const ValueKey('pin-recovery-dialog'));
+    final recoveryField = find.byKey(const ValueKey('recovery-field'));
+    final recoveryOk = find.byKey(const ValueKey('recovery-ok'));
+    final proceed = find.byKey(const ValueKey('recovery-continue'));
+    final settingsTile = find.byKey(const ValueKey('setting-pin'));
+
+    PinRepository repository() =>
+        PinRepository(SettingsRepository(database.db));
+
+    /// Sets the PIN through the repository and returns its recovery code.
+    Future<String> setPinWithCode(WidgetTester tester) =>
+        db(tester, () => repository().set(pin));
+
+    /// Opens Settings and chooses a PIN there, up to the recovery dialog.
+    Future<void> choosePinInSettings(WidgetTester tester) async {
+      await pump(tester, const SettingsScreen());
+      await tester.scrollUntilVisible(
+        settingsTile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await settle(tester, 4);
+      await tester.tap(settingsTile);
+      await animated(tester);
+      await tester.enterText(find.byKey(const ValueKey('pin-new-field')), pin);
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-again-field')), pin);
+      await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+      await until(tester, () => recoveryDialog.evaluate().isNotEmpty);
+      await animated(tester);
+    }
+
+    /// Opens the PIN dialog (from the card stock's code search) and taps
+    /// "Forgot PIN?".
+    Future<void> openForgot(
+      WidgetTester tester, {
+      SignedPinReset? signedReset,
+    }) async {
+      await pump(tester, const CardStockScreen(), signedReset: signedReset);
+      await tester.tap(find.byKey(const ValueKey('stock-lookup')));
+      await animated(tester);
+      expect(pinDialog, findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('pin-forgot')));
+      await animated(tester);
+      expect(forgotDialog, findsOneWidget);
+    }
+
+    Future<void> submitRecovery(WidgetTester tester, String code) async {
+      await tester.enterText(recoveryField, code);
+      await tester.tap(recoveryOk);
+      // The field is disabled while the code is being checked. Hashing
+      // takes real time: wait until that check is over, whichever way.
+      await tester.pump();
+      await until(
+        tester,
+        () =>
+            pinSetDialog.evaluate().isNotEmpty ||
+            (tester.widget<TextField>(recoveryField).enabled ?? true),
+      );
+      await animated(tester);
+    }
+
+    String? recoveryError(WidgetTester tester) =>
+        tester.widget<TextField>(recoveryField).decoration?.errorText;
+
+    /// A well-formed code that is certainly not [code].
+    String wrong(String code) =>
+        code.substring(0, 11) + (code.endsWith('0') ? '1' : '0');
+
+    testWidgets(
+        'a new PIN shows its recovery code once, and only "I saved it" '
+        'lets the user go on', (tester) async {
+      await choosePinInSettings(tester);
+
+      // Twelve Crockford characters in three groups of four.
+      final shown = shownRecoveryCode(tester);
+      expect(shown, matches(RegExp(r'^[0-9A-HJKMNP-TV-Z]{12}$')));
+      expect(
+        tester
+            .widgetList<Text>(find.descendant(
+              of: find.byKey(const ValueKey('recovery-code')),
+              matching: find.byType(Text),
+            ))
+            .map((text) => text.data!.length),
+        [4, 4, 4],
+      );
+      // It IS the code of the PIN that was just saved — and the database
+      // holds only its hash.
+      expect(await db(tester, () => repository().checkRecovery(shown)),
+          isA<PinCorrect>());
+      for (final row in await rows(tester, 'settings', orderBy: 'key')) {
+        expect('${row['value']}'.contains(shown), isFalse,
+            reason: '${row['key']}');
+      }
+
+      // No way on yet: Continue is off, and neither a tap outside nor the
+      // back button closes the only copy of the way back in.
+      expect(tester.widget<FilledButton>(proceed).onPressed, isNull);
+      await tester.tapAt(const Offset(6, 6));
+      await animated(tester);
+      expect(recoveryDialog, findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await animated(tester);
+      expect(recoveryDialog, findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(const ValueKey('recovery-saved')));
+      await settle(tester);
+      expect(tester.widget<FilledButton>(proceed).onPressed, isNotNull);
+      await tester.tap(proceed);
+      await until(tester, () => recoveryDialog.evaluate().isEmpty);
+      await animated(tester);
+
+      // Both dialogs are gone, the PIN is set, and the code is not shown
+      // anywhere again.
+      expect(pinSetDialog, findsNothing);
+      expect(find.text('A PIN is set'), findsOneWidget);
+      expect(allText(tester).contains(shown.substring(0, 4)), isFalse);
+      expect(
+        [for (final l in await audit(tester)) l['action']],
+        ['PIN_SET'],
+      );
+    });
+
+    testWidgets('the recovery code can be printed, shared and saved',
+        (tester) async {
+      await choosePinInSettings(tester);
+      final shown = shownRecoveryCode(tester);
+      final grouped = [
+        shown.substring(0, 4),
+        shown.substring(4, 8),
+        shown.substring(8),
+      ].join('-');
+      Text message() => tester
+          .widget<Text>(find.byKey(const ValueKey('recovery-message')));
+
+      await tester.tap(find.byKey(const ValueKey('recovery-print')));
+      await until(tester, () => bridge.printed.length == 1);
+      expect(bridge.printed.single.address, 'AA:BB:CC:DD:EE:FF');
+      expect(bridge.printed.single.bytes.length, greaterThan(1000));
+      expect(message().data, 'Sent to the printer');
+
+      await tester.tap(find.byKey(const ValueKey('recovery-share')));
+      await until(tester, () => bridge.shared.length == 1);
+      expect(bridge.shared.single.mimeType, 'text/plain');
+      final sharedText = File(bridge.shared.single.path).readAsStringSync();
+      expect(sharedText, contains(grouped));
+      expect(sharedText, contains('PIN recovery code'));
+
+      await tester.tap(find.byKey(const ValueKey('recovery-save')));
+      await until(tester, () => bridge.saved.length == 1);
+      await settle(tester);
+      expect(bridge.saved.single.fileName, 'souqi-pin-recovery-code.txt');
+      expect(message().data, contains('Download/Souqi/'));
+      // Saved to the phone: no second copy is left in the app's cache.
+      expect(File(bridge.saved.single.path).existsSync(), isFalse);
+
+      // The dialog is still there, waiting for "I saved it".
+      expect(recoveryDialog, findsOneWidget);
+      expect(tester.widget<FilledButton>(proceed).onPressed, isNull);
+    });
+
+    testWidgets('printing without a printer says why, inside the dialog',
+        (tester) async {
+      await db(tester, () async {
+        await database.db.delete('settings',
+            where: 'key = ?', whereArgs: [SettingsKeys.printerMac]);
+        return true;
+      });
+      await choosePinInSettings(tester);
+      await tester.tap(find.byKey(const ValueKey('recovery-print')));
+      await until(
+        tester,
+        () => find
+            .byKey(const ValueKey('recovery-message'))
+            .evaluate()
+            .isNotEmpty,
+      );
+      expect(bridge.printed, isEmpty);
+      expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('recovery-message')))
+            .data,
+        isNotEmpty,
+      );
+      expect(recoveryDialog, findsOneWidget);
+    });
+
+    testWidgets('changing the PIN gives a new recovery code', (tester) async {
+      final first = await setPinWithCode(tester);
+      await pump(tester, const SettingsScreen());
+      await tester.scrollUntilVisible(
+        settingsTile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await settle(tester, 4);
+      await tester.tap(settingsTile);
+      await animated(tester);
+      await tester.tap(find.byKey(const ValueKey('pin-option-change')));
+      await animated(tester);
+      await enterPin(tester, pin);
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-new-field')), '135790');
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-again-field')), '135790');
+      await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+      final second = await passRecoveryCode(tester);
+
+      expect(second, isNot(first));
+      expect(await db(tester, () => repository().checkRecovery(first)),
+          isA<PinWrong>());
+      expect(await db(tester, () => repository().checkRecovery(second)),
+          isA<PinCorrect>());
+    });
+
+    testWidgets(
+        'forgot PIN: the recovery code sets a new PIN and gives a new code',
+        (tester) async {
+      final oldCode = await setPinWithCode(tester);
+      await openForgot(tester);
+      expect(
+        find.text('Enter the recovery code you were given when the PIN was '
+            'chosen.'),
+        findsOneWidget,
+      );
+
+      // Not a recovery code at all: said without counting an attempt.
+      await tester.enterText(recoveryField, 'abc');
+      await tester.tap(recoveryOk);
+      await settle(tester);
+      expect(recoveryError(tester), 'A recovery code has 12 letters and digits');
+
+      // Well-formed but wrong: one attempt gone.
+      await submitRecovery(tester, wrong(oldCode));
+      expect(recoveryError(tester), 'Wrong recovery code. 4 attempts left');
+      expect(pinSetDialog, findsNothing);
+
+      // The right code, typed the way people type: lower case, with dashes.
+      final typed = [
+        oldCode.substring(0, 4),
+        oldCode.substring(4, 8),
+        oldCode.substring(8),
+      ].join('-').toLowerCase();
+      await submitRecovery(tester, typed);
+      expect(pinSetDialog, findsOneWidget);
+      expect(find.text('New PIN'), findsOneWidget);
+
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-new-field')), '135790');
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-again-field')), '135790');
+      await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+      final newCode = await passRecoveryCode(tester);
+      await animated(tester);
+
+      // Every dialog is gone and the action that asked for the PIN went
+      // ahead: a PIN just chosen with the recovery code counts as entered.
+      expect(forgotDialog, findsNothing);
+      expect(pinDialog, findsNothing);
+      expect(find.byKey(const ValueKey('lookup-field')), findsOneWidget);
+
+      expect(newCode, isNot(oldCode));
+      final pins = repository();
+      expect(await db(tester, () => pins.verify('135790')), isA<PinCorrect>());
+      expect(await db(tester, () => pins.verify(pin)), isA<PinWrong>());
+      // The old code stopped working; the new one works.
+      expect(await db(tester, () => pins.checkRecovery(oldCode)),
+          isA<PinWrong>());
+      expect(await db(tester, () => pins.checkRecovery(newCode)),
+          isA<PinCorrect>());
+
+      final log = await audit(tester);
+      expect([for (final l in log) l['action']], ['PIN_RECOVER']);
+      expect('${log.single['details']}'.contains(oldCode), isFalse);
+    });
+
+    testWidgets('backing out of the new PIN leaves everything as it was',
+        (tester) async {
+      final code = await setPinWithCode(tester);
+      await openForgot(tester);
+      await submitRecovery(tester, code);
+      expect(pinSetDialog, findsOneWidget);
+      await tester.tap(find.descendant(
+        of: pinSetDialog,
+        matching: find.text('Cancel'),
+      ));
+      await animated(tester);
+
+      // Back on "Forgot PIN?"; the PIN and its code are untouched.
+      expect(forgotDialog, findsOneWidget);
+      final pins = repository();
+      expect(await db(tester, () => pins.verify(pin)), isA<PinCorrect>());
+      expect(await db(tester, () => pins.checkRecovery(code)),
+          isA<PinCorrect>());
+      expect(await audit(tester), isEmpty);
+    });
+
+    testWidgets('five wrong recovery codes lock it, like the PIN',
+        (tester) async {
+      final code = await setPinWithCode(tester);
+      await openForgot(tester);
+      for (var left = 4; left >= 1; left--) {
+        await submitRecovery(tester, wrong(code));
+        expect(recoveryError(tester), contains('$left attempt'));
+      }
+      await submitRecovery(tester, wrong(code));
+      expect(recoveryError(tester), contains('Too many wrong attempts'));
+
+      // Even the right code is refused while the lock lasts…
+      await submitRecovery(tester, code);
+      expect(recoveryError(tester), contains('Too many wrong attempts'));
+      expect(pinSetDialog, findsNothing);
+      // …and the PIN itself was not touched by any of it.
+      expect(await db(tester, () => repository().verify(pin)),
+          isA<PinCorrect>());
+    });
+
+    testWidgets('phase 5b hook: a developer reset code is accepted when a '
+        'verifier is installed', (tester) async {
+      final oldCode = await setPinWithCode(tester);
+      final authority = _FakeSignedReset({'SOUQI-RESET-DEVICE42-SIGNATURE'});
+      await openForgot(tester, signedReset: authority);
+      expect(find.textContaining('reset code from the developer'),
+          findsOneWidget);
+
+      await submitRecovery(tester, 'FORGED-CODE');
+      expect(recoveryError(tester), 'This code is not valid');
+
+      await submitRecovery(tester, 'SOUQI-RESET-DEVICE42-SIGNATURE');
+      expect(pinSetDialog, findsOneWidget);
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-new-field')), '4321');
+      await tester.enterText(
+          find.byKey(const ValueKey('pin-again-field')), '4321');
+      await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+      final newCode = await passRecoveryCode(tester);
+      await animated(tester);
+
+      final pins = repository();
+      expect(await db(tester, () => pins.verify('4321')), isA<PinCorrect>());
+      expect(await db(tester, () => pins.checkRecovery(oldCode)),
+          isA<PinWrong>());
+      expect(await db(tester, () => pins.checkRecovery(newCode)),
+          isA<PinCorrect>());
+      expect(authority.consumed, ['SOUQI-RESET-DEVICE42-SIGNATURE']);
+      expect(
+        [for (final l in await audit(tester)) l['action']],
+        ['PIN_RESET_SIGNED'],
+      );
+    });
+
+    group('a PIN without a recovery code (chosen on an older build)', () {
+      final banner = find.byKey(const ValueKey('recovery-missing-banner'));
+      final offer = find.byKey(const ValueKey('pin-recovery-offer'));
+      final armed = find.byKey(const ValueKey('pin-recovery-armed'));
+
+      /// As phase 4c wrote it: the PIN's hash and salt, nothing else.
+      Future<void> legacyPin(WidgetTester tester) => db(tester, () async {
+            final salt = newPinSalt();
+            await SettingsRepository(database.db).setMany({
+              SettingsKeys.pinSalt: base64Encode(salt),
+              SettingsKeys.pinHash: hashPin(pin, salt),
+            });
+            return true;
+          });
+
+      Future<void> openSettings(WidgetTester tester) async {
+        await pump(tester, const SettingsScreen());
+        await tester.scrollUntilVisible(
+          settingsTile,
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await settle(tester, 4);
+      }
+
+      testWidgets('settings banner: confirm the PIN, get the recovery code',
+          (tester) async {
+        await legacyPin(tester);
+        await openSettings(tester);
+        expect(banner, findsOneWidget);
+        expect(find.textContaining('This PIN has no recovery code'),
+            findsOneWidget);
+        // Above the PIN tile.
+        expect(tester.getTopLeft(banner).dy,
+            lessThan(tester.getTopLeft(settingsTile).dy));
+
+        await tester.tap(find.byKey(const ValueKey('recovery-create-now')));
+        await animated(tester);
+        expect(pinDialog, findsOneWidget);
+        expect(armed, findsOneWidget);
+
+        // A wrong PIN creates nothing.
+        await enterPin(tester, '0000');
+        expect(find.byKey(const ValueKey('recovery-code-dialog')),
+            findsNothing);
+        expect(await db(tester, () => repository().lacksRecoveryCode()),
+            isTrue);
+
+        // The right one: the recovery dialog, once, with "I saved it".
+        await tester.enterText(
+            find.byKey(const ValueKey('pin-entry-field')), pin);
+        await tester.tap(find.byKey(const ValueKey('pin-entry-ok')));
+        final code = await passRecoveryCode(tester);
+        await until(tester, () => pinDialog.evaluate().isEmpty);
+        await animated(tester);
+
+        expect(code, matches(RegExp(r'^[0-9A-HJKMNP-TV-Z]{12}$')));
+        final pins = repository();
+        expect(await db(tester, () => pins.checkRecovery(code)),
+            isA<PinCorrect>());
+        // The PIN itself did not change.
+        expect(await db(tester, () => pins.verify(pin)), isA<PinCorrect>());
+        // The banner is gone for good, and it is in the audit log.
+        expect(banner, findsNothing);
+        expect(
+          [for (final l in await audit(tester)) l['action']],
+          ['RECOVERY_CODE_CREATE'],
+        );
+        await openSettings(tester);
+        expect(banner, findsNothing);
+      });
+
+      testWidgets('backing out of the PIN leaves the banner where it is',
+          (tester) async {
+        await legacyPin(tester);
+        await openSettings(tester);
+        await tester.tap(find.byKey(const ValueKey('recovery-create-now')));
+        await animated(tester);
+        await tester.tap(find.text('Cancel'));
+        await animated(tester);
+        expect(banner, findsOneWidget);
+        expect(await db(tester, () => repository().lacksRecoveryCode()),
+            isTrue);
+        expect(await audit(tester), isEmpty);
+      });
+
+      testWidgets(
+          'the next PIN prompt offers it: accepted, the PIN is entered as '
+          'usual and the code is shown before the action goes on',
+          (tester) async {
+        await legacyPin(tester);
+        await pump(tester, const CardStockScreen());
+        await tester.tap(find.byKey(const ValueKey('stock-lookup')));
+        await animated(tester);
+        expect(offer, findsOneWidget);
+        expect(armed, findsNothing);
+
+        await tester.tap(find.byKey(const ValueKey('pin-recovery-create')));
+        await settle(tester);
+        expect(offer, findsNothing);
+        expect(armed, findsOneWidget);
+
+        await tester.enterText(
+            find.byKey(const ValueKey('pin-entry-field')), pin);
+        await tester.tap(find.byKey(const ValueKey('pin-entry-ok')));
+        final code = await passRecoveryCode(tester);
+        await until(tester, () => pinDialog.evaluate().isEmpty);
+        await animated(tester);
+
+        // The action that asked for the PIN went ahead.
+        expect(find.byKey(const ValueKey('lookup-field')), findsOneWidget);
+        expect(await db(tester, () => repository().checkRecovery(code)),
+            isA<PinCorrect>());
+        expect(
+          [for (final l in await audit(tester)) l['action']],
+          ['RECOVERY_CODE_CREATE'],
+        );
+      });
+
+      testWidgets(
+          'the offer is made on ONE prompt; ignored, the PIN works as before '
+          'and only the settings keep reminding', (tester) async {
+        await legacyPin(tester);
+        await pump(tester, const CardStockScreen());
+        final lookup = find.byKey(const ValueKey('stock-lookup'));
+
+        // First prompt: the offer, not taken. The PIN alone still opens.
+        await tester.tap(lookup);
+        await animated(tester);
+        expect(offer, findsOneWidget);
+        await enterPin(tester, pin);
+        expect(find.byKey(const ValueKey('recovery-code-dialog')),
+            findsNothing);
+        expect(find.byKey(const ValueKey('lookup-field')), findsOneWidget);
+
+        // Every prompt after it is as short as it always was.
+        await pump(tester, const CardStockScreen());
+        await tester.tap(lookup);
+        await animated(tester);
+        expect(pinDialog, findsOneWidget);
+        expect(offer, findsNothing);
+        await tester.tap(find.text('Cancel'));
+        await animated(tester);
+
+        await openSettings(tester);
+        expect(banner, findsOneWidget);
+      });
+
+      testWidgets('a PIN that has a recovery code sees none of this',
+          (tester) async {
+        await setPinWithCode(tester);
+        await openSettings(tester);
+        expect(banner, findsNothing);
+
+        await pump(tester, const CardStockScreen());
+        await tester.tap(find.byKey(const ValueKey('stock-lookup')));
+        await animated(tester);
+        expect(pinDialog, findsOneWidget);
+        expect(offer, findsNothing);
+        expect(armed, findsNothing);
+      });
+
+      testWidgets('no PIN at all: no banner', (tester) async {
+        await openSettings(tester);
+        expect(banner, findsNothing);
+      });
+    });
+
+    testWidgets('without a verifier only a recovery code is taken',
+        (tester) async {
+      await setPinWithCode(tester);
+      await openForgot(tester);
+      await tester.enterText(recoveryField, 'SOUQI-RESET-DEVICE42-SIGNATURE');
+      await tester.tap(recoveryOk);
+      await settle(tester);
+      expect(recoveryError(tester), 'A recovery code has 12 letters and digits');
+    });
+  });
+}
+
+/// Stands in for phase 5b's signature check: accepts the codes it was given,
+/// each once.
+class _FakeSignedReset implements SignedPinReset {
+  _FakeSignedReset(this.valid);
+
+  final Set<String> valid;
+  final List<String> consumed = [];
+
+  @override
+  Future<bool> verify(String code) async => valid.contains(code);
+
+  @override
+  Future<void> consume(String code) async {
+    valid.remove(code);
+    consumed.add(code);
+  }
 }

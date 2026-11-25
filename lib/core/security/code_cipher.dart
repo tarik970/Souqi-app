@@ -64,6 +64,12 @@ class CodeCipher {
   CodeCipher(this._store, {Random? random}) : _random = random ?? Random.secure();
 
   /// The Keystore entry: 64 random bytes, base64 — 32 for AES, 32 for HMAC.
+  ///
+  /// PHASE 5 (backup / restore): a backup must carry this entry AS A WHOLE,
+  /// re-encrypted with the backup password, and a restore must write it back
+  /// before the database is used. With only the AES half the codes decrypt
+  /// but every lookup hash stops matching; with neither, the codes of the
+  /// restored database are unreadable. See PHASE 5 NOTES in the rule file.
   static const String keyName = 'souqi.voucher_keys.v1';
 
   /// First byte of every stored blob, so the format can change later without

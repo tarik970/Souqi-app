@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -5,6 +7,7 @@ import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/core/security/code_cipher.dart';
+import 'package:souqi/core/security/pin_hash.dart';
 import 'package:souqi/core/utils/due_dates.dart';
 import 'package:souqi/core/vouchers/code_import.dart';
 import 'package:souqi/data/db/app_database.dart';
@@ -40,6 +43,7 @@ import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
 import 'package:souqi/features/security/audit_log_screen.dart';
 import 'package:souqi/features/security/pin_dialogs.dart';
+import 'package:souqi/features/security/pin_recovery.dart';
 import 'package:souqi/features/settings/renewal_settings.dart';
 import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/setup/setup_screen.dart';
@@ -1315,17 +1319,87 @@ void main() {
         await tester.enterText(
             find.byKey(const ValueKey('pin-again-field')), '2580');
         await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+
+        // The new PIN ends on its recovery code: the code, three buttons, a
+        // message and the "I saved it" box, with the keyboard still up for
+        // a moment and then without it.
+        final recovery = find.byType(RecoveryCodeDialog);
+        for (var i = 0; i < 200 && recovery.evaluate().isEmpty; i++) {
+          await settle(tester, 2);
+        }
+        await settle(tester, 28);
+        expect(recovery, findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await keyboardDown(tester);
+        // No printer is set up: the longest message the dialog shows.
+        final print = find.byKey(const ValueKey('recovery-print'));
+        await tester.ensureVisible(print);
+        await settle(tester, 4);
+        await tester.tap(print);
+        final message = find.byKey(const ValueKey('recovery-message'),
+            skipOffstage: false);
+        for (var i = 0; i < 200 && message.evaluate().isEmpty; i++) {
+          await settle(tester, 2);
+        }
+        expect(message, findsOneWidget);
+        expect(tester.takeException(), isNull);
+        final saved = find.byKey(const ValueKey('recovery-saved'));
+        await tester.ensureVisible(saved);
+        await settle(tester, 4);
+        await tester.tap(saved);
+        await settle(tester);
+        await tester.tap(find.byKey(const ValueKey('recovery-continue')));
         for (var i = 0;
             i < 200 && find.byType(SetPinDialog).evaluate().isNotEmpty;
             i++) {
           await settle(tester, 2);
         }
-        await keyboardDown(tester);
+        await settle(tester, 28);
+        expect(tester.takeException(), isNull);
 
-        // Now it is set: the entry dialog, with a wrong attempt's message.
+        // Now it is set: "Forgot PIN?" with a wrong code's message…
         await openHost(tester);
         expect(find.byType(PinEntryDialog), findsOneWidget);
         await keyboardUp(tester);
+        // "Forgot PIN?" is beside the title, in the part of the dialog that
+        // does not scroll: on THIS phone, at THIS font and with the keyboard
+        // up it is on screen, above the keyboard, and takes the tap as it is
+        // — nothing is scrolled to reach it.
+        final forgot = find.byKey(const ValueKey('pin-forgot'));
+        expect(forgot.hitTestable(), findsOneWidget);
+        final forgotRect = tester.getRect(forgot);
+        expect(forgotRect.top, greaterThanOrEqualTo(0));
+        expect(forgotRect.bottom,
+            lessThanOrEqualTo(phone.height - keyboardInset));
+        expect(forgotRect.left, greaterThanOrEqualTo(0));
+        expect(forgotRect.right, lessThanOrEqualTo(phone.width));
+        await tester.tap(forgot);
+        await settle(tester, 28);
+        expect(find.byType(PinRecoveryDialog), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.enterText(
+            find.byKey(const ValueKey('recovery-field')), '0000-0000-0000');
+        await tester.tap(find.byKey(const ValueKey('recovery-ok')));
+        for (var i = 0;
+            i < 200 &&
+                tester
+                        .widget<TextField>(
+                            find.byKey(const ValueKey('recovery-field')))
+                        .decoration
+                        ?.errorText ==
+                    null;
+            i++) {
+          await settle(tester, 2);
+        }
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.descendant(
+          of: find.byType(PinRecoveryDialog),
+          matching: find.byType(TextButton),
+        ));
+        await settle(tester, 28);
+
+        // …and the entry dialog itself, with a wrong attempt's message.
+        expect(find.byType(PinEntryDialog), findsOneWidget);
         await tester.enterText(
             find.byKey(const ValueKey('pin-entry-field')), '0000');
         await tester.tap(find.byKey(const ValueKey('pin-entry-ok')));
@@ -1343,6 +1417,67 @@ void main() {
           await settle(tester, 2);
         }
         expect(tester.takeException(), isNull);
+        await keyboardDown(tester);
+      });
+
+      testWidgets(
+          'a PIN without a recovery code: the settings banner and the '
+          'offer on the PIN prompt fit ($locale)', (tester) async {
+        // A PIN as phase 4c wrote it: hash and salt, no recovery code.
+        await db(tester, () async {
+          final salt = newPinSalt();
+          await SettingsRepository(database.db).setMany({
+            SettingsKeys.pinSalt: base64Encode(salt),
+            SettingsKeys.pinHash: hashPin('2580', salt),
+          });
+          return true;
+        });
+
+        await pumpPhone(tester, const SettingsScreen(), locale: locale);
+        final banner = find.byKey(const ValueKey('recovery-missing-banner'));
+        // To the PIN tile first: the banner above it reads the database when
+        // it is first built, which only completes in settle()'s real async.
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('setting-pin')),
+          120,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await settle(tester, 12);
+        await tester.ensureVisible(banner);
+        await settle(tester, 4);
+        expect(banner, findsOneWidget);
+        expect(tester.takeException(), isNull);
+        final create = find.byKey(const ValueKey('recovery-create-now'));
+        await tester.ensureVisible(create);
+        await settle(tester, 4);
+        await tester.tap(create);
+        await settle(tester, 28);
+        expect(find.byKey(const ValueKey('pin-recovery-armed')),
+            findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await keyboardUp(tester);
+        await keyboardDown(tester);
+
+        // The offer on a prompt, with a reason above it and the keyboard up:
+        // "Forgot PIN?" is still on screen.
+        await pumpPhone(
+          tester,
+          host((context) => requirePin(
+                context,
+                reason: AppLocalizations.of(context).pinReasonReprint,
+              )),
+          locale: locale,
+        );
+        await openHost(tester);
+        expect(
+          find.byKey(const ValueKey('pin-recovery-offer'), skipOffstage: false),
+          findsOneWidget,
+        );
+        await keyboardUp(tester);
+        final forgot = find.byKey(const ValueKey('pin-forgot'));
+        expect(forgot.hitTestable(), findsOneWidget);
+        expect(tester.getRect(forgot).bottom,
+            lessThanOrEqualTo(phone.height - keyboardInset));
         await keyboardDown(tester);
       });
 
@@ -1635,6 +1770,38 @@ void main() {
         unreadable: true,
       ),
     ];
+
+    for (final language in ['en', 'ar']) {
+      for (final dots in [576, 384, 280]) {
+        testWidgets('the printed recovery slip fits $dots dots ($language)',
+            (tester) async {
+          tester.view.devicePixelRatio = 1;
+          tester.view.physicalSize = Size(dots.toDouble(), 4000);
+          addTearDown(tester.view.reset);
+          await tester.pumpWidget(
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: SingleChildScrollView(
+                child: SizedBox(
+                  width: dots.toDouble(),
+                  child: RecoverySlipView(
+                    code: 'WWWWMMMMWXYZ',
+                    settings: InvoiceSettings(
+                      language: language,
+                      shopName: 'Al-Baraka Telecom',
+                    ),
+                    printedAt: DateTime(2026, 11, 26, 14, 5),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          expect(find.byType(InvoiceCodeBlock), findsOneWidget);
+        });
+      }
+    }
 
     for (final language in ['en', 'ar']) {
       for (final dots in [576, 384, 280]) {

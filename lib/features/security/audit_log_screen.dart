@@ -160,6 +160,9 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.pinSet => l10n.auditPinSet,
       AuditAction.pinChange => l10n.auditPinChange,
       AuditAction.pinRemove => l10n.auditPinRemove,
+      AuditAction.recoveryCodeCreate => l10n.auditRecoveryCodeCreate,
+      AuditAction.pinRecover => l10n.auditPinRecover,
+      AuditAction.pinResetSigned => l10n.auditPinResetSigned,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -178,6 +181,8 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
       AuditAction.pinChange ||
       AuditAction.pinRemove =>
         Icons.lock_outline,
+      AuditAction.recoveryCodeCreate => Icons.key_outlined,
+      AuditAction.pinRecover || AuditAction.pinResetSigned => Icons.lock_reset,
       null => Icons.info_outline,
     };
 

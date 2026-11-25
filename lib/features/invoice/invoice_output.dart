@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' show Locale;
@@ -28,6 +29,7 @@ const double sharePixelRatio = 2;
 
 const _pngMime = 'image/png';
 const _pdfMime = 'application/pdf';
+const _textMime = 'text/plain';
 
 /// Where share/save files are staged before they leave the app. Inside the
 /// app's cache, under the folder exposed by the FileProvider
@@ -243,6 +245,70 @@ class InvoiceOutput {
     }
     if (!status.enabled) {
       throw const OutputException(OutputFailure.bluetoothOff);
+    }
+  }
+
+  // ---- PIN recovery code -----------------------------------------------
+
+  /// Prints the PIN recovery [code] on a slip of its own: large, in fours,
+  /// with a line saying what it is for. Same checks and failures as
+  /// [printInvoice].
+  Future<void> printRecoveryCode(String code) async {
+    final c = await _context();
+    final address = c.settings.printerAddress;
+    if (address == null || address.isEmpty) {
+      throw const OutputException(OutputFailure.noPrinterSelected);
+    }
+    await ensureBluetoothReady();
+    final image = await captureWidget(
+      RecoverySlipView(
+        code: code,
+        settings: c.settings,
+        printedAt: DateTime.now(),
+      ),
+      logicalWidth: c.settings.printableDots,
+    );
+    await _bridge.printBytes(
+      address,
+      buildRasterJob(
+        toMonochrome(image),
+        feedLines: c.settings.feedLines < minSlipFeedLines
+            ? minSlipFeedLines
+            : c.settings.feedLines,
+        cut: c.settings.cutPaper,
+      ),
+    );
+  }
+
+  /// Hands a small UTF-8 text file to the share sheet. The staged copy has
+  /// to outlive the sheet; the launch housekeeping removes it within a day.
+  Future<void> shareTextFile({
+    required String fileName,
+    required String text,
+  }) async {
+    final file = await _stage(fileName, Uint8List.fromList(utf8.encode(text)));
+    await _bridge.shareFile(filePath: file.path, mimeType: _textMime);
+  }
+
+  /// Saves a small UTF-8 text file to Downloads/Souqi and returns the path
+  /// to show the user. No copy is left behind in the app's cache.
+  Future<String> saveTextFile({
+    required String fileName,
+    required String text,
+  }) async {
+    final file = await _stage(fileName, Uint8List.fromList(utf8.encode(text)));
+    try {
+      return await _bridge.saveToDownloads(
+        filePath: file.path,
+        fileName: fileName,
+        mimeType: _textMime,
+      );
+    } finally {
+      try {
+        await file.delete();
+      } on FileSystemException {
+        // Swept on the next launch.
+      }
     }
   }
 
