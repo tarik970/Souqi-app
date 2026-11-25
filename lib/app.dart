@@ -15,6 +15,40 @@ const _primaryGreen = Color(0xFF12332B);
 const _warmAccent = Color(0xFFE2A13B);
 const _cream = Color(0xFFFAF6EC);
 
+/// What is written on the green app bar: the title, its icons, its tabs.
+const _onGreen = Colors.white;
+
+/// The gold line under the selected tab: 3 px, as wide as the tab.
+const _tabIndicator = UnderlineTabIndicator(
+  borderSide: BorderSide(color: _warmAccent, width: 3),
+);
+
+/// Tabs in the green app bar — where every TabBar of the app sits, so this is
+/// the app-wide [ThemeData.tabBarTheme].
+///
+/// Material 3 would write the selected label in `primary`, which here is the
+/// colour of the bar itself. White is 13.7:1 against the green and the
+/// unselected 70 % white 7.5:1.
+const _appBarTabs = TabBarThemeData(
+  labelColor: _onGreen,
+  unselectedLabelColor: Colors.white70,
+  indicator: _tabIndicator,
+  indicatorSize: TabBarIndicatorSize.tab,
+);
+
+/// Tabs on the cream surface instead of the app bar. A theme cannot see what
+/// a TabBar is painted on, so such a TabBar has to ask for this one:
+///
+///     TabBarTheme(data: surfaceTabBarTheme, child: TabBar(...))
+///
+/// Green on cream is 12.6:1, the gray 5.7:1.
+const surfaceTabBarTheme = TabBarThemeData(
+  labelColor: _primaryGreen,
+  unselectedLabelColor: Color(0xFF616161),
+  indicator: _tabIndicator,
+  indicatorSize: TabBarIndicatorSize.tab,
+);
+
 ThemeData buildTheme() {
   final scheme = ColorScheme.fromSeed(seedColor: _primaryGreen).copyWith(
     primary: _primaryGreen,
@@ -27,8 +61,9 @@ ThemeData buildTheme() {
     fontFamily: 'Tajawal',
     appBarTheme: const AppBarTheme(
       backgroundColor: _primaryGreen,
-      foregroundColor: Colors.white,
+      foregroundColor: _onGreen,
     ),
+    tabBarTheme: _appBarTabs,
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: _warmAccent,
       foregroundColor: _primaryGreen,

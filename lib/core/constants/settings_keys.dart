@@ -27,6 +27,29 @@ abstract final class SettingsKeys {
   static const printerMac = 'printer_mac';
   static const printerName = 'printer_name';
 
+  // Printer compatibility (the printer diagnostics screen).
+  /// The command language of each printer ever chosen, as a JSON object
+  /// `{"<MAC address>": "ESCPOS" | "TSPL"}` — remembered per printer, so
+  /// going back to an earlier printer brings its language back with it.
+  static const printerLanguages = 'printer_languages';
+
+  /// The calibration of each printer, the same way: a JSON object
+  /// `{"<MAC address>": <dots>}` — how far the print is moved to the right
+  /// (negative = left), a multiple of 8 within ±64. Missing = 0.
+  static const printerOffsets = 'printer_offsets';
+
+  /// How the picture is sent in ESC/POS: GS_V0 / ESC_STAR / GS_L.
+  static const escPosImageMode = 'escpos_image_mode';
+
+  /// Bytes written to the printer at a time (1024 / 512 / 256) and the
+  /// pause between two writes in milliseconds (12 / 30 / 60).
+  static const printChunkSize = 'print_chunk_size';
+  static const printChunkDelayMs = 'print_chunk_delay_ms';
+
+  /// '1' for the few TSPL firmwares where a 1 bit in BITMAP data is a black
+  /// dot (the label test comes out white on black without it).
+  static const tsplOneIsBlack = 'tspl_one_is_black';
+
   // Invoice content.
   static const baseFontSize = 'base_font_size';
   static const headerText = 'header_text';
@@ -156,6 +179,12 @@ abstract final class SettingsKeys {
     cutPaper: '0',
     printerMac: '',
     printerName: '',
+    printerLanguages: '{}',
+    printerOffsets: '{}',
+    escPosImageMode: 'GS_V0',
+    printChunkSize: '1024',
+    printChunkDelayMs: '12',
+    tsplOneIsBlack: '0',
     baseFontSize: '22',
     headerText: '',
     footerText: '',

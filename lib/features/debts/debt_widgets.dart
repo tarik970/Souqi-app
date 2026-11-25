@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/debt.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'debt_providers.dart';
@@ -49,6 +50,12 @@ class AmountField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Gaining focus selects the whole amount: an amount a field opens on is
+    // restated, not continued, so the first keystroke replaces it.
+    return SelectAllOnFocus(controller: controller, child: _field());
+  }
+
+  Widget _field() {
     return TextField(
       controller: controller,
       focusNode: focusNode,

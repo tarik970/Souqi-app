@@ -126,7 +126,20 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
   /// A field still showing its prefilled value: the first digit typed
   /// replaces it instead of appending, the way a cashier expects (opening a
   /// line that says 1 and typing 3 means 3, not 13).
+  ///
+  /// A field becomes pristine again every time it is tapped — tapping it is
+  /// the seller restating that number — and its value is then drawn
+  /// highlighted, so it is visible that the next key replaces it.
   final _pristine = {_Field.qty: true, _Field.price: true};
+
+  /// The keypad types into [field] from now on, with its value selected: the
+  /// next key replaces it.
+  void _focusField(_Field field) {
+    setState(() {
+      _active = field;
+      _pristine[field] = true;
+    });
+  }
 
   static const _maxQtyDecimals = 3;
   static const _maxDigits = 12;
@@ -180,6 +193,13 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
   }
 
   void _backspace() {
+    // Backspace on a value that is still selected clears it outright instead
+    // of nibbling a digit off a number the seller is replacing anyway;
+    // typing then starts from empty.
+    if (_pristine[_active]!) {
+      _setBuffer('');
+      return;
+    }
     final text = _buffer;
     _setBuffer(text.isEmpty ? '' : text.substring(0, text.length - 1));
   }
@@ -434,19 +454,24 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
           children: [
             Expanded(
               child: _ValueField(
+                fieldKey: 'qty',
                 label: l10n.quantityLabel,
                 value: _qtyText.isEmpty
                     ? '0'
                     : localizeDigits(_qtyText, locale),
                 suffix: unitName,
                 selected: _active == _Field.qty,
+                // Nothing typed into it yet, so its value is shown
+                // selected: the next key replaces it.
+                valueSelected: _pristine[_Field.qty]! && _qtyText.isNotEmpty,
                 invalid: qty == null || qty <= 0,
-                onTap: () => setState(() => _active = _Field.qty),
+                onTap: () => _focusField(_Field.qty),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _ValueField(
+                fieldKey: 'price',
                 label: l10n.unitPriceLabel,
                 value: _priceText.isEmpty
                     ? '0'
@@ -455,11 +480,13 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
                     ? priceCurrency.code
                     : priceCurrency.symbol,
                 selected: _active == _Field.price,
+                valueSelected:
+                    _pristine[_Field.price]! && _priceText.isNotEmpty,
                 // An empty price is not wrong, just not typed yet: no red
                 // border, but "Add" stays disabled.
                 muted: _priceText.isEmpty,
                 invalid: priceMinor == null && _priceText.isNotEmpty,
-                onTap: () => setState(() => _active = _Field.price),
+                onTap: () => _focusField(_Field.price),
               ),
             ),
           ],
@@ -681,19 +708,31 @@ class _UnitChips extends StatelessWidget {
 
 class _ValueField extends StatelessWidget {
   const _ValueField({
+    required this.fieldKey,
     required this.label,
     required this.value,
     this.suffix,
     required this.selected,
+    this.valueSelected = false,
     this.muted = false,
     required this.invalid,
     required this.onTap,
   });
 
+  /// Names this field's keys: 'qty' gives `qty-field` to tap, `qty-value`
+  /// for the number shown and `qty-selected` while it is highlighted.
+  final String fieldKey;
+
   final String label;
   final String value;
   final String? suffix;
+
+  /// The keypad types into this field.
   final bool selected;
+
+  /// The value is still the one the field opened with and the next key
+  /// replaces it: it is drawn highlighted, like selected text.
+  final bool valueSelected;
 
   /// The value is a placeholder (nothing typed yet): shown greyed.
   final bool muted;
@@ -708,7 +747,10 @@ class _ValueField extends StatelessWidget {
         : selected
             ? theme.colorScheme.primary
             : theme.dividerColor;
+    // Only the field the keypad types into can show a selected value.
+    final highlight = selected && valueSelected;
     return InkWell(
+      key: ValueKey('$fieldKey-field'),
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -727,13 +769,32 @@ class _ValueField extends StatelessWidget {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Flexible(
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: muted ? theme.colorScheme.outline : null,
+                  // Highlighted like selected text while the next key still
+                  // replaces it, so the seller can see that typing wipes
+                  // this number instead of adding to it.
+                  child: Container(
+                    key: highlight ? ValueKey('$fieldKey-selected') : null,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: highlight
+                        ? BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(6),
+                          )
+                        : null,
+                    child: Text(
+                      value,
+                      key: ValueKey('$fieldKey-value'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: highlight
+                            ? theme.colorScheme.onPrimaryContainer
+                            : muted
+                                ? theme.colorScheme.outline
+                                : null,
+                      ),
                     ),
                   ),
                 ),

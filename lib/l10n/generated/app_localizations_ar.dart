@@ -2852,4 +2852,165 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cashReceivedClear => 'مسح';
+
+  @override
+  String get printerLanguageLabel => 'لغة الطابعة';
+
+  @override
+  String get printerLanguageReceipt => 'إيصالات (ESC/POS)';
+
+  @override
+  String get printerLanguageReceiptHint => 'طابعات الإيصالات — أغلب الطابعات';
+
+  @override
+  String get printerLanguageTspl => 'ملصقات (TSPL)';
+
+  @override
+  String get printerLanguageTsplHint =>
+      'طابعات الملصقات، أو طابعة مزدوجة متروكة على وضع الملصقات';
+
+  @override
+  String get printerLanguageHint =>
+      'لست متأكداً؟ اترك «إيصالات». وإن لم يُطبع شيء فجرّب الوضعين من «فحص الطابعة».';
+
+  @override
+  String get cutPaperTsplHint => 'لا يُرسَل في وضع الملصقات (TSPL)';
+
+  @override
+  String get printerDiagnosticsTitle => 'فحص الطابعة';
+
+  @override
+  String get printerDiagnosticsSubtitle =>
+      'لا تطبع الطابعة أو تطبع رموزاً غريبة؟ اعرف هنا الإعدادات التي تعمل.';
+
+  @override
+  String get diagLanguageSection => 'أي لغة تفهمها الطابعة؟';
+
+  @override
+  String get diagLanguageIntro =>
+      'اطبع الاختبارين. الذي يخرج مقروءاً هو لغة الطابعة.';
+
+  @override
+  String get testReceiptMode => 'اختبار وضع الإيصالات (ESC/POS)';
+
+  @override
+  String get testLabelMode => 'اختبار وضع الملصقات (TSPL)';
+
+  @override
+  String get diagLanguageHint =>
+      'إذا طُبع اختبار الملصقات فقط فاختر «ملصقات (TSPL)»، أو حوّل الطابعة إلى وضع الإيصالات (راجع دليلها).';
+
+  @override
+  String get diagDidItPrint => 'هل طُبع هذا الاختبار؟';
+
+  @override
+  String get diagPrintedUseThis => 'طُبع — استخدمه';
+
+  @override
+  String get diagDidNotPrint => 'لم يُطبع';
+
+  @override
+  String get diagWorks => 'هذا الاختبار طُبع';
+
+  @override
+  String get diagWorksInUse => 'هذا الاختبار طُبع — وهو المستخدم الآن';
+
+  @override
+  String get diagNotPrinted => 'هذا الاختبار لم يُطبع';
+
+  @override
+  String get diagImageModeSection => 'طريقة إرسال الصورة (ESC/POS)';
+
+  @override
+  String get diagImageModeHint =>
+      'لطابعة إيصالات تتصل لكنها لا تطبع أو تطبع رموزاً غريبة: اختبر كل طريقة واحتفظ بالتي تطبع.';
+
+  @override
+  String imageModeDefault(String mode) {
+    return '$mode (الافتراضي)';
+  }
+
+  @override
+  String imageModeEscStar(String mode) {
+    return '$mode (24 نقطة، سطراً سطراً)';
+  }
+
+  @override
+  String testImageMode(String mode) {
+    return 'اختبار $mode';
+  }
+
+  @override
+  String get diagCompatSection => 'التوافق';
+
+  @override
+  String get diagChunkSizeLabel => 'حجم الدفعة (بايت)';
+
+  @override
+  String get diagChunkDelayLabel => 'المهلة بين الدفعات (ملّي ثانية)';
+
+  @override
+  String get diagCompatHint =>
+      'إذا توقفت الفواتير الطويلة في منتصفها أو ضاعت منها أسطر فجرّب دفعات أصغر ومهلة أطول.';
+
+  @override
+  String get tsplOneIsBlackLabel => 'تبديل الأبيض والأسود (وضع الملصقات)';
+
+  @override
+  String get tsplOneIsBlackHint =>
+      'فعّله إذا طُبع اختبار الملصقات بنص أبيض على خلفية سوداء.';
+
+  @override
+  String widthTooWideWarning(String dots, String paper, String head) {
+    return 'عرض الصورة $dots نقطة، لكن رأس الطباعة لورق $paper مم يكون عادةً $head نقطة. الصورة الأعرض تُقصّ أو تُطبع رموزاً غريبة.';
+  }
+
+  @override
+  String widthUseHead(String head) {
+    return 'استخدام $head نقطة';
+  }
+
+  @override
+  String get printerTestSlipTitle => 'اختبار الطباعة';
+
+  @override
+  String get diagCalibrationSection => 'موضع الطباعة على الورق';
+
+  @override
+  String get diagCalibrationHint =>
+      'اطبع اختبار المعايرة: إطار في أعلاه مسطرة، وكلمة LEFT في طرف و RIGHT في الطرف الآخر. يجب أن يظهر طرفا الإطار على الورق. إذا كان أحد الجانبين مقصوصاً فأبعد الطباعة عنه بالسهمين، وإن بقي مقصوصاً فضيّق العرض بزر −. كل ضغطة تطبع الاختبار من جديد.';
+
+  @override
+  String get calibrationTest => 'اختبار المعايرة';
+
+  @override
+  String horizontalOffsetValue(String offset) {
+    return 'الإزاحة الأفقية: $offset نقطة';
+  }
+
+  @override
+  String printableWidthValue(String dots) {
+    return 'عرض الطباعة: $dots نقطة';
+  }
+
+  @override
+  String get calibrationShiftLeft => 'تحريك الطباعة إلى اليسار';
+
+  @override
+  String get calibrationShiftRight => 'تحريك الطباعة إلى اليمين';
+
+  @override
+  String get calibrationNarrower => 'أضيق';
+
+  @override
+  String get calibrationWider => 'أعرض';
+
+  @override
+  String get calibrationReceiptNote =>
+      'في وضع الإيصالات (ESC/POS) لا تتحرك الطباعة إلا إلى اليمين: الإزاحة الأقل من 0 لا تغيّر شيئاً.';
+
+  @override
+  String printerCalibrationInfo(String dots, String offset) {
+    return 'العرض $dots نقطة · الإزاحة $offset';
+  }
 }

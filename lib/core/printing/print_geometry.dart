@@ -47,6 +47,32 @@ double mmToDots(double mm, int dpi) => mm * dpi / mmPerInch;
 /// count means on paper.
 double dotsToMm(int dots, int dpi) => dots * mmPerInch / dpi;
 
+/// Dots of the print head a printer for [paperWidthMm] paper normally has —
+/// the widest image it can print. A wider one is cut off, wraps into
+/// garbage or is refused outright.
+///
+/// 58 mm paper has a 48 mm head (384 dots at 203 dpi) and 80 mm paper a
+/// 72 mm one (576 dots); the label printers that take 80 mm rolls
+/// ([labelPrinter]) have a 76 mm head (608 dots). For any other paper the
+/// only limit known is the paper itself. Dots per millimetre are whole, as
+/// print heads are built: 8 at 203 dpi, 12 at 300 dpi.
+int standardHeadDots({
+  required double paperWidthMm,
+  required int dpi,
+  bool labelPrinter = false,
+}) {
+  final double headMm;
+  if (paperWidthMm == 58) {
+    headMm = 48;
+  } else if (paperWidthMm == 80) {
+    headMm = labelPrinter ? 76 : 72;
+  } else {
+    headMm = paperWidthMm;
+  }
+  final dotsPerMm = (dpi / mmPerInch).round();
+  return snapDots((headMm * (dotsPerMm < 1 ? 1 : dotsPerMm)).floor());
+}
+
 /// The side margin that matches each standard paper's print head.
 double defaultSideMarginFor(double paperWidthMm) {
   if (paperWidthMm == 58) return 5; // 48 mm head → 384 dots

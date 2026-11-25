@@ -4872,6 +4872,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear'**
   String get cashReceivedClear;
+
+  /// No description provided for @printerLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer language'**
+  String get printerLanguageLabel;
+
+  /// No description provided for @printerLanguageReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt (ESC/POS)'**
+  String get printerLanguageReceipt;
+
+  /// No description provided for @printerLanguageReceiptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt printers — most printers'**
+  String get printerLanguageReceiptHint;
+
+  /// No description provided for @printerLanguageTspl.
+  ///
+  /// In en, this message translates to:
+  /// **'Label (TSPL)'**
+  String get printerLanguageTspl;
+
+  /// No description provided for @printerLanguageTsplHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Label printers, or a dual printer left in label mode'**
+  String get printerLanguageTsplHint;
+
+  /// No description provided for @printerLanguageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure? Keep Receipt. If nothing prints, try both in Printer diagnostics.'**
+  String get printerLanguageHint;
+
+  /// No description provided for @cutPaperTsplHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent in label mode (TSPL)'**
+  String get cutPaperTsplHint;
+
+  /// No description provided for @printerDiagnosticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer diagnostics'**
+  String get printerDiagnosticsTitle;
+
+  /// No description provided for @printerDiagnosticsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing prints, or it prints garbage? Find the settings that work.'**
+  String get printerDiagnosticsSubtitle;
+
+  /// No description provided for @diagLanguageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Which language does the printer understand?'**
+  String get diagLanguageSection;
+
+  /// No description provided for @diagLanguageIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Print both tests. The one that comes out readable is the printer\'s language.'**
+  String get diagLanguageIntro;
+
+  /// No description provided for @testReceiptMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Test receipt mode (ESC/POS)'**
+  String get testReceiptMode;
+
+  /// No description provided for @testLabelMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Test label mode (TSPL)'**
+  String get testLabelMode;
+
+  /// No description provided for @diagLanguageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If only the label test prints, choose Label (TSPL), or switch the printer to receipt mode (see its manual).'**
+  String get diagLanguageHint;
+
+  /// No description provided for @diagDidItPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Did this test print?'**
+  String get diagDidItPrint;
+
+  /// No description provided for @diagPrintedUseThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Printed — use this'**
+  String get diagPrintedUseThis;
+
+  /// No description provided for @diagDidNotPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Did not print'**
+  String get diagDidNotPrint;
+
+  /// No description provided for @diagWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'This one printed'**
+  String get diagWorks;
+
+  /// No description provided for @diagWorksInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'This one printed — in use'**
+  String get diagWorksInUse;
+
+  /// No description provided for @diagNotPrinted.
+  ///
+  /// In en, this message translates to:
+  /// **'This one did not print'**
+  String get diagNotPrinted;
+
+  /// No description provided for @diagImageModeSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Image mode (ESC/POS)'**
+  String get diagImageModeSection;
+
+  /// No description provided for @diagImageModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For a receipt printer that connects but prints nothing or garbage: test each mode and keep the one that prints.'**
+  String get diagImageModeHint;
+
+  /// No description provided for @imageModeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode} (default)'**
+  String imageModeDefault(String mode);
+
+  /// No description provided for @imageModeEscStar.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode} (24-dot, line by line)'**
+  String imageModeEscStar(String mode);
+
+  /// No description provided for @testImageMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Test {mode}'**
+  String testImageMode(String mode);
+
+  /// No description provided for @diagCompatSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Compatibility'**
+  String get diagCompatSection;
+
+  /// No description provided for @diagChunkSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chunk size (bytes)'**
+  String get diagChunkSizeLabel;
+
+  /// No description provided for @diagChunkDelayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delay between chunks (ms)'**
+  String get diagChunkDelayLabel;
+
+  /// No description provided for @diagCompatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If long receipts stop halfway or lose lines, try smaller chunks and a longer delay.'**
+  String get diagCompatHint;
+
+  /// No description provided for @tsplOneIsBlackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap black and white (label mode)'**
+  String get tsplOneIsBlackLabel;
+
+  /// No description provided for @tsplOneIsBlackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on if the label test prints white text on a black background.'**
+  String get tsplOneIsBlackHint;
+
+  /// No description provided for @widthTooWideWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The image is {dots} dots wide, but the print head for {paper} mm paper is usually {head} dots. A wider image is cut off or prints garbage.'**
+  String widthTooWideWarning(String dots, String paper, String head);
+
+  /// No description provided for @widthUseHead.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {head} dots'**
+  String widthUseHead(String head);
+
+  /// No description provided for @printerTestSlipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Print test'**
+  String get printerTestSlipTitle;
+
+  /// No description provided for @diagCalibrationSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Position on the paper'**
+  String get diagCalibrationSection;
+
+  /// No description provided for @diagCalibrationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print the calibration test: a frame with a ruler along the top, LEFT at one end and RIGHT at the other. Both ends of the frame must be on the paper. If one side is cut off, move the print away from it with the arrows. If it is still cut off, make it narrower with −. Each tap prints the test again.'**
+  String get diagCalibrationHint;
+
+  /// No description provided for @calibrationTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Calibration test'**
+  String get calibrationTest;
+
+  /// No description provided for @horizontalOffsetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal offset: {offset} dots'**
+  String horizontalOffsetValue(String offset);
+
+  /// No description provided for @printableWidthValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Printable width: {dots} dots'**
+  String printableWidthValue(String dots);
+
+  /// No description provided for @calibrationShiftLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the print left'**
+  String get calibrationShiftLeft;
+
+  /// No description provided for @calibrationShiftRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the print right'**
+  String get calibrationShiftRight;
+
+  /// No description provided for @calibrationNarrower.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrower'**
+  String get calibrationNarrower;
+
+  /// No description provided for @calibrationWider.
+  ///
+  /// In en, this message translates to:
+  /// **'Wider'**
+  String get calibrationWider;
+
+  /// No description provided for @calibrationReceiptNote.
+  ///
+  /// In en, this message translates to:
+  /// **'In receipt mode (ESC/POS) the print can only be moved to the right: an offset below 0 changes nothing.'**
+  String get calibrationReceiptNote;
+
+  /// No description provided for @printerCalibrationInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Width {dots} dots · offset {offset}'**
+  String printerCalibrationInfo(String dots, String offset);
 }
 
 class _AppLocalizationsDelegate

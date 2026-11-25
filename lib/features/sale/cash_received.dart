@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/money_format.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/cart.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'sale_providers.dart';
@@ -200,20 +201,24 @@ class _CashReceivedDialogState extends State<CashReceivedDialog> {
         children: [
           Text('${l10n.totalLabel}: ${money(widget.totals.totalMinor)}'),
           const SizedBox(height: 12),
-          TextField(
-            key: const ValueKey('cash-received-field'),
+          SelectAllOnFocus(
             controller: _controller,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textDirection: TextDirection.ltr,
-            textInputAction: TextInputAction.done,
-            onChanged: (_) => setState(() => _error = null),
-            onSubmitted: (_) => _submit(),
-            decoration: InputDecoration(
-              suffixText: label,
-              errorText: _error,
-              errorMaxLines: 3,
-              border: const OutlineInputBorder(),
+            child: TextField(
+              key: const ValueKey('cash-received-field'),
+              controller: _controller,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              textDirection: TextDirection.ltr,
+              textInputAction: TextInputAction.done,
+              onChanged: (_) => setState(() => _error = null),
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                suffixText: label,
+                errorText: _error,
+                errorMaxLines: 3,
+                border: const OutlineInputBorder(),
+              ),
             ),
           ),
           if (change != null && typed! > 0)

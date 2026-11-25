@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'storage_providers.dart';
 
@@ -165,15 +166,18 @@ class _CustomDaysDialogState extends State<_CustomDaysDialog> {
       // Scrolls: with the keyboard up on a small phone at a large system
       // font the title, the field and the buttons do not all fit.
       scrollable: true,
-      content: TextField(
+      content: SelectAllOnFocus(
         controller: _controller,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        textDirection: TextDirection.ltr,
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          labelText: l10n.retentionCustomHint,
-          errorText: _error,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          textDirection: TextDirection.ltr,
+          onSubmitted: (_) => _submit(),
+          decoration: InputDecoration(
+            labelText: l10n.retentionCustomHint,
+            errorText: _error,
+          ),
         ),
       ),
       actions: [

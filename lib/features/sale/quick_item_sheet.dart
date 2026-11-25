@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
@@ -142,19 +143,22 @@ class _QuickItemSheetState extends ConsumerState<QuickItemSheet> {
               children: [
                 Expanded(
                   flex: 3,
-                  child: TextFormField(
+                  child: SelectAllOnFocus(
                     controller: _price,
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
-                    decoration: InputDecoration(
-                      labelText: l10n.productPrice,
-                      border: const OutlineInputBorder(),
+                    child: TextFormField(
+                      controller: _price,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      decoration: InputDecoration(
+                        labelText: l10n.productPrice,
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) =>
+                          parseAmountMinor(value ?? '', decimals: decimals) ==
+                                  null
+                              ? l10n.invalidPrice
+                              : null,
                     ),
-                    validator: (value) =>
-                        parseAmountMinor(value ?? '', decimals: decimals) ==
-                                null
-                            ? l10n.invalidPrice
-                            : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -184,20 +188,24 @@ class _QuickItemSheetState extends ConsumerState<QuickItemSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            // It opens showing 1: typing 5 must mean 5, not 15.
+            SelectAllOnFocus(
               controller: _qty,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: l10n.quantityLabel,
-                border: const OutlineInputBorder(),
+              child: TextFormField(
+                controller: _qty,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: l10n.quantityLabel,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final qty = parseQuantityThousandths(value ?? '');
+                  if (qty == null) return l10n.invalidQuantity;
+                  if (qty <= 0) return l10n.quantityMustBePositive;
+                  return null;
+                },
               ),
-              validator: (value) {
-                final qty = parseQuantityThousandths(value ?? '');
-                if (qty == null) return l10n.invalidQuantity;
-                if (qty <= 0) return l10n.quantityMustBePositive;
-                return null;
-              },
             ),
             const SizedBox(height: 4),
             CheckboxListTile(

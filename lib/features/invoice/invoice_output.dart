@@ -10,9 +10,10 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../config/features.dart';
 import '../../core/platform/native_bridge.dart';
-import '../../core/printing/escpos.dart';
+import '../../core/printing/calibration_pattern.dart';
 import '../../core/printing/pdf_builder.dart';
 import '../../core/printing/png_encoder.dart';
+import '../../core/printing/print_job.dart';
 import '../../core/printing/raster.dart';
 import '../../core/printing/widget_capture.dart';
 import '../../core/providers.dart';
@@ -22,6 +23,7 @@ import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'invoice_providers.dart';
 import 'invoice_view.dart';
+import 'printer_test_slip.dart';
 
 /// The shared image is rendered at twice its layout width so it stays sharp
 /// when a chat app zooms it.
@@ -44,7 +46,8 @@ final outputDirectoryProvider = Provider<Future<Directory> Function()>(
 /// Turns an [Invoice] into paper, a picture or a PDF.
 ///
 /// One pipeline for every output: [InvoiceView] is rendered off-screen, and
-/// the same pixels become ESC/POS raster bytes, a PNG or a one-page PDF.
+/// the same pixels become printer bytes (ESC/POS or TSPL, whichever the
+/// printer speaks), a PNG or a one-page PDF.
 /// The printer render is exactly [InvoiceSettings.printableDots] wide at one
 /// pixel per dot; the share render ignores printer-only settings and uses
 /// [InvoiceSettings.shareDots] at 2×.
@@ -146,11 +149,12 @@ class InvoiceOutput {
   /// without a gap there is nowhere to tear.
   static const int minSlipFeedLines = 3;
 
-  /// The complete ESC/POS byte stream for [invoice].
+  /// The complete byte stream for [invoice], in the printer's language.
   ///
   /// With "print each card on a separate slip" on, the invoice is printed
   /// without its codes and each sold card follows as its own job — its own
-  /// feed and (when the printer has a cutter) its own cut.
+  /// feed and (when the printer has a cutter) its own cut. In TSPL each
+  /// slip is a label of its own, with its own PRINT.
   Future<Uint8List> printJob(
     Invoice invoice, {
     InvoiceRenderContext? context,
@@ -166,10 +170,11 @@ class InvoiceOutput {
       copy: copy,
       codes: slips ? const [] : sold,
     );
-    final main = buildRasterJob(
+    final format = c.settings.printFormat;
+    final main = buildPrintJob(
       toMonochrome(image),
+      format: format,
       feedLines: c.settings.feedLines,
-      cut: c.settings.cutPaper,
     );
     if (!slips) return main;
 
@@ -179,10 +184,10 @@ class InvoiceOutput {
         : c.settings.feedLines;
     for (final code in sold) {
       final slip = await renderSlip(invoice, code, context: c, copy: copy);
-      job.add(buildRasterJob(
+      job.add(buildPrintJob(
         toMonochrome(slip),
+        format: format,
         feedLines: feed,
-        cut: c.settings.cutPaper,
       ));
     }
     return job.toBytes();
@@ -227,7 +232,54 @@ class InvoiceOutput {
     }
     await ensureBluetoothReady();
     final job = await printJob(invoice, context: c, copy: copy);
-    await _bridge.printBytes(address, job);
+    await send(c.settings, address, job);
+  }
+
+  /// Writes [job] to the printer at [address], paced as the compatibility
+  /// settings say (chunk size and the pause between chunks).
+  Future<void> send(InvoiceSettings settings, String address, Uint8List job) =>
+      _bridge.printBytes(
+        address,
+        job,
+        chunkSize: settings.printChunkSize,
+        chunkDelayMs: settings.printChunkDelayMs,
+      );
+
+  // ---- Printer diagnostics ---------------------------------------------
+
+  /// Prints the short test slip of the diagnostics screen: the shop name,
+  /// a line of Arabic and [label] (which test this is). [format] replaces
+  /// the stored language and image mode, so a mode can be tried before it
+  /// is chosen. Same checks and failures as [printInvoice].
+  Future<void> printTest({
+    required PrintFormat format,
+    required String label,
+  }) async {
+    final c = await _context();
+    final address = c.settings.printerAddress;
+    if (address == null || address.isEmpty) {
+      throw const OutputException(OutputFailure.noPrinterSelected);
+    }
+    await ensureBluetoothReady();
+    final image = await captureWidget(
+      PrinterTestSlipView(
+        settings: c.settings,
+        label: label,
+        printedAt: DateTime.now(),
+      ),
+      logicalWidth: c.settings.printableDots,
+    );
+    await send(
+      c.settings,
+      address,
+      buildPrintJob(
+        toMonochrome(image),
+        format: format,
+        feedLines: c.settings.feedLines < minSlipFeedLines
+            ? minSlipFeedLines
+            : c.settings.feedLines,
+      ),
+    );
   }
 
   /// Checks Bluetooth exists, is allowed and is on. With [askPermission] the
@@ -246,6 +298,33 @@ class InvoiceOutput {
     if (!status.enabled) {
       throw const OutputException(OutputFailure.bluetoothOff);
     }
+  }
+
+  /// Prints the calibration ruler with [settings] — passed in, not read,
+  /// because the diagnostics screen prints it in the same breath as it
+  /// changes the offset or the width. The pattern is as wide as the
+  /// printable width and goes through the same job builder as an invoice,
+  /// so it lands on the paper exactly where an invoice would.
+  Future<void> printCalibration(InvoiceSettings settings) async {
+    final address = settings.printerAddress;
+    if (address == null || address.isEmpty) {
+      throw const OutputException(OutputFailure.noPrinterSelected);
+    }
+    await ensureBluetoothReady();
+    await send(
+      settings,
+      address,
+      buildPrintJob(
+        buildCalibrationPattern(
+          width: settings.printableDots,
+          offsetDots: settings.printerOffsetDots,
+        ),
+        format: settings.printFormat,
+        feedLines: settings.feedLines < minSlipFeedLines
+            ? minSlipFeedLines
+            : settings.feedLines,
+      ),
+    );
   }
 
   // ---- PIN recovery code -----------------------------------------------
@@ -268,14 +347,15 @@ class InvoiceOutput {
       ),
       logicalWidth: c.settings.printableDots,
     );
-    await _bridge.printBytes(
+    await send(
+      c.settings,
       address,
-      buildRasterJob(
+      buildPrintJob(
         toMonochrome(image),
+        format: c.settings.printFormat,
         feedLines: c.settings.feedLines < minSlipFeedLines
             ? minSlipFeedLines
             : c.settings.feedLines,
-        cut: c.settings.cutPaper,
       ),
     );
   }

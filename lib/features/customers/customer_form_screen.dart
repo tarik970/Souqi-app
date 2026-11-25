@@ -5,6 +5,7 @@ import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/normalize.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/customer.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../debts/debt_providers.dart';
@@ -231,51 +232,58 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
             ),
             if (debtOn) ...[
               const SizedBox(height: 12),
-              TextFormField(
-                key: const ValueKey('customer-credit-limit-field'),
+              SelectAllOnFocus(
                 controller: _creditLimit,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                textDirection: TextDirection.ltr,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: l10n.customerCreditLimitLabel,
-                  suffixText: base == null
-                      ? null
-                      : (base.symbol.isEmpty ? base.code : base.symbol),
+                child: TextFormField(
+                  key: const ValueKey('customer-credit-limit-field'),
+                  controller: _creditLimit,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  textDirection: TextDirection.ltr,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: l10n.customerCreditLimitLabel,
+                    suffixText: base == null
+                        ? null
+                        : (base.symbol.isEmpty ? base.code : base.symbol),
+                  ),
+                  validator: (v) {
+                    final text = v?.trim() ?? '';
+                    if (text.isEmpty) return null;
+                    final minor = parseAmountMinor(
+                      text,
+                      decimals: base?.decimalPlaces ?? 0,
+                    );
+                    return minor == null ? l10n.invalidNumber : null;
+                  },
                 ),
-                validator: (v) {
-                  final text = v?.trim() ?? '';
-                  if (text.isEmpty) return null;
-                  final minor = parseAmountMinor(
-                    text,
-                    decimals: base?.decimalPlaces ?? 0,
-                  );
-                  return minor == null ? l10n.invalidNumber : null;
-                },
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                key: const ValueKey('customer-due-days-field'),
+              SelectAllOnFocus(
                 controller: _dueDays,
-                keyboardType: TextInputType.number,
-                textDirection: TextDirection.ltr,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: l10n.customerDueDaysLabel,
-                  helperText: l10n.customerDueDaysHint(
-                    localizeDigits('$shopDueDays', Localizations.localeOf(context).languageCode),
+                child: TextFormField(
+                  key: const ValueKey('customer-due-days-field'),
+                  controller: _dueDays,
+                  keyboardType: TextInputType.number,
+                  textDirection: TextDirection.ltr,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: l10n.customerDueDaysLabel,
+                    helperText: l10n.customerDueDaysHint(
+                      localizeDigits('$shopDueDays',
+                          Localizations.localeOf(context).languageCode),
+                    ),
+                    helperMaxLines: 2,
                   ),
-                  helperMaxLines: 2,
+                  validator: (v) {
+                    final text = normalizeDigits(v?.trim() ?? '');
+                    if (text.isEmpty) return null;
+                    final days = int.tryParse(text);
+                    return days == null || days < 0 || days > 3650
+                        ? l10n.invalidNumber
+                        : null;
+                  },
                 ),
-                validator: (v) {
-                  final text = normalizeDigits(v?.trim() ?? '');
-                  if (text.isEmpty) return null;
-                  final days = int.tryParse(text);
-                  return days == null || days < 0 || days > 3650
-                      ? l10n.invalidNumber
-                      : null;
-                },
               ),
             ],
             if (_withAccount) ...[

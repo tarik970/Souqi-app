@@ -5,6 +5,7 @@ import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/normalize.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
@@ -253,16 +254,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             children: [
               Expanded(
                 flex: 3,
-                child: TextFormField(
+                child: SelectAllOnFocus(
                   controller: _price,
-                  decoration: InputDecoration(labelText: l10n.productPrice),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  validator: (v) => parseAmountMinor(v ?? '',
-                              decimals: currency.decimalPlaces) ==
-                          null
-                      ? l10n.invalidPrice
-                      : null,
+                  child: TextFormField(
+                    controller: _price,
+                    decoration: InputDecoration(labelText: l10n.productPrice),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    validator: (v) => parseAmountMinor(v ?? '',
+                                decimals: currency.decimalPlaces) ==
+                            null
+                        ? l10n.invalidPrice
+                        : null,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -308,17 +312,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             if (_codeStock) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextFormField(
-                  key: const ValueKey('product-low-stock'),
+                child: SelectAllOnFocus(
                   controller: _threshold,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: l10n.lowStockThresholdLabel,
-                    helperText: l10n.lowStockThresholdHint,
+                  child: TextFormField(
+                    key: const ValueKey('product-low-stock'),
+                    controller: _threshold,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.lowStockThresholdLabel,
+                      helperText: l10n.lowStockThresholdHint,
+                    ),
+                    validator: (v) => _parseThreshold(v ?? '').$1
+                        ? null
+                        : l10n.invalidNumber,
                   ),
-                  validator: (v) => _parseThreshold(v ?? '').$1
-                      ? null
-                      : l10n.invalidNumber,
                 ),
               ),
               // Loading codes needs a saved product to load them for.

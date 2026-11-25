@@ -222,7 +222,8 @@ void main() {
 
       expect(searchBox, findsOneWidget);
       expect(find.byType(GridView), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-cards')), findsNothing);
+      // No renewals card on a grocery home — the tile is enough.
+      expect(find.byKey(const ValueKey('home-due')), findsNothing);
       for (final label in [
         'Sale',
         'Customers',
@@ -247,19 +248,25 @@ void main() {
     });
 
     for (final type in ['CARDS', 'BOTH']) {
-      testWidgets('shop type $type opens on the search with the due list',
+      testWidgets('shop type $type opens on the search with the renewals card',
           (tester) async {
         await db(tester, seed);
         await setShopType(tester, type);
         await pump(tester, const HomeScreen());
 
         expect(searchBox, findsOneWidget);
-        expect(find.byKey(const ValueKey('home-cards')), findsOneWidget);
-        expect(find.byType(GridView), findsNothing);
-        // The due list, under the search box.
+        // The renewals summary card, and the same tile grid as a grocery.
+        expect(find.byKey(const ValueKey('home-due')), findsOneWidget);
+        expect(find.byType(GridView), findsOneWidget);
         expect(find.text('Overdue (1)'), findsOneWidget);
-        expect(find.byKey(ValueKey('due-row-$accountId')), findsOneWidget);
-        expect(find.text('Ahmad Hasan'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byKey(const ValueKey('home-due')),
+            matching: find.text('Ahmad Hasan'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.byKey(const ValueKey('home-due-see-all')), findsOneWidget);
         // Its place on the screen: below the box.
         expect(
           tester.getTopLeft(find.text('Overdue (1)')).dy,
@@ -284,7 +291,7 @@ void main() {
       await db(tester, seed);
       await setShopType(tester, 'CARDS');
       await pump(tester, const HomeScreen());
-      expect(find.byKey(const ValueKey('home-cards')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-due')), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('home-nav-settings')));
       await animated(tester);

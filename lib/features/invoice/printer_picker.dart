@@ -2,18 +2,52 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/platform/native_bridge.dart';
+import '../../core/printing/print_job.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'invoice_output.dart';
 import 'invoice_providers.dart';
 import 'output_messages.dart';
+import 'printer_widgets.dart';
 
-/// Lists the Bluetooth devices already paired with the phone and returns the
-/// one the user picks. Pairing itself happens in the system settings (a
-/// button opens them) — the app never scans, so it needs no location access.
-Future<PairedDevice?> showPrinterPicker(BuildContext context) {
-  return showDialog<PairedDevice>(
+/// What the printer picker returns: the device, and the command language
+/// the user chose for it.
+class PrinterChoice {
+  const PrinterChoice(this.device, this.language);
+
+  final PairedDevice device;
+  final PrinterLanguage language;
+}
+
+/// Lists the Bluetooth devices already paired with the phone; picking one
+/// asks for its language (Receipt / Label) right there, and both are
+/// returned. Pairing itself happens in the system settings (a button opens
+/// them) — the app never scans, so it needs no location access.
+Future<PrinterChoice?> showPrinterPicker(BuildContext context) {
+  return showDialog<PrinterChoice>(
     context: context,
     builder: (_) => const _PrinterPickerDialog(),
+  );
+}
+
+/// Opens the picker and stores what was chosen: the printer becomes the
+/// default one, and its language is remembered under its address.
+Future<void> chooseAndRememberPrinter(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  // Read before the await: `ref` must not be used once the dialog is up.
+  final settings = ref.read(invoiceSettingsProvider.notifier);
+  final choice = await showPrinterPicker(context);
+  if (choice == null) return;
+  final device = choice.device;
+  await settings.change(
+    (s) => s
+        .copyWith(
+          printerAddress: () => device.address,
+          printerName: () =>
+              device.name.isEmpty ? device.address : device.name,
+        )
+        .withPrinterLanguage(choice.language),
   );
 }
 
@@ -30,6 +64,10 @@ class _PrinterPickerDialogState extends ConsumerState<_PrinterPickerDialog>
   List<PairedDevice>? _devices;
   OutputException? _error;
   bool _loading = false;
+
+  /// The device tapped in the list; the dialog then asks for its language.
+  PairedDevice? _picked;
+  PrinterLanguage _language = PrinterLanguage.escPos;
 
   @override
   void initState() {
@@ -49,7 +87,7 @@ class _PrinterPickerDialogState extends ConsumerState<_PrinterPickerDialog>
   /// dialog also resumes the app, and a denied request would re-open it.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !_loading) {
+    if (state == AppLifecycleState.resumed && !_loading && _picked == null) {
       _load(askPermission: false);
     }
   }
@@ -77,8 +115,70 @@ class _PrinterPickerDialogState extends ConsumerState<_PrinterPickerDialog>
     }
   }
 
+  void _pick(PairedDevice device) {
+    setState(() {
+      _picked = device;
+      // A printer chosen before comes back with the language it had.
+      _language = ref
+              .read(invoiceSettingsProvider)
+              .value
+              ?.languageOf(device.address) ??
+          PrinterLanguage.escPos;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final picked = _picked;
+    return picked == null ? _buildList(context) : _buildLanguage(context, picked);
+  }
+
+  /// Step 2: the language of the printer that was just tapped.
+  Widget _buildLanguage(BuildContext context, PairedDevice device) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: Text(device.name.isEmpty ? device.address : device.name),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.printerLanguageLabel, style: theme.textTheme.titleSmall),
+              PrinterLanguageSelector(
+                value: _language,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (language) => setState(() => _language = language),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.printerLanguageHint,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.outline),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => setState(() => _picked = null),
+          child: Text(MaterialLocalizations.of(context).backButtonTooltip),
+        ),
+        FilledButton(
+          key: const ValueKey('printer-language-confirm'),
+          onPressed: () =>
+              Navigator.of(context).pop(PrinterChoice(device, _language)),
+          child: Text(l10n.done),
+        ),
+      ],
+    );
+  }
+
+  /// Step 1: the paired devices.
+  Widget _buildList(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final bridge = ref.read(nativeBridgeProvider);
@@ -118,7 +218,7 @@ class _PrinterPickerDialogState extends ConsumerState<_PrinterPickerDialog>
               trailing: device.address == selected
                   ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
                   : null,
-              onTap: () => Navigator.of(context).pop(device),
+              onTap: () => _pick(device),
             );
           },
         ),

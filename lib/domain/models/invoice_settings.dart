@@ -7,7 +7,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../core/constants/settings_keys.dart';
+import '../../core/printing/escpos.dart';
 import '../../core/printing/print_geometry.dart';
+import '../../core/printing/print_job.dart';
 import '../../core/utils/normalize.dart';
 
 /// What the main button does after a sale is saved.
@@ -50,6 +52,12 @@ class InvoiceSettings {
     this.cutPaper = false,
     this.printerAddress,
     this.printerName,
+    this.printerLanguages = const {},
+    this.printerOffsets = const {},
+    this.escPosImageMode = EscPosImageMode.gsV0,
+    this.printChunkSize = 1024,
+    this.printChunkDelayMs = 12,
+    this.tsplOneIsBlack = false,
     this.baseFontSize = 22,
     this.shopName = '',
     this.logoPng,
@@ -93,6 +101,100 @@ class InvoiceSettings {
   /// The remembered default printer (Bluetooth MAC address and its name).
   final String? printerAddress;
   final String? printerName;
+
+  // Printer compatibility (the printer diagnostics screen).
+  /// The command language of every printer chosen so far, by address. A
+  /// printer that is not in here speaks ESC/POS.
+  final Map<String, PrinterLanguage> printerLanguages;
+
+  /// The calibration of every printer chosen so far, by address: how many
+  /// dots its print is moved to the right (negative = left). A printer
+  /// that is not in here prints where the defaults put it.
+  final Map<String, int> printerOffsets;
+
+  /// How the picture is sent to an ESC/POS printer.
+  final EscPosImageMode escPosImageMode;
+
+  /// Bytes written to the printer at a time, and the pause between two
+  /// writes: a slow printer drops what arrives faster than it can take.
+  final int printChunkSize;
+  final int printChunkDelayMs;
+
+  /// TSPL only: this printer's firmware burns a dot for a 1 bit (the
+  /// convention is 0).
+  final bool tsplOneIsBlack;
+
+  static const List<int> chunkSizes = [1024, 512, 256];
+  static const List<int> chunkDelaysMs = [12, 30, 60];
+
+  /// The language of the chosen printer.
+  PrinterLanguage get printerLanguage =>
+      printerLanguages[printerAddress] ?? PrinterLanguage.escPos;
+
+  /// The language remembered for the printer at [address], if it was ever
+  /// chosen before.
+  PrinterLanguage languageOf(String address) =>
+      printerLanguages[address] ?? PrinterLanguage.escPos;
+
+  /// These settings with [language] remembered for the printer at
+  /// [address] (default: the chosen printer; nothing changes without one).
+  InvoiceSettings withPrinterLanguage(
+    PrinterLanguage language, {
+    String? address,
+  }) {
+    final target = address ?? printerAddress;
+    if (target == null || target.isEmpty) return this;
+    return copyWith(printerLanguages: {...printerLanguages, target: language});
+  }
+
+  /// The calibration offset of the chosen printer, in dots.
+  int get printerOffsetDots => printerOffsets[printerAddress] ?? 0;
+
+  /// These settings with the chosen printer's print moved to [dots] (made
+  /// a valid offset first). Nothing changes without a printer.
+  InvoiceSettings withPrinterOffset(int dots) {
+    final target = printerAddress;
+    if (target == null || target.isEmpty) return this;
+    return copyWith(
+      printerOffsets: {...printerOffsets, target: snapOffsetDots(dots)},
+    );
+  }
+
+  /// What shapes the bytes of a print job for the chosen printer.
+  PrintFormat get printFormat => printFormatFor(printerLanguage);
+
+  /// The same for the chosen printer spoken to in [language] — what a
+  /// diagnostics test of the OTHER language is built with. The head, and
+  /// with it where the image sits, depends on the language.
+  PrintFormat printFormatFor(PrinterLanguage language) => PrintFormat(
+        language: language,
+        imageMode: escPosImageMode,
+        dpi: printerDpi,
+        cut: cutPaper,
+        tsplZeroIsBlack: !tsplOneIsBlack,
+        offsetDots: printerOffsetDots,
+        headDots: headDotsFor(language),
+        paperWidthMm: paperWidthMm,
+      );
+
+  /// Dots of the print head a printer for this paper normally has.
+  int get headDots => headDotsFor(printerLanguage);
+
+  int headDotsFor(PrinterLanguage language) => standardHeadDots(
+        paperWidthMm: paperWidthMm,
+        dpi: printerDpi,
+        labelPrinter: language == PrinterLanguage.tspl,
+      );
+
+  /// The image is wider than the print head can print.
+  bool get widerThanHead => printableDots > headDots;
+
+  /// These settings with the printable width brought down to [headDots]:
+  /// back to the computed width when that fits, else an explicit override.
+  InvoiceSettings fittedToHead() => copyWith(
+        printableDotsOverride: () =>
+            computedPrintableDots <= headDots ? null : headDots,
+      );
 
   // Content.
   /// In printer dots: the invoice is laid out with one logical pixel per dot.
@@ -224,6 +326,36 @@ class InvoiceSettings {
       extras = const [];
     }
 
+    var languages = const <String, PrinterLanguage>{};
+    try {
+      final decoded = jsonDecode(get(SettingsKeys.printerLanguages));
+      if (decoded is Map) {
+        languages = {
+          for (final entry in decoded.entries)
+            if (entry.key is String && entry.value is String)
+              entry.key as String:
+                  PrinterLanguage.fromDb(entry.value as String),
+        };
+      }
+    } on FormatException {
+      languages = const {};
+    }
+    var offsets = const <String, int>{};
+    try {
+      final decoded = jsonDecode(get(SettingsKeys.printerOffsets));
+      if (decoded is Map) {
+        offsets = {
+          for (final entry in decoded.entries)
+            if (entry.key is String && entry.value is int)
+              entry.key as String: snapOffsetDots(entry.value as int),
+        };
+      }
+    } on FormatException {
+      offsets = const {};
+    }
+    final chunkSize = int.tryParse(get(SettingsKeys.printChunkSize));
+    final chunkDelay = int.tryParse(get(SettingsKeys.printChunkDelayMs));
+
     final marginRaw = double.tryParse(get(SettingsKeys.sideMarginMm));
     final overrideRaw = int.tryParse(get(SettingsKeys.printableDotsOverride));
     final shareRaw = get(SettingsKeys.shareWidthMm);
@@ -245,6 +377,14 @@ class InvoiceSettings {
       cutPaper: _bool(get(SettingsKeys.cutPaper)),
       printerAddress: printerAddress.isEmpty ? null : printerAddress,
       printerName: printerName.isEmpty ? null : printerName,
+      printerLanguages: languages,
+      printerOffsets: offsets,
+      escPosImageMode:
+          EscPosImageMode.fromDb(get(SettingsKeys.escPosImageMode)),
+      printChunkSize: chunkSizes.contains(chunkSize) ? chunkSize! : 1024,
+      printChunkDelayMs:
+          chunkDelaysMs.contains(chunkDelay) ? chunkDelay! : 12,
+      tsplOneIsBlack: _bool(get(SettingsKeys.tsplOneIsBlack)),
       baseFontSize: (int.tryParse(get(SettingsKeys.baseFontSize)) ?? 22)
           .clamp(minFontSize, maxFontSize),
       shopName: get(SettingsKeys.shopName),
@@ -291,6 +431,15 @@ class InvoiceSettings {
         SettingsKeys.cutPaper: cutPaper ? '1' : '0',
         SettingsKeys.printerMac: printerAddress ?? '',
         SettingsKeys.printerName: printerName ?? '',
+        SettingsKeys.printerOffsets: jsonEncode(printerOffsets),
+        SettingsKeys.printerLanguages: jsonEncode({
+          for (final entry in printerLanguages.entries)
+            entry.key: entry.value.db,
+        }),
+        SettingsKeys.escPosImageMode: escPosImageMode.db,
+        SettingsKeys.printChunkSize: '$printChunkSize',
+        SettingsKeys.printChunkDelayMs: '$printChunkDelayMs',
+        SettingsKeys.tsplOneIsBlack: tsplOneIsBlack ? '1' : '0',
         SettingsKeys.baseFontSize: '$baseFontSize',
         SettingsKeys.shopName: shopName,
         SettingsKeys.shopLogoBase64:
@@ -331,6 +480,12 @@ class InvoiceSettings {
     bool? cutPaper,
     String? Function()? printerAddress,
     String? Function()? printerName,
+    Map<String, PrinterLanguage>? printerLanguages,
+    Map<String, int>? printerOffsets,
+    EscPosImageMode? escPosImageMode,
+    int? printChunkSize,
+    int? printChunkDelayMs,
+    bool? tsplOneIsBlack,
     int? baseFontSize,
     String? shopName,
     Uint8List? Function()? logoPng,
@@ -371,6 +526,12 @@ class InvoiceSettings {
       printerAddress:
           printerAddress != null ? printerAddress() : this.printerAddress,
       printerName: printerName != null ? printerName() : this.printerName,
+      printerLanguages: printerLanguages ?? this.printerLanguages,
+      printerOffsets: printerOffsets ?? this.printerOffsets,
+      escPosImageMode: escPosImageMode ?? this.escPosImageMode,
+      printChunkSize: printChunkSize ?? this.printChunkSize,
+      printChunkDelayMs: printChunkDelayMs ?? this.printChunkDelayMs,
+      tsplOneIsBlack: tsplOneIsBlack ?? this.tsplOneIsBlack,
       baseFontSize: baseFontSize ?? this.baseFontSize,
       shopName: shopName ?? this.shopName,
       logoPng: logoPng != null ? logoPng() : this.logoPng,

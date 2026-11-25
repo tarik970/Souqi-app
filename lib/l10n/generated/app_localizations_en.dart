@@ -2840,4 +2840,166 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashReceivedClear => 'Clear';
+
+  @override
+  String get printerLanguageLabel => 'Printer language';
+
+  @override
+  String get printerLanguageReceipt => 'Receipt (ESC/POS)';
+
+  @override
+  String get printerLanguageReceiptHint => 'Receipt printers — most printers';
+
+  @override
+  String get printerLanguageTspl => 'Label (TSPL)';
+
+  @override
+  String get printerLanguageTsplHint =>
+      'Label printers, or a dual printer left in label mode';
+
+  @override
+  String get printerLanguageHint =>
+      'Not sure? Keep Receipt. If nothing prints, try both in Printer diagnostics.';
+
+  @override
+  String get cutPaperTsplHint => 'Not sent in label mode (TSPL)';
+
+  @override
+  String get printerDiagnosticsTitle => 'Printer diagnostics';
+
+  @override
+  String get printerDiagnosticsSubtitle =>
+      'Nothing prints, or it prints garbage? Find the settings that work.';
+
+  @override
+  String get diagLanguageSection =>
+      'Which language does the printer understand?';
+
+  @override
+  String get diagLanguageIntro =>
+      'Print both tests. The one that comes out readable is the printer\'s language.';
+
+  @override
+  String get testReceiptMode => 'Test receipt mode (ESC/POS)';
+
+  @override
+  String get testLabelMode => 'Test label mode (TSPL)';
+
+  @override
+  String get diagLanguageHint =>
+      'If only the label test prints, choose Label (TSPL), or switch the printer to receipt mode (see its manual).';
+
+  @override
+  String get diagDidItPrint => 'Did this test print?';
+
+  @override
+  String get diagPrintedUseThis => 'Printed — use this';
+
+  @override
+  String get diagDidNotPrint => 'Did not print';
+
+  @override
+  String get diagWorks => 'This one printed';
+
+  @override
+  String get diagWorksInUse => 'This one printed — in use';
+
+  @override
+  String get diagNotPrinted => 'This one did not print';
+
+  @override
+  String get diagImageModeSection => 'Image mode (ESC/POS)';
+
+  @override
+  String get diagImageModeHint =>
+      'For a receipt printer that connects but prints nothing or garbage: test each mode and keep the one that prints.';
+
+  @override
+  String imageModeDefault(String mode) {
+    return '$mode (default)';
+  }
+
+  @override
+  String imageModeEscStar(String mode) {
+    return '$mode (24-dot, line by line)';
+  }
+
+  @override
+  String testImageMode(String mode) {
+    return 'Test $mode';
+  }
+
+  @override
+  String get diagCompatSection => 'Compatibility';
+
+  @override
+  String get diagChunkSizeLabel => 'Chunk size (bytes)';
+
+  @override
+  String get diagChunkDelayLabel => 'Delay between chunks (ms)';
+
+  @override
+  String get diagCompatHint =>
+      'If long receipts stop halfway or lose lines, try smaller chunks and a longer delay.';
+
+  @override
+  String get tsplOneIsBlackLabel => 'Swap black and white (label mode)';
+
+  @override
+  String get tsplOneIsBlackHint =>
+      'Turn on if the label test prints white text on a black background.';
+
+  @override
+  String widthTooWideWarning(String dots, String paper, String head) {
+    return 'The image is $dots dots wide, but the print head for $paper mm paper is usually $head dots. A wider image is cut off or prints garbage.';
+  }
+
+  @override
+  String widthUseHead(String head) {
+    return 'Use $head dots';
+  }
+
+  @override
+  String get printerTestSlipTitle => 'Print test';
+
+  @override
+  String get diagCalibrationSection => 'Position on the paper';
+
+  @override
+  String get diagCalibrationHint =>
+      'Print the calibration test: a frame with a ruler along the top, LEFT at one end and RIGHT at the other. Both ends of the frame must be on the paper. If one side is cut off, move the print away from it with the arrows. If it is still cut off, make it narrower with −. Each tap prints the test again.';
+
+  @override
+  String get calibrationTest => 'Calibration test';
+
+  @override
+  String horizontalOffsetValue(String offset) {
+    return 'Horizontal offset: $offset dots';
+  }
+
+  @override
+  String printableWidthValue(String dots) {
+    return 'Printable width: $dots dots';
+  }
+
+  @override
+  String get calibrationShiftLeft => 'Move the print left';
+
+  @override
+  String get calibrationShiftRight => 'Move the print right';
+
+  @override
+  String get calibrationNarrower => 'Narrower';
+
+  @override
+  String get calibrationWider => 'Wider';
+
+  @override
+  String get calibrationReceiptNote =>
+      'In receipt mode (ESC/POS) the print can only be moved to the right: an offset below 0 changes nothing.';
+
+  @override
+  String printerCalibrationInfo(String dots, String offset) {
+    return 'Width $dots dots · offset $offset';
+  }
 }

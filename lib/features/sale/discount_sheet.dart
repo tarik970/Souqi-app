@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/money/money_format.dart';
 import '../../core/money/quantity.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/cart.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'sale_providers.dart';
@@ -138,20 +139,23 @@ class _DiscountSheetState extends ConsumerState<DiscountSheet> {
                 setState(() => _type = selection.first),
           ),
           const SizedBox(height: 16),
-          TextField(
+          SelectAllOnFocus(
             controller: _controller,
-            autofocus: true,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.discountLabel,
-              border: const OutlineInputBorder(),
-              suffixText: _type == DiscountType.amount ? symbol : '%',
-              errorText: _controller.text.trim().isEmpty || value != null
-                  ? null
-                  : l10n.invalidDiscount,
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: l10n.discountLabel,
+                border: const OutlineInputBorder(),
+                suffixText: _type == DiscountType.amount ? symbol : '%',
+                errorText: _controller.text.trim().isEmpty || value != null
+                    ? null
+                    : l10n.invalidDiscount,
+              ),
+              onChanged: (_) => setState(() {}),
             ),
-            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 16),
           _Row(label: l10n.subtotalLabel, value: money(totals.subtotalMinor)),

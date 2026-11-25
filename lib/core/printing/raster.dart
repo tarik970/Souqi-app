@@ -31,6 +31,27 @@ class MonoImage {
       bits[y * bytesPerRow + (x >> 3)] & (0x80 >> (x & 7)) != 0;
 }
 
+/// [image] moved [dots] to the right: white columns are added on its left,
+/// so it becomes that much wider. Whole bytes only — [dots] is rounded down
+/// to a multiple of 8, and nothing happens for 0 or less. This is how a
+/// receipt printer, which always starts at its left edge, is given a
+/// horizontal offset.
+MonoImage padLeft(MonoImage image, int dots) {
+  final pad = dots <= 0 ? 0 : dots ~/ 8;
+  if (pad == 0) return image;
+  final from = image.bytesPerRow;
+  final to = from + pad;
+  final bits = Uint8List(to * image.height);
+  for (var y = 0; y < image.height; y++) {
+    bits.setRange(y * to + pad, (y + 1) * to, image.bits, y * from);
+  }
+  return MonoImage(
+    width: image.width + pad * 8,
+    height: image.height,
+    bits: bits,
+  );
+}
+
 /// Luminance below which a dot is printed. Text is antialiased, so its edges
 /// are grey: a threshold above the midpoint keeps those edge pixels and gives
 /// strokes their full weight on paper, where thin strokes fade first.

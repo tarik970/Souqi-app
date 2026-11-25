@@ -510,19 +510,25 @@ void main() {
       expect(find.byType(GridView), findsOneWidget);
     });
 
-    testWidgets('the home screen of a cards shop fits, with its due list',
+    testWidgets('the home screen of a cards shop fits, with its renewals card',
         (tester) async {
       await seedCustomers(tester);
       await setShopType(tester, 'CARDS');
       await pumpPhone(tester, const HomeScreen());
-      // With the keyboard up there are barely 200 px under the search box,
-      // all of it taken by the destination chips (one more of them since
-      // card stock); the due list is what shows once the keyboard is gone.
+      // With the keyboard up there are barely 200 px under the search box;
+      // the renewals card and the tiles are one scroll away.
       tester.view.resetViewInsets();
       await settle(tester);
       expect(tester.takeException(), isNull);
-      expect(find.byKey(ValueKey('due-row-$accountId'), skipOffstage: false),
+      expect(find.byKey(const ValueKey('home-due'), skipOffstage: false),
           findsOneWidget);
+      expect(find.byKey(const ValueKey('home-due-see-all'), skipOffstage: false),
+          findsOneWidget);
+      // The tiles below it scroll into view without overflowing.
+      await tester.drag(find.byKey(const ValueKey('home-idle')),
+          const Offset(0, -400));
+      await settle(tester);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('quick search results fit under the keyboard', (tester) async {
@@ -940,6 +946,11 @@ void main() {
             priceCurrencyCode: 'SYP',
             qtyThousandths: 1000,
           ));
+      // The home has the renewals card; Renew lives on the due screen.
+      final seeAll = find.byKey(const ValueKey('home-due-see-all'));
+      await reach(tester, seeAll);
+      await tester.tap(seeAll);
+      await settle(tester, 24);
       final renew = find.byKey(ValueKey('due-renew-$accountId'));
       await reach(tester, renew);
       await settle(tester, 4);

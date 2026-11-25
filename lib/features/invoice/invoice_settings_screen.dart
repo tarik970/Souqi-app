@@ -6,8 +6,10 @@ import 'package:material_ui/material_ui.dart';
 import '../../config/features.dart';
 import '../../core/platform/native_bridge.dart';
 import '../../core/printing/print_geometry.dart';
+import '../../core/printing/print_job.dart';
 import '../../core/providers.dart';
 import '../../core/utils/normalize.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -17,7 +19,9 @@ import 'invoice_preview.dart';
 import 'invoice_providers.dart';
 import 'logo_codec.dart';
 import 'output_messages.dart';
+import 'printer_diagnostics_screen.dart';
 import 'printer_picker.dart';
+import 'printer_widgets.dart';
 import 'sample_invoice.dart';
 
 /// Invoice & printing settings with a live preview.
@@ -70,6 +74,9 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
   /// Bumped when the margin is changed from code (picking a paper preset),
   /// so its field is rebuilt with the new text.
   int _marginEpoch = 0;
+
+  /// The same for the width override, when the width warning fixes it.
+  int _dotsEpoch = 0;
   bool _testing = false;
 
   InvoiceSettings get _settings =>
@@ -115,14 +122,11 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
         ));
   }
 
-  Future<void> _choosePrinter() async {
-    final device = await showPrinterPicker(context);
-    if (device == null || !mounted) return;
-    _change((s) => s.copyWith(
-          printerAddress: () => device.address,
-          printerName: () =>
-              device.name.isEmpty ? device.address : device.name,
-        ));
+  Future<void> _choosePrinter() => chooseAndRememberPrinter(context, ref);
+
+  void _fitWidthToHead() {
+    setState(() => _dotsEpoch++);
+    _change((s) => s.fittedToHead());
   }
 
   Future<void> _forgetPrinter() async {
@@ -363,7 +367,17 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
             ? (s.printerName ?? s.printerAddress!)
             : l10n.printerNone),
         subtitle: s.hasPrinter
-            ? Text(s.printerAddress!, textDirection: TextDirection.ltr)
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(s.printerAddress!, textDirection: TextDirection.ltr),
+                  // Where its print sits (the diagnostics screen sets it).
+                  Text(
+                    printerCalibrationText(l10n, s),
+                    key: const ValueKey('printer-calibration-info'),
+                  ),
+                ],
+              )
             : null,
         trailing: TextButton(
           onPressed: _choosePrinter,
@@ -393,6 +407,29 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
                 child: Text(l10n.forgetPrinter),
               ),
           ],
+        ),
+      ),
+      if (s.hasPrinter) ...[
+        _Padded(
+          child: Text(
+            l10n.printerLanguageLabel,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+        PrinterLanguageSelector(
+          value: s.printerLanguage,
+          onChanged: (language) =>
+              _change((s) => s.withPrinterLanguage(language)),
+        ),
+      ],
+      ListTile(
+        key: const ValueKey('printer-diagnostics'),
+        leading: const Icon(Icons.troubleshoot),
+        title: Text(l10n.printerDiagnosticsTitle),
+        subtitle: Text(l10n.printerDiagnosticsSubtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PrinterDiagnosticsScreen()),
         ),
       ),
       ListTile(
@@ -427,9 +464,14 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
       ),
       SwitchListTile(
         title: Text(l10n.cutPaperLabel),
-        subtitle: Text(l10n.cutPaperHint),
-        value: s.cutPaper,
-        onChanged: (value) => _change((s) => s.copyWith(cutPaper: value)),
+        // A label printer has no cutter command: TSPL jobs never cut.
+        subtitle: Text(s.printerLanguage == PrinterLanguage.tspl
+            ? l10n.cutPaperTsplHint
+            : l10n.cutPaperHint),
+        value: s.cutPaper && s.printerLanguage != PrinterLanguage.tspl,
+        onChanged: s.printerLanguage == PrinterLanguage.tspl
+            ? null
+            : (value) => _change((s) => s.copyWith(cutPaper: value)),
       ),
     ];
   }
@@ -506,32 +548,42 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
               ?.copyWith(color: theme.colorScheme.primary),
         ),
       ),
+      PrintWidthWarning(settings: s, onFix: _fitWidthToHead),
       ExpansionTile(
         title: Text(l10n.advancedSection),
         initiallyExpanded: s.printableDotsOverride != null,
         children: [
-          _NumberField(
+          KeyedSubtree(
             key: const ValueKey('dots-override'),
-            label: l10n.printableDotsOverrideLabel,
-            helper: l10n.printableDotsOverrideHint,
-            initialText: s.printableDotsOverride == null
-                ? ''
-                : '${s.printableDotsOverride}',
-            integer: true,
-            onChanged: (text) {
-              if (text.trim().isEmpty) {
-                _change((s) => s.copyWith(printableDotsOverride: () => null));
+            child: _NumberField(
+              // A new field (with the new text) when the width warning
+              // changes the override: the field owns what is typed in it.
+              key: ValueKey('dots-override-$_dotsEpoch'),
+              label: l10n.printableDotsOverrideLabel,
+              helper: l10n.printableDotsOverrideHint,
+              initialText: s.printableDotsOverride == null
+                  ? ''
+                  : '${s.printableDotsOverride}',
+              integer: true,
+              onChanged: (text) {
+                if (text.trim().isEmpty) {
+                  _change(
+                    (s) => s.copyWith(printableDotsOverride: () => null),
+                  );
+                  return true;
+                }
+                final value = int.tryParse(normalizeDigits(text.trim()));
+                if (value == null ||
+                    value < minPrintableDots ||
+                    value > maxPrintableDots) {
+                  return false;
+                }
+                _change(
+                  (s) => s.copyWith(printableDotsOverride: () => value),
+                );
                 return true;
-              }
-              final value = int.tryParse(normalizeDigits(text.trim()));
-              if (value == null ||
-                  value < minPrintableDots ||
-                  value > maxPrintableDots) {
-                return false;
-              }
-              _change((s) => s.copyWith(printableDotsOverride: () => value));
-              return true;
-            },
+              },
+            ),
           ),
         ],
       ),
@@ -944,27 +996,36 @@ class _NumberFieldState extends State<_NumberField> {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: TextField(
+      // Gaining focus selects the whole number: the first keystroke
+      // replaces the setting's current value instead of appending to it.
+      child: SelectAllOnFocus(
         controller: _controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: !widget.integer),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(
-            RegExp(widget.integer ? r'[0-9٠-٩۰-۹]' : r'[0-9٠-٩۰-۹.,٫]'),
-          ),
-        ],
-        textDirection: TextDirection.ltr,
-        decoration: InputDecoration(
-          labelText: widget.label,
-          helperText: widget.helper,
-          helperMaxLines: 3,
-          prefixText: widget.prefixText,
-          errorText: _invalid ? l10n.invalidNumber : null,
-        ),
-        onChanged: (text) {
-          final valid = widget.onChanged(text);
-          if (valid == _invalid) setState(() => _invalid = !valid);
-        },
+        child: _field(l10n),
       ),
+    );
+  }
+
+  Widget _field(AppLocalizations l10n) {
+    return TextField(
+      controller: _controller,
+      keyboardType: TextInputType.numberWithOptions(decimal: !widget.integer),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(
+          RegExp(widget.integer ? r'[0-9٠-٩۰-۹]' : r'[0-9٠-٩۰-۹.,٫]'),
+        ),
+      ],
+      textDirection: TextDirection.ltr,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        helperText: widget.helper,
+        helperMaxLines: 3,
+        prefixText: widget.prefixText,
+        errorText: _invalid ? l10n.invalidNumber : null,
+      ),
+      onChanged: (text) {
+        final valid = widget.onChanged(text);
+        if (valid == _invalid) setState(() => _invalid = !valid);
+      },
     );
   }
 }

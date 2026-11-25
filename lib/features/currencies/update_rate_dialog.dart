@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/money/exchange.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/currency.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -89,14 +90,17 @@ class _UpdateRateDialogState extends State<UpdateRateDialog> {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(l10n.updateRate),
-      content: TextField(
+      content: SelectAllOnFocus(
         controller: _controller,
-        autofocus: true,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          labelText: l10n.rateHint(widget.currency.code, widget.baseCode),
-          errorText: _errorText,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onSubmitted: (_) => _submit(),
+          decoration: InputDecoration(
+            labelText: l10n.rateHint(widget.currency.code, widget.baseCode),
+            errorText: _errorText,
+          ),
         ),
       ),
       actions: [

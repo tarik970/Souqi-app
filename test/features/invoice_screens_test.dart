@@ -311,6 +311,12 @@ void main() {
       await settle(tester);
       await tester.tap(find.text('XP-P323B'));
       await settle(tester);
+      // The picker now asks for the printer's language; Receipt (ESC/POS)
+      // is the default.
+      expect(find.text('Receipt (ESC/POS)'), findsOneWidget);
+      expect(find.text('Label (TSPL)'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('printer-language-confirm')));
+      await settle(tester);
 
       expect(await stored(tester, SettingsKeys.printerMac), 'AA:BB:CC:DD:EE:FF');
       expect(await stored(tester, SettingsKeys.printerName), 'XP-P323B');

@@ -6,6 +6,7 @@ import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
 import '../../core/utils/due_dates.dart';
 import '../../core/utils/normalize.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/customer.dart';
 import '../../domain/models/product.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -318,19 +319,22 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
               onChanged: (value) => setState(() => _packageId = value),
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              key: const ValueKey('account-days-field'),
+            SelectAllOnFocus(
               controller: _days,
-              keyboardType: TextInputType.number,
-              textDirection: TextDirection.ltr,
-              decoration: InputDecoration(
-                labelText: l10n.accountRenewalDaysLabel,
-                helperText: l10n.accountRenewalDaysHint,
-                helperMaxLines: 2,
+              child: TextFormField(
+                key: const ValueKey('account-days-field'),
+                controller: _days,
+                keyboardType: TextInputType.number,
+                textDirection: TextDirection.ltr,
+                decoration: InputDecoration(
+                  labelText: l10n.accountRenewalDaysLabel,
+                  helperText: l10n.accountRenewalDaysHint,
+                  helperMaxLines: 2,
+                ),
+                validator: (_) =>
+                    _renewalDays == -1 ? l10n.invalidNumber : null,
+                onChanged: (_) => setState(_recomputeDue),
               ),
-              validator: (_) =>
-                  _renewalDays == -1 ? l10n.invalidNumber : null,
-              onChanged: (_) => setState(_recomputeDue),
             ),
             const SizedBox(height: 12),
             _DateRow(

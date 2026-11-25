@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/exchange.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/currency.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -158,27 +159,30 @@ class _CurrencyFormScreenState extends ConsumerState<CurrencyFormScreen> {
             ),
             if (_isNew) ...[
               const SizedBox(height: 12),
-              TextFormField(
+              SelectAllOnFocus(
                 controller: _rate,
-                decoration: InputDecoration(
-                  labelText: l10n.exchangeRate,
-                  hintText: l10n.rateHint(
-                    _code.text.trim().isEmpty
-                        ? '…'
-                        : _code.text.trim().toUpperCase(),
-                    baseCode,
+                child: TextFormField(
+                  controller: _rate,
+                  decoration: InputDecoration(
+                    labelText: l10n.exchangeRate,
+                    hintText: l10n.rateHint(
+                      _code.text.trim().isEmpty
+                          ? '…'
+                          : _code.text.trim().toUpperCase(),
+                      baseCode,
+                    ),
                   ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  validator: (v) {
+                    try {
+                      parseRateFraction(v ?? '');
+                      return null;
+                    } on FormatException {
+                      return l10n.invalidRate;
+                    }
+                  },
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) {
-                  try {
-                    parseRateFraction(v ?? '');
-                    return null;
-                  } on FormatException {
-                    return l10n.invalidRate;
-                  }
-                },
               ),
             ],
             const SizedBox(height: 24),

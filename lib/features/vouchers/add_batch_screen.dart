@@ -11,6 +11,7 @@ import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
 import '../../core/utils/voucher_format.dart';
 import '../../core/vouchers/code_import.dart';
+import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/voucher.dart';
@@ -434,13 +435,17 @@ class _AddBatchScreenState extends ConsumerState<AddBatchScreen> {
                   ),
             onTap: _pickExpiry,
           ),
-          TextField(
-            key: const ValueKey('batch-cost'),
+          SelectAllOnFocus(
             controller: _cost,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.batchCostLabel(product.currencyCode),
-              errorText: _costError,
+            child: TextField(
+              key: const ValueKey('batch-cost'),
+              controller: _cost,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: l10n.batchCostLabel(product.currencyCode),
+                errorText: _costError,
+              ),
             ),
           ),
           const SizedBox(height: 24),

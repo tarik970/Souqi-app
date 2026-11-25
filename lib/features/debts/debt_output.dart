@@ -6,10 +6,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/platform/native_bridge.dart';
-import '../../core/printing/escpos.dart';
 import '../../core/printing/pdf_builder.dart';
 import '../../core/printing/png_encoder.dart';
 import '../../core/printing/print_geometry.dart';
+import '../../core/printing/print_job.dart';
 import '../../core/printing/raster.dart';
 import '../../core/printing/widget_capture.dart';
 import '../../core/utils/normalize.dart';
@@ -51,7 +51,7 @@ class LedgerPaper {
 
 /// Turns a [LedgerPaper] into paper, a picture or a PDF — the SAME pipeline
 /// as the invoices ([InvoiceOutput]): the widget is rendered off-screen and
-/// the pixels become ESC/POS raster bytes at the printer's width, or a PNG /
+/// the pixels become printer bytes at the printer's width, or a PNG /
 /// a one-page PDF at the share width, 2×.
 ///
 /// Every method throws [OutputException] for failures the user can act on.
@@ -105,8 +105,9 @@ class LedgerPaperOutput {
     );
   }
 
-  /// The complete ESC/POS byte stream. A long statement is one long strip:
-  /// the raster job is sent in bands, and the roll simply keeps feeding.
+  /// The complete byte stream, in the printer's language. A long statement
+  /// is one long strip: ESC/POS sends it in bands and the roll simply keeps
+  /// feeding; TSPL sends it as pages that join on continuous paper.
   Future<Uint8List> printJob(
     LedgerPaper paper, {
     InvoiceRenderContext? context,
@@ -114,10 +115,10 @@ class LedgerPaperOutput {
   }) async {
     final c = context ?? await _context();
     final image = await renderForPrinter(paper, context: c, copy: copy);
-    return buildRasterJob(
+    return buildPrintJob(
       toMonochrome(image),
+      format: c.settings.printFormat,
       feedLines: c.settings.feedLines,
-      cut: c.settings.cutPaper,
     );
   }
 
@@ -154,8 +155,10 @@ class LedgerPaperOutput {
     if (address == null || address.isEmpty) {
       throw const OutputException(OutputFailure.noPrinterSelected);
     }
-    await _ref.read(invoiceOutputProvider).ensureBluetoothReady();
-    await _bridge.printBytes(
+    final output = _ref.read(invoiceOutputProvider);
+    await output.ensureBluetoothReady();
+    await output.send(
+      c.settings,
       address,
       await printJob(paper, context: c, copy: copy),
     );
