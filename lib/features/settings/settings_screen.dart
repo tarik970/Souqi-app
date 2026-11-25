@@ -58,16 +58,30 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.store),
             title: Text(l10n.setupShopType),
-            trailing: DropdownButton<String>(
+            // UNDER the title and as wide as the tile, not a trailing
+            // widget: "Cards & subscriptions" at a large system font is
+            // wider than what a ListTile leaves beside its title, and it
+            // overflowed on a phone. Expanded, the choice gets the whole
+            // row and is cut with an ellipsis if even that is not enough.
+            subtitle: DropdownButton<String>(
+              key: const ValueKey('setting-shop-type-dropdown'),
               value: shopType,
+              isExpanded: true,
               underline: const SizedBox.shrink(),
               items: [
-                DropdownMenuItem(
-                    value: shopTypeGrocery, child: Text(l10n.shopTypeGrocery)),
-                DropdownMenuItem(
-                    value: shopTypeCards, child: Text(l10n.shopTypeCards)),
-                DropdownMenuItem(
-                    value: shopTypeBoth, child: Text(l10n.shopTypeBoth)),
+                for (final (value, label) in [
+                  (shopTypeGrocery, l10n.shopTypeGrocery),
+                  (shopTypeCards, l10n.shopTypeCards),
+                  (shopTypeBoth, l10n.shopTypeBoth),
+                ])
+                  DropdownMenuItem(
+                    value: value,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
               ],
               onChanged: (value) async {
                 if (value == null) return;

@@ -33,7 +33,7 @@ CORE FEATURES (later phases)
 6. Invoice archive: search by date range / invoice number / product, view, reprint, delete one, delete a date range, and auto-delete invoices older than N days (user setting, off by default).
 7. Statistics: sales total, invoice count, average invoice, top products by quantity and by amount, for today / this week / this month / custom range, plus comparison with the previous period.
 8. Extras: bulk price change by percentage (all or selected products, with rounding option), barcode scan with camera, discount per invoice (amount or %), favorites bar, data backup/restore to a single file, PIN lock for settings/archive/stats.
-9. Debt ledger (customer debts) — BUILD IT but HIDE IT behind a compile-time feature flag.
+9. Debt ledger (customer debts, partial payments, receipts, statements, debtors list, opening balances) — built in phase 4d, behind the `debtEnabled` flag (licensable feature in 5b).
 10. Multiple currencies (fully offline, rates entered manually by the shop owner):
    - Currencies table: code, Arabic name, English name, symbol, decimal places, exchange rate to the base currency, active flag, sort order. Seed SYP (base, 0 decimals) and USD (2 decimals); the user can add any currency (e.g. TRY, EUR, or "old lira" for the Syrian redenomination) and edit/disable them.
    - One BASE currency (default SYP) used for totals and statistics. The base currency can only be changed while there are no invoices and no debt transactions; after that the setting is locked with an explanation (no recalculation logic).

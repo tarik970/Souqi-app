@@ -23,6 +23,7 @@ import 'package:souqi/features/sale/sale_invoice_screen.dart';
 import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
 import 'package:souqi/features/settings/renewal_settings.dart';
+import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/setup/setup_screen.dart';
 import 'package:souqi/features/stats/stats_screen.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
@@ -389,6 +390,7 @@ void main() {
       WidgetTester tester,
       Widget screen, {
       bool keyboard = true,
+      String locale = 'en',
     }) async {
       tester.view.devicePixelRatio = 2;
       tester.view.physicalSize = phone * tester.view.devicePixelRatio;
@@ -401,10 +403,10 @@ void main() {
           overrides: [
             databaseProvider.overrideWithValue(database),
             appLocaleProvider
-                .overrideWith(() => AppLocaleNotifier(const Locale('en'))),
+                .overrideWith(() => AppLocaleNotifier(Locale(locale))),
           ],
           child: MaterialApp(
-            locale: const Locale('en'),
+            locale: Locale(locale),
             localizationsDelegates: const [
               AppLocalizations.delegate,
               ...GlobalMaterialLocalizations.delegates,
@@ -763,22 +765,56 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the renewal settings and the reminder dialog fit',
+    for (final locale in ['en', 'ar']) {
+      testWidgets('the whole settings screen fits, top to bottom ($locale)',
+          (tester) async {
+        // The longest shop type is the one that overflowed on a phone.
+        await setShopType(tester, 'CARDS');
+        await pumpPhone(
+          tester,
+          const SettingsScreen(),
+          keyboard: false,
+          locale: locale,
+        );
+        expect(
+          find.byKey(const ValueKey('setting-shop-type-dropdown')),
+          findsOneWidget,
+        );
+
+        // Every tile is laid out on the way down: the list is lazy, so the
+        // ones below the fold are only checked once they are scrolled to.
+        final list = find.byType(Scrollable).first;
+        for (var i = 0; i < 40; i++) {
+          final position = tester.state<ScrollableState>(list).position;
+          if (position.pixels >= position.maxScrollExtent) break;
+          await tester.drag(list, const Offset(0, -200));
+          await settle(tester, 4);
+          expect(tester.takeException(), isNull, reason: 'after $i drags');
+        }
+        final position = tester.state<ScrollableState>(list).position;
+        expect(position.pixels, position.maxScrollExtent,
+            reason: 'reached the end of the settings list');
+      });
+    }
+
+    testWidgets('the shop-type menu fits when it is open', (tester) async {
+      await pumpPhone(tester, const SettingsScreen(), keyboard: false);
+      await tester
+          .tap(find.byKey(const ValueKey('setting-shop-type-dropdown')));
+      await settle(tester, 24);
+      expect(find.text('Cards & subscriptions'), findsWidgets);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Cards & subscriptions').last);
+      await settle(tester, 24);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the reminder dialog fits, opened from the settings screen',
         (tester) async {
-      // The two new tiles on their own page: the rest of the settings
-      // screen is older than this test and is not what is being checked.
-      await pumpPhone(
-        tester,
-        Scaffold(
-          body: ListView(
-            children: const [DueSoonDaysTile(), ReminderTextTile()],
-          ),
-        ),
-        keyboard: false,
-      );
+      await pumpPhone(tester, const SettingsScreen(), keyboard: false);
       final tile = find.byKey(const ValueKey('setting-reminder-text'));
-      expect(find.byKey(const ValueKey('setting-due-soon')), findsOneWidget);
       await reach(tester, tile);
+      expect(find.byKey(const ValueKey('setting-due-soon')), findsOneWidget);
       await tester.tap(tile);
       await settle(tester, 24);
       expect(find.byType(ReminderTextDialog), findsOneWidget);
