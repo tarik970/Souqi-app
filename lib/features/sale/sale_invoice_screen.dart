@@ -161,7 +161,10 @@ class SaleInvoiceScreen extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            // All the way home, whatever the sale was opened from (the due
+            // list, a customer's page): not just one screen back.
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
             child: Text(l10n.backToHome),
           ),
           const SizedBox(height: 8),

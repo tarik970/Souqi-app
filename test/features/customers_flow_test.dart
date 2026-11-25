@@ -464,6 +464,9 @@ void main() {
       await pump(tester, const HomeScreen());
       expect(find.text('Overdue (1)'), findsOneWidget);
 
+      // The home has the renewals card; Renew lives on the due screen.
+      await tester.tap(find.byKey(const ValueKey('home-due-see-all')));
+      await animated(tester);
       await tester.tap(find.byKey(ValueKey('due-renew-$accountId')));
       await animated(tester);
       await tester.tap(saveButton);
@@ -471,7 +474,11 @@ void main() {
       await tester.tap(find.text('Back to home'));
       await animated(tester);
 
+      // "Back to home" goes all the way home, although the sale was opened
+      // from the due list: that screen is gone, not waiting underneath.
       expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(DueScreen, skipOffstage: false), findsNothing);
+      expect(find.byTooltip('Back'), findsNothing);
       expect(find.text('Overdue (1)'), findsNothing);
       expect(find.text('Nothing is due for renewal'), findsOneWidget);
       expect(find.byKey(const ValueKey('home-badge-due')), findsNothing);
@@ -1709,10 +1716,17 @@ void main() {
       await pump(tester, const HomeScreen(), locale: 'ar');
 
       expect(find.text('متأخرة (1)'), findsOneWidget);
-      expect(find.textContaining('متأخر يوماً واحداً'), findsOneWidget);
-      expect(find.text('تجديد'), findsOneWidget);
       final context = tester.element(find.byType(HomeScreen));
       expect(Directionality.of(context), TextDirection.rtl);
+
+      // The rows themselves — how late, and Renew — are on the due screen.
+      await tester.tap(find.byKey(const ValueKey('home-due-see-all')));
+      await animated(tester);
+      expect(find.textContaining('متأخر يوماً واحداً'), findsOneWidget);
+      expect(find.text('تجديد'), findsOneWidget);
+      // Not pageBack(): it looks for the English "Back" tooltip.
+      await tester.tap(find.byType(BackButton));
+      await animated(tester);
 
       await tester.enterText(searchBox, '٠٠١١');
       await settle(tester);
