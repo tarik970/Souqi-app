@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/db/app_database.dart';
 import '../data/repositories/archive_repository.dart';
 import '../data/repositories/currency_repository.dart';
+import '../data/repositories/customer_repository.dart';
 import '../data/repositories/invoice_repository.dart';
 import '../data/repositories/product_repository.dart';
 import '../data/repositories/settings_repository.dart';
@@ -38,6 +39,10 @@ final invoiceRepositoryProvider = Provider<InvoiceRepository>(
 
 final archiveRepositoryProvider = Provider<ArchiveRepository>(
   (ref) => ArchiveRepository(ref.watch(databaseProvider).db),
+);
+
+final customerRepositoryProvider = Provider<CustomerRepository>(
+  (ref) => CustomerRepository(ref.watch(databaseProvider).db),
 );
 
 final statsRepositoryProvider = Provider<StatsRepository>(

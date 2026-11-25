@@ -2,12 +2,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/core/providers.dart';
+import 'package:souqi/core/platform/native_bridge.dart';
 import 'package:souqi/data/db/app_database.dart';
+import 'package:souqi/data/repositories/customer_repository.dart';
+import 'package:souqi/domain/models/cart.dart';
+import 'package:souqi/domain/models/customer.dart';
 import 'package:souqi/features/archive/archive_screen.dart';
 import 'package:souqi/features/archive/invoice_detail_screen.dart';
 import 'package:souqi/features/currencies/currencies_screen.dart';
 import 'package:souqi/features/currencies/currency_form_screen.dart';
 import 'package:souqi/features/currencies/update_rate_dialog.dart';
+import 'package:souqi/features/customers/account_form_screen.dart';
+import 'package:souqi/features/customers/customer_detail_screen.dart';
+import 'package:souqi/features/customers/customer_form_screen.dart';
+import 'package:souqi/features/customers/customer_picker_screen.dart';
+import 'package:souqi/features/customers/customers_screen.dart';
+import 'package:souqi/features/customers/due_screen.dart';
+import 'package:souqi/features/home/home_screen.dart';
 import 'package:souqi/features/invoice/invoice_actions.dart';
 import 'package:souqi/features/invoice/invoice_providers.dart';
 import 'package:souqi/features/invoice/invoice_settings_screen.dart';
@@ -17,7 +28,9 @@ import 'package:souqi/features/sale/discount_sheet.dart';
 import 'package:souqi/features/sale/quantity_sheet.dart';
 import 'package:souqi/features/sale/quick_item_sheet.dart';
 import 'package:souqi/features/sale/rates_sheet.dart';
+import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
+import 'package:souqi/features/settings/renewal_settings.dart';
 import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/units/units_screen.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
@@ -212,6 +225,20 @@ void main() {
     final id = await insertProduct(database.db, name: 'Sugar', code: '101');
     await database.db.update('products', {'is_favorite': 1},
         where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Customer 1, "Ahmad", with a phone and one overdue account ("0011",
+  /// MTN) — the first customer inserted, so its id is 1.
+  Future<void> ahmad(AppDatabase database) async {
+    final customers = CustomerRepository(database.db);
+    final id = await customers
+        .insert(const Customer(name: 'Ahmad', phone: '0944 123 456'));
+    await customers.insertAccount(CustomerAccount(
+      customerId: id,
+      accountNumber: '0011',
+      provider: 'MTN',
+      nextDueAt: DateTime(2020),
+    ));
   }
 
   // --- Ways in -----------------------------------------------------------
@@ -572,6 +599,208 @@ void main() {
       button: find.byType(BackButton),
       keyboard: true,
       isPage: true,
+    ),
+    // --- Phase 4b: customers, accounts and renewals ----------------------
+    Closable(
+      'customer form, from the customers screen',
+      home: const CustomersScreen(),
+      open: (tester) async {
+        await tester.tap(find.text('Add customer'));
+        await animated(tester);
+        await tester.tap(find.byType(TextFormField).first);
+        await settle(tester, 4);
+      },
+      shown: find.byType(CustomerFormScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+    ),
+    Closable(
+      'customer page',
+      home: const CustomersScreen(),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.tap(find.text('Ahmad'));
+        await animated(tester);
+      },
+      shown: find.byType(CustomerDetailScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'account form, from the customer page',
+      home: const CustomerDetailScreen(customerId: 1),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('customer-add-account')));
+        await animated(tester);
+        await tester.tap(find.byType(TextFormField).first);
+        await settle(tester, 4);
+      },
+      shown: find.byType(AccountFormScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+      // Nothing was saved: still the one account.
+      after: (tester) async => expect(
+        find.byKey(const ValueKey('customer-account-1')),
+        findsOneWidget,
+      ),
+    ),
+    Closable(
+      'duplicate-number warning',
+      home: const AccountFormScreen(customerId: 1),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.enterText(
+            find.byKey(const ValueKey('account-number-field')), '00 11');
+        await tester.enterText(
+            find.byKey(const ValueKey('account-provider-field')), 'mtn');
+        await settle(tester, 4);
+        await tester.tap(find.byKey(const ValueKey('account-save')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('account-duplicate-dialog')),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'date picker of the account form',
+      home: const AccountFormScreen(customerId: 1),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('account-last-renewal')));
+        await animated(tester);
+      },
+      shown: find.byType(DatePickerDialog),
+      button: cancel,
+    ),
+    Closable(
+      'deactivate-customer confirmation',
+      home: const CustomerDetailScreen(customerId: 1),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('customer-menu')));
+        await animated(tester);
+        await tester.tap(find.text('Deactivate'));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('deactivate-customer-dialog')),
+      button: cancel,
+      // Not confirmed: the customer is still active.
+      after: (tester) async => expect(
+        find.byKey(const ValueKey('customer-inactive')),
+        findsNothing,
+      ),
+    ),
+    Closable(
+      'WhatsApp app chooser, from the customer page',
+      home: const CustomerDetailScreen(customerId: 1),
+      seed: ahmad,
+      open: (tester) async {
+        bridge.installedWhatsApp = const [
+          whatsAppPackage,
+          whatsAppBusinessPackage,
+        ];
+        await tester.tap(find.byKey(const ValueKey('customer-whatsapp')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('whatsapp-package-dialog')),
+      // Dismissed without choosing: no chat was opened.
+      after: (tester) async => expect(bridge.chats, isEmpty),
+    ),
+    Closable(
+      'customer picker, from the sale screen',
+      home: const SaleScreen(),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('sale-customer-chip')));
+        await animated(tester);
+      },
+      shown: find.byType(CustomerPickerScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+      // Nothing picked: the chip is still empty.
+      after: (tester) async => expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('sale-customer-chip')),
+          matching: find.text('Customer'),
+        ),
+        findsOneWidget,
+      ),
+    ),
+    Closable(
+      'customer form, from the picker',
+      home: const SaleScreen(),
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('sale-customer-chip')));
+        await animated(tester);
+        await tester.enterText(
+            find.byKey(const ValueKey('quick-search-field')), 'Samer');
+        await settle(tester);
+        await tester.tap(find.byKey(const ValueKey('new-customer-name')));
+        await animated(tester);
+      },
+      shown: find.byType(CustomerFormScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+      // Back on the picker, not all the way out.
+      after: (tester) async =>
+          expect(find.byType(CustomerPickerScreen), findsOneWidget),
+    ),
+    Closable(
+      '"start a new sale?" confirmation of Renew',
+      home: const DueScreen(),
+      seed: ahmad,
+      open: (tester) async {
+        // Something left in the cart, so Renew has to ask first.
+        ProviderScope.containerOf(tester.element(find.byType(DueScreen)))
+            .read(cartProvider.notifier)
+            .add(const CartLine(
+              name: 'Left in the cart',
+              unitPriceMinor: 1000,
+              priceCurrencyCode: 'SYP',
+              qtyThousandths: 1000,
+            ));
+        await tester.tap(find.text('Renew'));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('renew-replace-cart-dialog')),
+      button: cancel,
+      // Not confirmed: no sale was opened.
+      after: (tester) async => expect(find.byType(SaleScreen), findsNothing),
+    ),
+    Closable(
+      'due-for-renewal page',
+      home: const HomeScreen(),
+      seed: ahmad,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('home-nav-due')));
+        await animated(tester);
+      },
+      shown: find.byType(DueScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'reminder message dialog',
+      home: const SettingsScreen(),
+      open: (tester) async {
+        final tile = find.byKey(const ValueKey('setting-reminder-text'));
+        await tester.scrollUntilVisible(
+          tile,
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await settle(tester, 4);
+        await tester.tap(tile);
+        await animated(tester);
+      },
+      shown: find.byType(ReminderTextDialog),
+      button: cancel,
+      keyboard: true,
     ),
   ];
 

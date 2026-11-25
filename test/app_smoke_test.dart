@@ -31,7 +31,16 @@ void main() {
         child: const SouqiApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    // The home screen reads the database (shop type, the due-for-renewal
+    // badge), and sqflite futures only progress outside fake async — so
+    // frames are interleaved with real time instead of `pumpAndSettle`.
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 5)),
+      );
+    }
+    await tester.pump();
   }
 
   testWidgets('home renders in Arabic, RTL, without exceptions',

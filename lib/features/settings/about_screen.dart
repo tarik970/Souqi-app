@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/byte_size.dart';
+import '../../data/dev/customer_seeder.dart';
 import '../../data/dev/invoice_seeder.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/archive_providers.dart';
+import '../customers/customers_providers.dart';
 import 'storage_providers.dart';
 
 class AboutScreen extends ConsumerWidget {
@@ -76,6 +79,7 @@ class AboutScreen extends ConsumerWidget {
               ),
             ),
             const _SeedInvoicesTile(),
+            if (customersEnabled) const _SeedCustomersTile(),
           ],
         ],
       ),
@@ -213,6 +217,92 @@ class _SeedInvoicesTile extends ConsumerWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(l10n.debugSeedDone(
+          formatMinor(created, decimals: 0, locale: locale),
+        )),
+      ));
+  }
+}
+
+/// Debug-only: fills the customer list with test customers, each with two
+/// cards / accounts.
+///
+/// The brief asks the quick search to stay instant with 5,000 customers and
+/// 10,000 accounts; this is how that is tried on a real phone.
+class _SeedCustomersTile extends ConsumerWidget {
+  const _SeedCustomersTile();
+
+  static const List<int> counts = [100, 1000, 5000];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const ValueKey('about-seed-customers'),
+      leading: const Icon(Icons.science_outlined),
+      title: Text(l10n.debugSeedCustomers),
+      subtitle: Text(l10n.debugSeedCustomersHint),
+      trailing: PopupMenuButton<int>(
+        key: const ValueKey('about-seed-customers-count'),
+        icon: const Icon(Icons.add),
+        itemBuilder: (context) => [
+          for (final count in counts)
+            PopupMenuItem(value: count, child: Text('$count')),
+        ],
+        onSelected: (count) => _seed(context, ref, count),
+      ),
+    );
+  }
+
+  Future<void> _seed(BuildContext context, WidgetRef ref, int count) async {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.read(appLocaleProvider).languageCode;
+    final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final database = container.read(databaseProvider);
+    final navigator = Navigator.of(context);
+
+    // Deliberately not disposed, for the same reason as in the invoice
+    // seeder above: the dialog can outlive this method while it animates
+    // out.
+    final progress = ValueNotifier<int>(0);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          key: const ValueKey('about-seeding-customers-dialog'),
+          title: Text(l10n.debugSeedingCustomersTitle),
+          content: ValueListenableBuilder<int>(
+            valueListenable: progress,
+            builder: (context, done, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.progressCount(
+                  formatMinor(done, decimals: 0, locale: locale),
+                  formatMinor(count, decimals: 0, locale: locale),
+                )),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(value: count == 0 ? null : done / count),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final created = await seedTestCustomers(
+      database.db,
+      customers: count,
+      onProgress: (done) => progress.value = done,
+    );
+    refreshCustomerData(container);
+    navigator.pop();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l10n.debugSeedCustomersDone(
           formatMinor(created, decimals: 0, locale: locale),
         )),
       ));

@@ -155,7 +155,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productDeactivatedMessage =>
-      'This product is used in invoices, so it was deactivated instead of deleted.';
+      'This product is used in invoices or as an account\'s default package, so it was deactivated instead of deleted.';
 
   @override
   String get noProducts => 'No products yet';
@@ -1088,4 +1088,405 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get archiveDeleteNeedsNoSearch =>
       'Clear the search to delete a period';
+
+  @override
+  String get navCustomers => 'Customers';
+
+  @override
+  String get navDue => 'Due for renewal';
+
+  @override
+  String get customerName => 'Name';
+
+  @override
+  String get customerPhone => 'Phone (optional)';
+
+  @override
+  String get notesLabel => 'Notes';
+
+  @override
+  String get addCustomer => 'Add customer';
+
+  @override
+  String get editCustomer => 'Edit customer';
+
+  @override
+  String get newCustomer => 'New customer';
+
+  @override
+  String get searchCustomersHint => 'Search by name or phone';
+
+  @override
+  String get noCustomers => 'No customers yet';
+
+  @override
+  String get deactivate => 'Deactivate';
+
+  @override
+  String get reactivate => 'Reactivate';
+
+  @override
+  String get deactivateCustomerTitle => 'Deactivate customer?';
+
+  @override
+  String deactivateCustomerMessage(String name) {
+    return '\"$name\" will no longer appear in the search or in the due list. Their invoices and accounts are kept, and you can reactivate them at any time.';
+  }
+
+  @override
+  String get customerNotFound => 'This customer is no longer there';
+
+  @override
+  String get callCustomer => 'Call';
+
+  @override
+  String get whatsAppCustomer => 'WhatsApp';
+
+  @override
+  String get cannotDial => 'Could not open the phone dialer';
+
+  @override
+  String get whatsAppChatNotInstalled =>
+      'WhatsApp is not installed on this phone';
+
+  @override
+  String get whatsAppChatFailed => 'Could not open the WhatsApp chat';
+
+  @override
+  String get accountsTitle => 'Cards & accounts';
+
+  @override
+  String get addAccount => 'Add card / account';
+
+  @override
+  String get editAccount => 'Edit card / account';
+
+  @override
+  String get noAccounts => 'No cards or accounts yet';
+
+  @override
+  String accountsCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString cards / accounts',
+      one: '1 card / account',
+      zero: 'No cards',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get accountNumberLabel => 'Card / account number';
+
+  @override
+  String get accountLabelLabel => 'Type (e.g. internet card, ADSL line)';
+
+  @override
+  String get accountProviderLabel => 'Provider';
+
+  @override
+  String get accountPackageLabel => 'Default package';
+
+  @override
+  String get accountNoPackage => 'None';
+
+  @override
+  String get accountRenewalDaysLabel => 'Renewal period (days)';
+
+  @override
+  String get accountRenewalDaysHint => 'e.g. 30. Leave empty for no schedule.';
+
+  @override
+  String get accountLastRenewalLabel => 'Last renewal';
+
+  @override
+  String get accountNextDueLabel => 'Next due date';
+
+  @override
+  String get accountNextDueHint =>
+      'Last renewal + period. You can also set it by hand.';
+
+  @override
+  String get accountNotSet => 'Not set';
+
+  @override
+  String get clearDate => 'Clear';
+
+  @override
+  String get accountDuplicateTitle => 'Number already registered';
+
+  @override
+  String accountDuplicateMessage(String number, String customer) {
+    return '$number is already registered with the same provider for: $customer. Save it anyway?';
+  }
+
+  @override
+  String get saveAnyway => 'Save anyway';
+
+  @override
+  String get firstAccountSection => 'First card / account (optional)';
+
+  @override
+  String get historyTitle => 'Purchases & renewals';
+
+  @override
+  String get noHistory => 'No invoices yet';
+
+  @override
+  String get showMore => 'Show more';
+
+  @override
+  String get customerInvoiceCount => 'Invoices';
+
+  @override
+  String get customerTotalSpent => 'Total';
+
+  @override
+  String get customerLastPurchase => 'Last purchase';
+
+  @override
+  String historyMoreItems(String count) {
+    return '+$count more';
+  }
+
+  @override
+  String get quickSearchHint => 'Customer, phone or card number';
+
+  @override
+  String quickSearchEmpty(String query) {
+    return 'No customer or card matches \"$query\"';
+  }
+
+  @override
+  String get quickSearchPrompt =>
+      'Type a name, a phone number or a card / account number';
+
+  @override
+  String get renew => 'Renew';
+
+  @override
+  String packageLabel(String name) {
+    return 'Package: $name';
+  }
+
+  @override
+  String lastRenewalLabel(String date) {
+    return 'Last renewal: $date';
+  }
+
+  @override
+  String dueOverdueBy(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Overdue by $daysString days',
+      one: 'Overdue by 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueToday => 'Due today';
+
+  @override
+  String dueInDays(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Due in $daysString days',
+      one: 'Due tomorrow',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueOk => 'OK';
+
+  @override
+  String get dueNoDate => 'No due date';
+
+  @override
+  String dueSectionOverdue(String count) {
+    return 'Overdue ($count)';
+  }
+
+  @override
+  String dueSectionToday(String count) {
+    return 'Due today ($count)';
+  }
+
+  @override
+  String dueSectionSoon(int days, String count) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Due in the next $daysString days ($count)',
+      one: 'Due tomorrow ($count)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueEmpty => 'Nothing is due for renewal';
+
+  @override
+  String dueSeeAll(String count) {
+    return 'See all ($count)';
+  }
+
+  @override
+  String get sendReminder => 'Remind on WhatsApp';
+
+  @override
+  String get sectionCustomers => 'Customers & renewals';
+
+  @override
+  String get settingDueSoonDays => 'Due-soon window';
+
+  @override
+  String get settingDueSoonDaysHint =>
+      'Accounts due within this many days are listed under \"Due for renewal\"';
+
+  @override
+  String daysCount(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$daysString days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingReminderText => 'Renewal reminder message';
+
+  @override
+  String get settingReminderTextHint =>
+      'Opened in the customer\'s WhatsApp chat from the due list. You can still edit it there before sending.';
+
+  @override
+  String get reminderDialogTitle => 'Reminder message';
+
+  @override
+  String reminderPlaceholdersHint(String placeholders) {
+    return 'These are replaced for each customer: $placeholders';
+  }
+
+  @override
+  String get reminderResetDefault => 'Use default';
+
+  @override
+  String reminderDefaultText(String name, String account, String date) {
+    return 'Hello $name, this is a reminder that your subscription ($account) is due for renewal on $date.';
+  }
+
+  @override
+  String get saleCustomerChip => 'Customer';
+
+  @override
+  String get saleCustomerRemove => 'Remove customer';
+
+  @override
+  String accountRequiredMessage(String name) {
+    return '\"$name\" must be linked to a customer\'s card or account';
+  }
+
+  @override
+  String get chooseAccount => 'Choose account';
+
+  @override
+  String get customerPickerTitle => 'Choose customer';
+
+  @override
+  String newCustomerNamed(String text) {
+    return 'New customer \"$text\"';
+  }
+
+  @override
+  String newCustomerWithPhone(String text) {
+    return 'New customer with phone $text';
+  }
+
+  @override
+  String newCustomerWithAccount(String text) {
+    return 'New customer with card no. $text';
+  }
+
+  @override
+  String packageChangedNotice(String name) {
+    return 'This renewal sold \"$name\", which is not the account\'s default package.';
+  }
+
+  @override
+  String get makeDefaultPackage =>
+      'Make this the default package for this account';
+
+  @override
+  String get defaultPackageUpdated => 'Default package updated';
+
+  @override
+  String get renewNewSaleTitle => 'Start a new sale?';
+
+  @override
+  String get renewNewSaleMessage =>
+      'There are items in the current sale. Starting the renewal will remove them.';
+
+  @override
+  String get renewNoPackage =>
+      'This account has no default package. Add the item to sell.';
+
+  @override
+  String get statsRenewals => 'Renewals';
+
+  @override
+  String get statsTopPackages => 'Top packages';
+
+  @override
+  String get statsTopCustomers => 'Sales per customer';
+
+  @override
+  String statsInvoicesCount(String count) {
+    return '$count invoices';
+  }
+
+  @override
+  String get debugSeedCustomers => 'Create test customers';
+
+  @override
+  String get debugSeedCustomersHint =>
+      'Each with 2 cards / accounts, for testing the quick search and the due list';
+
+  @override
+  String debugSeedCustomersDone(String count) {
+    return '$count test customers created';
+  }
+
+  @override
+  String get debugSeedingCustomersTitle => 'Creating test customers';
 }

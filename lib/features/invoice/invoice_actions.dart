@@ -7,6 +7,7 @@ import '../../core/utils/normalize.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../customers/contact_actions.dart';
 import 'invoice_output.dart';
 import 'invoice_providers.dart';
 import 'output_messages.dart';
@@ -189,27 +190,9 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
   }
 
   /// Both WhatsApp and WhatsApp Business are installed: let the user pick.
-  Future<String?> _askPackage(List<String> packages) {
-    final l10n = AppLocalizations.of(context);
-    return showDialog<String>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(l10n.whatsAppChooseTitle),
-        children: [
-          for (final package in packages)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(package),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(package == whatsAppBusinessPackage
-                    ? l10n.whatsAppBusiness
-                    : l10n.whatsAppRegular),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  /// The same dialog the customer page and the renewal reminder use.
+  Future<String?> _askPackage(List<String> packages) =>
+      askWhatsAppPackage(context, packages);
 
   Future<void> _showMore(List<InvoiceAction> actions) async {
     final l10n = AppLocalizations.of(context);

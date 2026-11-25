@@ -4,8 +4,10 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../domain/models/customer.dart';
 import '../../domain/models/invoice.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../customers/customers_providers.dart';
 import '../invoice/invoice_actions.dart';
 import '../invoice/invoice_preview.dart';
 import '../invoice/invoice_providers.dart';
@@ -18,9 +20,17 @@ import 'sale_screen.dart';
 /// output actions (primary button per the output mode, the rest under
 /// "More").
 class SaleInvoiceScreen extends ConsumerWidget {
-  const SaleInvoiceScreen({super.key, required this.invoice});
+  const SaleInvoiceScreen({
+    super.key,
+    required this.invoice,
+    this.packageOffer,
+  });
 
   final Invoice invoice;
+
+  /// Set when this sale renewed an account with a package other than the
+  /// account's default one: the screen then offers to make it the default.
+  final DefaultPackageOffer? packageOffer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -108,6 +118,10 @@ class SaleInvoiceScreen extends ConsumerWidget {
               ),
             ),
           ),
+          if (packageOffer != null) ...[
+            const SizedBox(height: 8),
+            _PackageOfferCard(offer: packageOffer!),
+          ],
           const SizedBox(height: 16),
           InvoiceActions(invoice: invoice),
           const SizedBox(height: 12),
@@ -138,6 +152,82 @@ class SaleInvoiceScreen extends ConsumerWidget {
               maxWidth: 380,
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Make this the default package for this account": shown after a renewal
+/// that sold a different package. An offer, not a question in the way — the
+/// invoice is already saved and printable; one tap here changes what the
+/// next "Renew" on that account starts with.
+class _PackageOfferCard extends ConsumerStatefulWidget {
+  const _PackageOfferCard({required this.offer});
+
+  final DefaultPackageOffer offer;
+
+  @override
+  ConsumerState<_PackageOfferCard> createState() => _PackageOfferCardState();
+}
+
+class _PackageOfferCardState extends ConsumerState<_PackageOfferCard> {
+  bool _saving = false;
+  bool _done = false;
+
+  Future<void> _accept() async {
+    if (_saving || _done) return;
+    final offer = widget.offer;
+    // Finishes even if this screen is closed meanwhile.
+    final container = ProviderScope.containerOf(context, listen: false);
+    setState(() => _saving = true);
+    await container
+        .read(customerRepositoryProvider)
+        .setDefaultPackage(offer.accountId, offer.productId);
+    refreshCustomerData(container);
+    if (mounted) setState(() => _done = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      key: const ValueKey('package-offer'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.packageChangedNotice(widget.offer.productName),
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            if (_done)
+              Row(
+                children: [
+                  Icon(Icons.check_circle,
+                      size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.defaultPackageUpdated,
+                      key: const ValueKey('package-offer-done'),
+                    ),
+                  ),
+                ],
+              )
+            else
+              OutlinedButton(
+                key: const ValueKey('package-offer-accept'),
+                onPressed: _saving ? null : _accept,
+                child: Text(
+                  l10n.makeDefaultPackage,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -96,6 +96,8 @@ class MainActivity : FlutterActivity() {
             }
             "whatsAppPackages" -> result.success(WHATSAPP_PACKAGES.filter(::isInstalled))
             "sendToWhatsApp" -> sendToWhatsApp(call, result)
+            "openWhatsAppChat" -> openWhatsAppChat(call, result)
+            "dial" -> dial(call, result)
             "saveToDownloads" -> saveToDownloads(call, result)
             else -> result.notImplemented()
         }
@@ -269,6 +271,65 @@ class MainActivity : FlutterActivity() {
             // The file is outside the folder SouqiFileProvider exposes.
             result.success(false)
         } catch (_: SecurityException) {
+            result.success(false)
+        }
+    }
+
+    /**
+     * Opens WhatsApp (or WhatsApp Business) on one chat with a message
+     * already typed into the box, ready to edit and send: WhatsApp's own
+     * "send" link, handed straight to the installed app by package name.
+     * Souqi sends nothing itself and opens no browser.
+     *
+     * The app-scheme link is tried first and the https form second — which
+     * of the two a given WhatsApp build accepts has changed over the years.
+     * Replies false when neither can be started.
+     */
+    private fun openWhatsAppChat(call: MethodCall, result: MethodChannel.Result) {
+        val target = call.argument<String>("package")
+        val phone = call.argument<String>("phone")
+        val text = call.argument<String>("text").orEmpty()
+        if (target !in WHATSAPP_PACKAGES || phone.isNullOrEmpty()) {
+            result.success(false)
+            return
+        }
+        val links = listOf(
+            Uri.Builder().scheme("whatsapp").authority("send"),
+            Uri.Builder().scheme("https").authority("api.whatsapp.com").path("send"),
+        ).map { builder ->
+            builder.appendQueryParameter("phone", phone)
+            if (text.isNotEmpty()) builder.appendQueryParameter("text", text)
+            builder.build()
+        }
+        for (link in links) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, link).setPackage(target))
+                result.success(true)
+                return
+            } catch (_: ActivityNotFoundException) {
+            } catch (_: SecurityException) {
+            }
+        }
+        result.success(false)
+    }
+
+    // ---- Phone ---------------------------------------------------------
+
+    /**
+     * Opens the dialer with the number filled in. ACTION_DIAL, not
+     * ACTION_CALL: the seller presses the call button, so the app needs no
+     * CALL_PHONE permission.
+     */
+    private fun dial(call: MethodCall, result: MethodChannel.Result) {
+        val phone = call.argument<String>("phone")
+        if (phone.isNullOrBlank()) {
+            result.success(false)
+            return
+        }
+        try {
+            startActivity(Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", phone, null)))
+            result.success(true)
+        } catch (_: ActivityNotFoundException) {
             result.success(false)
         }
     }

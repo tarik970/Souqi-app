@@ -1,18 +1,35 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/providers.dart';
+import 'package:souqi/core/utils/due_dates.dart';
 import 'package:souqi/data/db/app_database.dart';
+import 'package:souqi/data/repositories/customer_repository.dart';
+import 'package:souqi/domain/models/cart.dart';
+import 'package:souqi/domain/models/customer.dart';
 import 'package:souqi/features/currencies/currency_form_screen.dart';
+import 'package:souqi/features/customers/account_form_screen.dart';
+import 'package:souqi/features/customers/customer_detail_screen.dart';
+import 'package:souqi/features/customers/customer_form_screen.dart';
+import 'package:souqi/features/customers/customer_picker_screen.dart';
+import 'package:souqi/features/customers/customers_screen.dart';
+import 'package:souqi/features/customers/due_screen.dart';
+import 'package:souqi/features/home/home_screen.dart';
 import 'package:souqi/features/invoice/invoice_settings_screen.dart';
 import 'package:souqi/features/products/product_form_screen.dart';
 import 'package:souqi/features/sale/quantity_sheet.dart';
+import 'package:souqi/features/sale/sale_invoice_screen.dart';
+import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
+import 'package:souqi/features/settings/renewal_settings.dart';
 import 'package:souqi/features/setup/setup_screen.dart';
+import 'package:souqi/features/stats/stats_screen.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
+import 'invoice_test_utils.dart';
 
 /// The screens with text input, on the smallest phone this app targets, with
 /// the keyboard up and the system font turned up: nothing may overflow.
@@ -305,6 +322,535 @@ void main() {
 
     testWidgets('the setup screen fits', (tester) async {
       await pumpScreen(tester, const SetupScreen());
+    });
+  });
+
+  group('customers, accounts and renewals', () {
+    // Names as long as real ones get, so the rows have to wrap or ellipsize
+    // rather than overflow.
+    const longName = 'عبد الرحمن محمد الأحمد الحسن الطويل';
+    const longProvider = 'السورية للاتصالات والإنترنت';
+    const longPackage = 'ADSL 8 Mbps unlimited monthly renewal';
+
+    late int customerId;
+    late int accountId;
+    late int packageId;
+
+    /// A customer with two accounts (one overdue, one due today), a package
+    /// that requires an account, and a second customer.
+    Future<void> seedCustomers(WidgetTester tester) async {
+      await db(tester, () async {
+        final customers = CustomerRepository(database.db);
+        final now = DateTime.now().millisecondsSinceEpoch;
+        packageId = await database.db.insert('products', {
+          'name': longPackage,
+          'name_norm': longPackage.toLowerCase(),
+          'code': '201',
+          'kind': 'SERVICE',
+          'price_minor': 3500000,
+          'currency_code': 'SYP',
+          'requires_account': 1,
+          'created_at': now,
+          'updated_at': now,
+        });
+        customerId = await customers.insert(const Customer(
+          name: longName,
+          phone: '+963 944 123 456',
+          notes: 'يدفع في أول كل شهر، المحل المقابل للصيدلية',
+        ));
+        final lastRenewal = DateTime.now().subtract(const Duration(days: 40));
+        accountId = await customers.insertAccount(CustomerAccount(
+          customerId: customerId,
+          accountNumber: '0011-2233-4455-6677',
+          label: 'ADSL line',
+          provider: longProvider,
+          defaultProductId: packageId,
+          renewalDays: 30,
+          lastRenewalAt: lastRenewal,
+          nextDueAt: nextDueAfter(lastRenewal, 30),
+        ));
+        await customers.insertAccount(CustomerAccount(
+          customerId: customerId,
+          accountNumber: 'AB-7700',
+          provider: 'MTN',
+          renewalDays: 30,
+          lastRenewalAt: DateTime.now().subtract(const Duration(days: 30)),
+          nextDueAt: nextDueAfter(DateTime.now(), 0),
+        ));
+        await customers
+            .insert(const Customer(name: 'Samer', phone: '0933 555 111'));
+        return true;
+      });
+    }
+
+    /// Pumps [screen] on the 360×640 phone at font scale 1.3 and checks it,
+    /// then raises the keyboard and checks it again.
+    Future<void> pumpPhone(
+      WidgetTester tester,
+      Widget screen, {
+      bool keyboard = true,
+    }) async {
+      tester.view.devicePixelRatio = 2;
+      tester.view.physicalSize = phone * tester.view.devicePixelRatio;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        ProviderScope(
+          key: UniqueKey(),
+          overrides: [
+            databaseProvider.overrideWithValue(database),
+            appLocaleProvider
+                .overrideWith(() => AppLocaleNotifier(const Locale('en'))),
+          ],
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: screen,
+          ),
+        ),
+      );
+      await settle(tester, 24);
+      expect(tester.takeException(), isNull);
+      if (!keyboard) return;
+      tester.view.viewInsets = FakeViewPadding(
+        bottom: keyboardInset * tester.view.devicePixelRatio,
+      );
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    }
+
+    /// Scrolls the page until [target] is built and on screen. The forms
+    /// are lazy lists: what is below the fold does not exist yet.
+    Future<void> reach(WidgetTester tester, Finder target) async {
+      await tester.scrollUntilVisible(
+        target,
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await settle(tester, 4);
+    }
+
+    Future<void> keyboardUp(WidgetTester tester) async {
+      tester.view.viewInsets = FakeViewPadding(
+        bottom: keyboardInset * tester.view.devicePixelRatio,
+      );
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    }
+
+    Future<void> keyboardDown(WidgetTester tester) async {
+      tester.view.viewInsets = FakeViewPadding.zero;
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    }
+
+    Future<void> setShopType(WidgetTester tester, String type) => db(
+          tester,
+          () async {
+            await database.db.insert('settings', {
+              'key': SettingsKeys.shopType,
+              'value': type,
+              'updated_at': 0,
+            });
+            return true;
+          },
+        );
+
+    final searchBox = find.byKey(const ValueKey('quick-search-field'));
+
+    testWidgets('the home screen of a grocery shop fits', (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(tester, const HomeScreen());
+      expect(find.byType(GridView), findsOneWidget);
+    });
+
+    testWidgets('the home screen of a cards shop fits, with its due list',
+        (tester) async {
+      await seedCustomers(tester);
+      await setShopType(tester, 'CARDS');
+      await pumpPhone(tester, const HomeScreen());
+      expect(find.byKey(ValueKey('due-row-$accountId'), skipOffstage: false),
+          findsOneWidget);
+    });
+
+    testWidgets('quick search results fit under the keyboard', (tester) async {
+      await seedCustomers(tester);
+      await setShopType(tester, 'BOTH');
+      await pumpPhone(tester, const HomeScreen(), keyboard: false);
+      // Type first, then the keyboard — the order the phone does it in.
+      await tester.enterText(searchBox, '٠٠١١');
+      await settle(tester);
+      await keyboardUp(tester);
+      expect(find.text('Renew'), findsWidgets);
+      await tester.enterText(searchBox, 'nobody at all');
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+      await keyboardDown(tester);
+    });
+
+    testWidgets('the customers screen fits', (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(tester, const CustomersScreen());
+      await tester.enterText(
+          find.byKey(const ValueKey('customers-search-field')), 'zzz');
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the customer form fits (new, with the first account)',
+        (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(
+        tester,
+        const CustomerFormScreen(initialAccountNumber: '0011-2233-4455'),
+      );
+      // Every field, focused in turn with the keyboard up.
+      for (final key in [
+        'customer-name-field',
+        'customer-phone-field',
+        'customer-notes-field',
+        'customer-account-number-field',
+        'account-provider-field',
+      ]) {
+        await reach(tester, find.byKey(ValueKey(key)));
+        await settle(tester, 4);
+        await tester.tap(find.byKey(ValueKey(key)));
+        await settle(tester, 4);
+        expect(tester.takeException(), isNull, reason: key);
+      }
+      // Validation errors make the fields taller.
+      await reach(tester, find.byKey(const ValueKey('customer-save')));
+      await settle(tester, 4);
+      await tester.tap(find.byKey(const ValueKey('customer-save')));
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the customer form fits (edit)', (tester) async {
+      await seedCustomers(tester);
+      final customer = await db(
+        tester,
+        () async => (await CustomerRepository(database.db).getById(customerId))!,
+      );
+      await pumpPhone(tester, CustomerFormScreen(customer: customer));
+    });
+
+    testWidgets('the account form fits (new and edit)', (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(tester, AccountFormScreen(customerId: customerId));
+      // The provider suggestions under the field.
+      expect(find.byKey(const ValueKey('provider-suggestion-MTN')),
+          findsOneWidget);
+      await reach(tester, find.byKey(const ValueKey('account-save')));
+      await settle(tester, 4);
+      await tester.tap(find.byKey(const ValueKey('account-save')));
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+
+      final account = await db(
+        tester,
+        () async =>
+            (await CustomerRepository(database.db).getAccount(accountId))!,
+      );
+      tester.view.viewInsets = FakeViewPadding.zero;
+      await pumpPhone(
+        tester,
+        AccountFormScreen(customerId: customerId, account: account),
+      );
+      await reach(tester, find.byKey(const ValueKey('account-save')));
+      await settle(tester, 4);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the duplicate-number warning fits', (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(
+        tester,
+        AccountFormScreen(customerId: customerId),
+        keyboard: false,
+      );
+      await tester.enterText(
+          find.byKey(const ValueKey('account-number-field')), 'ab 7700');
+      await tester.enterText(
+          find.byKey(const ValueKey('account-provider-field')), 'mtn');
+      await keyboardUp(tester);
+      await reach(tester, find.byKey(const ValueKey('account-save')));
+      await settle(tester, 4);
+      await tester.tap(find.byKey(const ValueKey('account-save')));
+      await settle(tester, 24);
+      expect(find.byKey(const ValueKey('account-duplicate-dialog')),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await keyboardDown(tester);
+    });
+
+    testWidgets('the date picker of the account form fits', (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(
+        tester,
+        AccountFormScreen(customerId: customerId),
+        keyboard: false,
+      );
+      await reach(tester, find.byKey(const ValueKey('account-last-renewal')));
+      await settle(tester, 4);
+      await tester.tap(find.byKey(const ValueKey('account-last-renewal')));
+      await settle(tester, 24);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the customer page fits', (tester) async {
+      await seedCustomers(tester);
+      // A purchase, so the history and the totals have something to show.
+      await db(tester, () async {
+        final id = await insertInvoice(
+          database.db,
+          invoiceNo: 1,
+          subtotalMinor: 3500000,
+          customerName: longName,
+          accountNumber: '0011-2233-4455-6677',
+        );
+        await database.db.update('invoices', {'customer_id': customerId},
+            where: 'id = ?', whereArgs: [id]);
+        await insertInvoiceItem(database.db, invoiceId: id, name: longPackage);
+        return true;
+      });
+      await pumpPhone(tester, CustomerDetailScreen(customerId: customerId));
+      expect(find.byKey(const ValueKey('customer-call')), findsOneWidget);
+      // Down to the history, and the confirmation over it.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('customer-invoice-1')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await settle(tester, 4);
+      expect(tester.takeException(), isNull);
+
+      await keyboardDown(tester);
+      await tester.tap(find.byKey(const ValueKey('customer-menu')));
+      await settle(tester, 24);
+      await tester.tap(find.text('Deactivate'));
+      await settle(tester, 24);
+      expect(find.byKey(const ValueKey('deactivate-customer-dialog')),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the customer picker fits, with its "new customer" rows',
+        (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(tester, const CustomerPickerScreen());
+      // Digits: two "new customer" rows above the results.
+      await tester.enterText(searchBox, '0011 2233 4455 6677');
+      await settle(tester);
+      expect(find.byKey(const ValueKey('new-customer-phone')), findsOneWidget);
+      expect(find.byKey(const ValueKey('new-customer-accountNumber')),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.enterText(searchBox, 'عبد الرحمن');
+      await settle(tester);
+      expect(find.text(longName, skipOffstage: false), findsWidgets);
+      expect(tester.takeException(), isNull);
+      await keyboardDown(tester);
+    });
+
+    testWidgets('the due-for-renewal screen fits', (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(tester, const DueScreen());
+      expect(find.text('Remind on WhatsApp', skipOffstage: false), findsWidgets);
+      expect(find.text('Renew', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('the due screen fits when nothing is due', (tester) async {
+      await pumpPhone(tester, const DueScreen());
+      expect(find.byKey(const ValueKey('due-empty')), findsOneWidget);
+    });
+
+    testWidgets(
+        'the sale screen fits with a customer, a blocked product and a '
+        'discount', (tester) async {
+      await seedCustomers(tester);
+      await addFavorite(tester, 'Sugar', code: '7');
+      await pumpSale(tester, textScale: 1.3);
+      Future<void> enter(String code) async {
+        await tester.enterText(
+            find.byKey(const ValueKey('sale-search-field')), code);
+        await settle(tester);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await settle(tester);
+      }
+
+      // Goods and a package that needs an account: Save is blocked and the
+      // panel carries the message and the "Choose account" button.
+      await enter('7');
+      await enter('201');
+      expect(find.byKey(const ValueKey('account-required')), findsOneWidget);
+      expect(find.byKey(const ValueKey('choose-account')), findsOneWidget);
+      expect(find.byKey(const ValueKey('sale-save')), findsNothing);
+      expect(find.byKey(const ValueKey('sale-customer-chip')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // A customer with a long name on the chip, still with no account.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SaleScreen)),
+      );
+      container.read(saleCustomerProvider.notifier).attach(SaleCustomer(
+            customerId: customerId,
+            name: longName,
+            phone: '+963 944 123 456',
+          ));
+      await settle(tester);
+      expect(find.byKey(const ValueKey('account-required')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // A discount on top: the panel at its tallest.
+      await tester.tap(find.byIcon(Icons.percent));
+      await settle(tester, 24);
+      await tester.tap(find.widgetWithText(OutlinedButton, 'No discount'));
+      await settle(tester, 24);
+      container
+          .read(cartProvider.notifier)
+          .setDiscount(const Discount.percent(1000));
+      await settle(tester);
+      expect(find.byKey(const ValueKey('account-required')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // With the account (and its long number) attached.
+      container.read(saleCustomerProvider.notifier).attach(SaleCustomer(
+            customerId: customerId,
+            name: longName,
+            accountId: accountId,
+            accountNumber: '0011-2233-4455-6677',
+            accountProvider: longProvider,
+          ));
+      await settle(tester);
+      expect(find.byKey(const ValueKey('account-required')), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      // And with the keyboard up over it all.
+      await tester.enterText(
+          find.byKey(const ValueKey('sale-search-field')), 'Sug');
+      await settle(tester);
+      await keyboardUp(tester);
+      await keyboardDown(tester);
+    });
+
+    testWidgets('the saved-invoice screen fits with the package offer',
+        (tester) async {
+      await seedCustomers(tester);
+      await pumpPhone(
+        tester,
+        SaleInvoiceScreen(
+          invoice: sypInvoice(customerPhone: '0944 123 456'),
+          packageOffer: DefaultPackageOffer(
+            accountId: accountId,
+            productId: packageId,
+            productName: longPackage,
+          ),
+        ),
+        keyboard: false,
+      );
+      expect(find.byKey(const ValueKey('package-offer')), findsOneWidget);
+      await reach(tester, find.byKey(const ValueKey('package-offer-accept')));
+      await tester.tap(find.byKey(const ValueKey('package-offer-accept')));
+      await settle(tester);
+      expect(find.byKey(const ValueKey('package-offer-done')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the renewal settings and the reminder dialog fit',
+        (tester) async {
+      // The two new tiles on their own page: the rest of the settings
+      // screen is older than this test and is not what is being checked.
+      await pumpPhone(
+        tester,
+        Scaffold(
+          body: ListView(
+            children: const [DueSoonDaysTile(), ReminderTextTile()],
+          ),
+        ),
+        keyboard: false,
+      );
+      final tile = find.byKey(const ValueKey('setting-reminder-text'));
+      expect(find.byKey(const ValueKey('setting-due-soon')), findsOneWidget);
+      await reach(tester, tile);
+      await tester.tap(tile);
+      await settle(tester, 24);
+      expect(find.byType(ReminderTextDialog), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await keyboardUp(tester);
+      await keyboardDown(tester);
+    });
+
+    testWidgets('the "start a new sale?" confirmation fits', (tester) async {
+      await seedCustomers(tester);
+      await setShopType(tester, 'CARDS');
+      await pumpPhone(tester, const HomeScreen(), keyboard: false);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(HomeScreen)),
+      );
+      container.read(cartProvider.notifier).add(const CartLine(
+            name: 'Left in the cart',
+            unitPriceMinor: 1000,
+            priceCurrencyCode: 'SYP',
+            qtyThousandths: 1000,
+          ));
+      final renew = find.byKey(ValueKey('due-renew-$accountId'));
+      await reach(tester, renew);
+      await settle(tester, 4);
+      await tester.tap(renew);
+      await settle(tester, 24);
+      expect(find.byKey(const ValueKey('renew-replace-cart-dialog')),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the statistics screen fits with renewals and customers',
+        (tester) async {
+      await seedCustomers(tester);
+      await db(tester, () async {
+        final id = await insertInvoice(
+          database.db,
+          invoiceNo: 1,
+          subtotalMinor: 3500000,
+          customerName: longName,
+          accountNumber: '0011-2233-4455-6677',
+        );
+        await database.db.insert('invoice_items', {
+          'invoice_id': id,
+          'sort_order': 0,
+          'product_name': longPackage,
+          'product_name_norm': longPackage.toLowerCase(),
+          'kind': 'SERVICE',
+          'qty_thousandths': 1000,
+          'orig_unit_price_minor': 3500000,
+          'orig_currency_code': 'SYP',
+          'orig_rate_num': 1,
+          'orig_rate_den': 1,
+          'unit_price_minor': 3500000,
+          'line_total_minor': 3500000,
+        });
+        return true;
+      });
+      await pumpPhone(tester, const StatsScreen(), keyboard: false);
+      for (final key in [
+        'stats-renewals',
+        'stats-top-packages',
+        'stats-top-customers',
+      ]) {
+        await tester.scrollUntilVisible(
+          find.byKey(ValueKey(key)),
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await settle(tester, 4);
+        expect(tester.takeException(), isNull, reason: key);
+      }
     });
   });
 }

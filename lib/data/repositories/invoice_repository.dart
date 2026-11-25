@@ -3,14 +3,16 @@ import 'package:sqflite/sqflite.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import 'counter_repository.dart';
+import 'customer_repository.dart';
 import 'product_repository.dart';
 
 /// Reads and writes invoices.
 ///
 /// Takes a [Database] (not a [DatabaseExecutor]) because saving an invoice
 /// must run in one transaction: drawing the sequential invoice number, the
-/// invoice row, all item rows and the products created or re-priced by the
-/// sale either all land or none do.
+/// invoice row, all item rows, the products created or re-priced by the
+/// sale and the renewal dates of the attached account either all land or
+/// none do.
 class InvoiceRepository {
   InvoiceRepository(this._db);
 
@@ -37,6 +39,12 @@ class InvoiceRepository {
       final products = ProductRepository(txn);
       final invoiceNo = await _counters.next(txn, CounterRepository.invoiceNo);
       final id = await txn.insert('invoices', draft.toRow(invoiceNo: invoiceNo));
+      // A renewal moves the account's dates in this same transaction: the
+      // invoice and the new due date land together, or neither does.
+      if (draft.renewsAccount) {
+        await CustomerRepository(txn)
+            .recordRenewal(draft.accountId!, draft.createdAt);
+      }
       final saved = <InvoiceItem>[];
       for (var i = 0; i < draft.items.length; i++) {
         final item = draft.items[i];

@@ -78,5 +78,6 @@ BUILD NOTES
 - Keep `kotlin.incremental=false` in android/gradle.properties (fixes a Windows Kotlin cache lock bug). Never remove it.
 - UI imports come from package:material_ui (Flutter 3.50); localization delegates from material_ui's GlobalMaterialLocalizations.delegates.
 - Bluetooth printing uses our own platform channel (PrinterConnection.kt) and our own ESC/POS raster code (lib/core/printing/escpos.dart); do not add printer plugins.
-- Database is at schema version 2 (v2 = recomputed normalized search columns). Every schema change is a new version step with a migration test.
+- Database is at schema version 3 (see lib/data/db/migrations for what each step did). Every schema change is a new version step with a migration test that upgrades a populated older database without data loss.
 - Do not run `flutter test` and `flutter build`/`run` at the same time (l10n files get regenerated); `flutter gen-l10n` restores them.
+- Phase 4b (customers, accounts, renewals, due list) is done. Renewal = an invoice with an account attached that sells at least one SERVICE/CARD item; it updates last renewal / next due in the invoice transaction.

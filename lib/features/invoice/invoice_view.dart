@@ -88,6 +88,7 @@ class InvoiceView extends StatelessWidget {
     final customerName = invoice.customerName?.trim() ?? '';
     final customerPhone = invoice.customerPhone?.trim() ?? '';
     final accountNumber = invoice.accountNumber?.trim() ?? '';
+    final accountProvider = invoice.accountProvider?.trim() ?? '';
     final rates = invoiceRatesUsed(invoice);
 
     final meta = <Widget>[
@@ -124,9 +125,22 @@ class InvoiceView extends StatelessWidget {
         _Pair(
           label: l10n.invoiceAccountLabel,
           gap: gap,
-          value: Text(
-            s.maskAccountNumber ? maskAllButLast4(accountNumber) : accountNumber,
-            textDirection: TextDirection.ltr,
+          // The provider and the number are separate text runs: the number
+          // keeps its own left-to-right order, and a narrow paper wraps
+          // between the two, never inside the number. The provider follows
+          // the same toggle — it only says whose number this is.
+          value: Wrap(
+            alignment: WrapAlignment.end,
+            spacing: gap * 0.6,
+            children: [
+              if (accountProvider.isNotEmpty) Text(accountProvider),
+              Text(
+                s.maskAccountNumber
+                    ? maskAllButLast4(accountNumber)
+                    : accountNumber,
+                textDirection: TextDirection.ltr,
+              ),
+            ],
           ),
         ),
     ];

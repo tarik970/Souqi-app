@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/archive_repository.dart';
@@ -196,6 +197,47 @@ class _Report extends ConsumerWidget {
             rows: report.topByAmount,
             trailing: (p) => money(p.amountBaseMinor),
           ),
+          // Renewals and customers: only when the feature is on AND the
+          // period has any — a grocery shop's statistics stay as they were.
+          if (accountsEnabled && report.renewals.count > 0)
+            _RowsCard(
+              keyName: 'stats-renewals',
+              title: l10n.statsRenewals,
+              rows: [
+                (
+                  title: l10n.statsInvoicesCount(count(report.renewals.count)),
+                  subtitle: null,
+                  trailing: money(report.renewals.totalBaseMinor),
+                ),
+              ],
+            ),
+          if (accountsEnabled && report.topPackages.isNotEmpty)
+            _RowsCard(
+              keyName: 'stats-top-packages',
+              title: l10n.statsTopPackages,
+              rows: [
+                for (final package in report.topPackages)
+                  (
+                    title: package.name,
+                    subtitle: l10n.statsSalesCount(count(package.salesCount)),
+                    trailing: money(package.amountBaseMinor),
+                  ),
+              ],
+            ),
+          if (customersEnabled && report.topCustomers.isNotEmpty)
+            _RowsCard(
+              keyName: 'stats-top-customers',
+              title: l10n.statsTopCustomers,
+              rows: [
+                for (final customer in report.topCustomers)
+                  (
+                    title: customer.name,
+                    subtitle:
+                        l10n.statsInvoicesCount(count(customer.invoiceCount)),
+                    trailing: money(customer.totalBaseMinor),
+                  ),
+              ],
+            ),
           SwitchListTile(
             key: const ValueKey('stats-by-currency-switch'),
             title: Text(l10n.statsShowByCurrency),
@@ -344,6 +386,53 @@ class _ProductTable extends ConsumerWidget {
                   : null,
               trailing: Text(
                 trailing(row),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A titled card of "name … amount" rows: renewals, top packages, sales per
+/// customer.
+class _RowsCard extends StatelessWidget {
+  const _RowsCard({
+    required this.keyName,
+    required this.title,
+    required this.rows,
+  });
+
+  final String keyName;
+  final String title;
+  final List<({String title, String? subtitle, String trailing})> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      key: ValueKey(keyName),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text(title, style: theme.textTheme.titleSmall),
+          ),
+          for (final row in rows)
+            ListTile(
+              dense: true,
+              title: Text(
+                row.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: row.subtitle == null ? null : Text(row.subtitle!),
+              trailing: Text(
+                row.trailing,
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),

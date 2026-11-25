@@ -72,6 +72,14 @@ abstract final class SettingsKeys {
   static const pinHash = 'pin_hash';
   static const pinSalt = 'pin_salt';
 
+  // Customers / renewals.
+  /// The "due in the next N days" window of the due-for-renewal list.
+  static const dueSoonDays = 'due_soon_days';
+
+  /// The WhatsApp renewal reminder. '' = the built-in text in the invoice
+  /// language (Arabic or English).
+  static const renewalReminderText = 'renewal_reminder_text';
+
   /// Defaults applied when a key is missing from the table.
   static const Map<String, String> defaults = {
     baseCurrencyCode: 'SYP',
@@ -116,5 +124,7 @@ abstract final class SettingsKeys {
     lastNewItemUnitId: '',
     autoDeleteDays: '0',
     autoDeleteLastRunAt: '0',
+    dueSoonDays: '3',
+    renewalReminderText: '',
   };
 }

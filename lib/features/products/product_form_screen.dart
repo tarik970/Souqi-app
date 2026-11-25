@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/currency.dart';
@@ -251,8 +252,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             value: _favorite,
             onChanged: (v) => setState(() => _favorite = v),
           ),
-          if (_kind == ProductKind.service)
+          // Without the accounts feature there would be no way to attach an
+          // account, so the switch that demands one is not offered.
+          if (accountsEnabled && _kind == ProductKind.service)
             SwitchListTile(
+              key: const ValueKey('product-requires-account'),
               title: Text(l10n.requiresAccount),
               subtitle: Text(l10n.requiresAccountHint),
               value: _requiresAccount,

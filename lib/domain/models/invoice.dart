@@ -8,6 +8,20 @@ import '../../core/utils/normalize.dart';
 import 'cart.dart';
 import 'product.dart';
 
+/// The cart holds a product marked "requires customer account" and the sale
+/// has no account attached. The sale screen blocks Save before it gets this
+/// far; this is the rule itself, so nothing else can save such a sale either.
+class AccountRequiredException implements Exception {
+  const AccountRequiredException(this.productName);
+
+  /// The first product that needs the account.
+  final String productName;
+
+  @override
+  String toString() =>
+      'AccountRequiredException: "$productName" requires a customer account';
+}
+
 /// The invoice total in one extra currency, with the rate used.
 class InvoiceExtraTotal {
   const InvoiceExtraTotal({
@@ -200,6 +214,15 @@ class Invoice {
 
   final List<InvoiceItem> items;
 
+  /// Saving this invoice renews the attached account: it is linked to one
+  /// and sells at least one SERVICE/CARD item. A customer's account attached
+  /// to a sale of goods only (sugar for the man who also has an ADSL line)
+  /// is a snapshot on the invoice, not a renewal — it leaves the account's
+  /// dates alone.
+  bool get renewsAccount =>
+      accountId != null &&
+      items.any((item) => item.kind == ProductKind.service);
+
   /// Builds a draft invoice from a cart. Computes the totals itself so the
   /// saved numbers can never drift from what the sale screen showed.
   ///
@@ -209,7 +232,8 @@ class Invoice {
   /// update that product's saved price.
   ///
   /// Throws [StateError] for an empty cart or when a currency in the cart has
-  /// no rate yet.
+  /// no rate yet, and [AccountRequiredException] when the cart holds a
+  /// product marked "requires customer account" and no [accountId] is given.
   factory Invoice.fromCart({
     required Cart cart,
     required CurrencyContext ctx,
@@ -225,6 +249,12 @@ class Invoice {
   }) {
     if (cart.isEmpty) {
       throw StateError('cannot save an empty cart');
+    }
+    if (accountId == null) {
+      final needing = cart.linesRequiringAccount;
+      if (needing.isNotEmpty) {
+        throw AccountRequiredException(needing.first.name);
+      }
     }
     final totals = computeCartTotals(cart, ctx);
     if (totals.currenciesNeedingRate.isNotEmpty) {

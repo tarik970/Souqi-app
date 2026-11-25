@@ -221,21 +221,32 @@ class _Row extends StatelessWidget {
         : theme.textTheme.bodyLarge;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          // The label gives way, the amount never does: at a large system
-          // font "Subtotal" plus the amount is wider than a narrow phone.
-          Expanded(
-            child: Text(
-              label,
-              style: style,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
+          children: [
+            // The label gives way first: at a large system font "Subtotal"
+            // plus the amount is wider than a narrow phone.
+            Expanded(
+              child: Text(
+                label,
+                style: style,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(value, style: style),
-        ],
+            const SizedBox(width: 12),
+            // And an amount in the millions is scaled down to what is left
+            // rather than overflowing — it is never cut short.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.8),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerEnd,
+                child: Text(value, style: style, maxLines: 1),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

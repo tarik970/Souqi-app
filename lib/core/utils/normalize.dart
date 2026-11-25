@@ -160,6 +160,53 @@ String? toInternationalPhone(
   return digits;
 }
 
+final _phoneShaped = RegExp(r'^[0-9\s\-‐‑‒–—+()./]+$');
+
+/// Whether [input] can be a phone number, or the beginning of one, at all:
+/// digits with nothing but the punctuation phones are written with. Text
+/// with a letter in it ("MTN-123") is a name or an account number, never a
+/// phone.
+bool looksLikePhone(String input) {
+  final text = normalizeDigits(input.trim());
+  return _phoneShaped.hasMatch(text) && text.contains(RegExp('[0-9]'));
+}
+
+/// The digits to look for inside a stored `phone_norm` so that a number is
+/// found however it — and the stored one — was typed: with the trunk zero
+/// ("0944 123 456"), with the country code ("+963 944 123 456",
+/// "00963944123456") or bare.
+///
+/// The stored column keeps the digits exactly as entered, so the one thing
+/// every spelling of a number shares is its subscriber part. This strips the
+/// international prefix and the trunk zero from the typed text and returns
+/// what is left; a "contains" match on that finds all the spellings.
+///
+/// Returns '' when [input] is not phone-shaped (see [looksLikePhone]).
+///
+/// Deliberately cautious, because the same box also searches card numbers
+/// and those often start with zeros: "00" is only an international prefix
+/// when the country code follows it, and the trunk zero is only dropped
+/// once seven digits are typed. Until then the digits are searched exactly
+/// as typed, so "0011" still means 0011.
+String phoneSearchKey(String input, {String countryCode = '963'}) {
+  if (!looksLikePhone(input)) return '';
+  final raw = normalizeDigits(input.trim());
+  var digits = normalizePhone(raw);
+  final cc = normalizePhone(countryCode).replaceFirst(RegExp('^0+'), '');
+  if (cc.isNotEmpty) {
+    if (digits.startsWith('00$cc')) {
+      digits = digits.substring(2 + cc.length);
+    } else if (digits.startsWith(cc) &&
+        (raw.startsWith('+') || digits.length >= cc.length + 7)) {
+      digits = digits.substring(cc.length);
+    }
+  }
+  if (digits.length >= 7 && digits.startsWith('0')) {
+    digits = digits.substring(1);
+  }
+  return digits;
+}
+
 /// Hides everything but the last four characters of an account / card number
 /// for printing ("0011-2233-4455" → "****-****-4455"). Spaces and dashes are
 /// kept so the grouping stays readable. Four characters or fewer are returned

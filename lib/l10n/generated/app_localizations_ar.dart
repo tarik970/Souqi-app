@@ -155,7 +155,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get productDeactivatedMessage =>
-      'هذا المنتج مستخدم في فواتير، لذلك أُلغي تفعيله بدل حذفه.';
+      'هذا المنتج مستخدم في فواتير أو كباقة افتراضية لحساب، لذلك أُلغي تفعيله بدل حذفه.';
 
   @override
   String get noProducts => 'لا توجد منتجات بعد';
@@ -1086,4 +1086,412 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get archiveDeleteNeedsNoSearch => 'امسح البحث لحذف مدة';
+
+  @override
+  String get navCustomers => 'الزبائن';
+
+  @override
+  String get navDue => 'مستحقة التجديد';
+
+  @override
+  String get customerName => 'الاسم';
+
+  @override
+  String get customerPhone => 'الهاتف (اختياري)';
+
+  @override
+  String get notesLabel => 'ملاحظات';
+
+  @override
+  String get addCustomer => 'إضافة زبون';
+
+  @override
+  String get editCustomer => 'تعديل الزبون';
+
+  @override
+  String get newCustomer => 'زبون جديد';
+
+  @override
+  String get searchCustomersHint => 'ابحث بالاسم أو الهاتف';
+
+  @override
+  String get noCustomers => 'لا يوجد زبائن بعد';
+
+  @override
+  String get deactivate => 'إلغاء التفعيل';
+
+  @override
+  String get reactivate => 'إعادة التفعيل';
+
+  @override
+  String get deactivateCustomerTitle => 'إلغاء تفعيل الزبون؟';
+
+  @override
+  String deactivateCustomerMessage(String name) {
+    return 'لن يظهر «$name» في البحث ولا في قائمة المستحقات. تبقى فواتيره وحساباته محفوظة، ويمكنك إعادة تفعيله في أي وقت.';
+  }
+
+  @override
+  String get customerNotFound => 'هذا الزبون لم يعد موجوداً';
+
+  @override
+  String get callCustomer => 'اتصال';
+
+  @override
+  String get whatsAppCustomer => 'واتساب';
+
+  @override
+  String get cannotDial => 'تعذّر فتح تطبيق الاتصال';
+
+  @override
+  String get whatsAppChatNotInstalled => 'واتساب غير مثبّت على هذا الهاتف';
+
+  @override
+  String get whatsAppChatFailed => 'تعذّر فتح محادثة واتساب';
+
+  @override
+  String get accountsTitle => 'البطاقات والحسابات';
+
+  @override
+  String get addAccount => 'إضافة بطاقة / حساب';
+
+  @override
+  String get editAccount => 'تعديل البطاقة / الحساب';
+
+  @override
+  String get noAccounts => 'لا توجد بطاقات أو حسابات بعد';
+
+  @override
+  String accountsCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString بطاقة / حساب',
+      few: '$countString بطاقات / حسابات',
+      two: 'بطاقتان / حسابان',
+      one: 'بطاقة / حساب واحد',
+      zero: 'لا توجد بطاقات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get accountNumberLabel => 'رقم البطاقة / الحساب';
+
+  @override
+  String get accountLabelLabel => 'النوع (مثل: بطاقة إنترنت، خط ADSL)';
+
+  @override
+  String get accountProviderLabel => 'المزوّد';
+
+  @override
+  String get accountPackageLabel => 'الباقة الافتراضية';
+
+  @override
+  String get accountNoPackage => 'بدون';
+
+  @override
+  String get accountRenewalDaysLabel => 'مدة التجديد (بالأيام)';
+
+  @override
+  String get accountRenewalDaysHint =>
+      'مثلاً 30. اتركها فارغة إن لم يكن هناك موعد دوري.';
+
+  @override
+  String get accountLastRenewalLabel => 'آخر تجديد';
+
+  @override
+  String get accountNextDueLabel => 'موعد الاستحقاق القادم';
+
+  @override
+  String get accountNextDueHint => 'آخر تجديد + المدة. ويمكنك تحديده يدوياً.';
+
+  @override
+  String get accountNotSet => 'غير محدد';
+
+  @override
+  String get clearDate => 'مسح';
+
+  @override
+  String get accountDuplicateTitle => 'الرقم مسجّل من قبل';
+
+  @override
+  String accountDuplicateMessage(String number, String customer) {
+    return 'الرقم $number مسجّل لدى المزوّد نفسه باسم: $customer. هل تريد الحفظ على أي حال؟';
+  }
+
+  @override
+  String get saveAnyway => 'حفظ على أي حال';
+
+  @override
+  String get firstAccountSection => 'أول بطاقة / حساب (اختياري)';
+
+  @override
+  String get historyTitle => 'المشتريات والتجديدات';
+
+  @override
+  String get noHistory => 'لا توجد فواتير بعد';
+
+  @override
+  String get showMore => 'عرض المزيد';
+
+  @override
+  String get customerInvoiceCount => 'الفواتير';
+
+  @override
+  String get customerTotalSpent => 'الإجمالي';
+
+  @override
+  String get customerLastPurchase => 'آخر شراء';
+
+  @override
+  String historyMoreItems(String count) {
+    return '+$count أخرى';
+  }
+
+  @override
+  String get quickSearchHint => 'الاسم أو الهاتف أو رقم البطاقة';
+
+  @override
+  String quickSearchEmpty(String query) {
+    return 'لا يوجد زبون أو بطاقة تطابق «$query»';
+  }
+
+  @override
+  String get quickSearchPrompt => 'اكتب اسماً أو رقم هاتف أو رقم بطاقة / حساب';
+
+  @override
+  String get renew => 'تجديد';
+
+  @override
+  String packageLabel(String name) {
+    return 'الباقة: $name';
+  }
+
+  @override
+  String lastRenewalLabel(String date) {
+    return 'آخر تجديد: $date';
+  }
+
+  @override
+  String dueOverdueBy(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'متأخر $daysString يوماً',
+      few: 'متأخر $daysString أيام',
+      two: 'متأخر يومين',
+      one: 'متأخر يوماً واحداً',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueToday => 'يستحق اليوم';
+
+  @override
+  String dueInDays(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'يستحق بعد $daysString يوماً',
+      few: 'يستحق بعد $daysString أيام',
+      two: 'يستحق بعد يومين',
+      one: 'يستحق غداً',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueOk => 'سارٍ';
+
+  @override
+  String get dueNoDate => 'بلا موعد استحقاق';
+
+  @override
+  String dueSectionOverdue(String count) {
+    return 'متأخرة ($count)';
+  }
+
+  @override
+  String dueSectionToday(String count) {
+    return 'تستحق اليوم ($count)';
+  }
+
+  @override
+  String dueSectionSoon(int days, String count) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'تستحق خلال $daysString يوماً ($count)',
+      few: 'تستحق خلال $daysString أيام ($count)',
+      two: 'تستحق خلال يومين ($count)',
+      one: 'تستحق غداً ($count)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueEmpty => 'لا توجد تجديدات مستحقة';
+
+  @override
+  String dueSeeAll(String count) {
+    return 'عرض الكل ($count)';
+  }
+
+  @override
+  String get sendReminder => 'تذكير عبر واتساب';
+
+  @override
+  String get sectionCustomers => 'الزبائن والتجديدات';
+
+  @override
+  String get settingDueSoonDays => 'مدة التنبيه قبل الاستحقاق';
+
+  @override
+  String get settingDueSoonDaysHint =>
+      'الحسابات التي تستحق خلال هذه المدة تظهر في قائمة «مستحقة التجديد»';
+
+  @override
+  String daysCount(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$daysString يوماً',
+      few: '$daysString أيام',
+      two: 'يومان',
+      one: 'يوم واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingReminderText => 'رسالة تذكير التجديد';
+
+  @override
+  String get settingReminderTextHint =>
+      'تُفتح في محادثة واتساب الزبون من قائمة المستحقات، ويمكنك تعديلها هناك قبل الإرسال.';
+
+  @override
+  String get reminderDialogTitle => 'رسالة التذكير';
+
+  @override
+  String reminderPlaceholdersHint(String placeholders) {
+    return 'تُستبدل هذه الرموز لكل زبون: $placeholders';
+  }
+
+  @override
+  String get reminderResetDefault => 'استخدام النص الافتراضي';
+
+  @override
+  String reminderDefaultText(String name, String account, String date) {
+    return 'مرحباً $name، نذكّركم بأن موعد تجديد اشتراككم ($account) هو $date.';
+  }
+
+  @override
+  String get saleCustomerChip => 'الزبون';
+
+  @override
+  String get saleCustomerRemove => 'إزالة الزبون';
+
+  @override
+  String accountRequiredMessage(String name) {
+    return 'يجب ربط «$name» ببطاقة أو حساب زبون';
+  }
+
+  @override
+  String get chooseAccount => 'اختيار الحساب';
+
+  @override
+  String get customerPickerTitle => 'اختيار الزبون';
+
+  @override
+  String newCustomerNamed(String text) {
+    return 'زبون جديد «$text»';
+  }
+
+  @override
+  String newCustomerWithPhone(String text) {
+    return 'زبون جديد برقم الهاتف $text';
+  }
+
+  @override
+  String newCustomerWithAccount(String text) {
+    return 'زبون جديد برقم البطاقة $text';
+  }
+
+  @override
+  String packageChangedNotice(String name) {
+    return 'بيعت في هذا التجديد «$name»، وهي ليست الباقة الافتراضية لهذا الحساب.';
+  }
+
+  @override
+  String get makeDefaultPackage => 'اجعلها الباقة الافتراضية لهذا الحساب';
+
+  @override
+  String get defaultPackageUpdated => 'تم تحديث الباقة الافتراضية';
+
+  @override
+  String get renewNewSaleTitle => 'بدء فاتورة جديدة؟';
+
+  @override
+  String get renewNewSaleMessage =>
+      'هناك أصناف في الفاتورة الحالية، وبدء التجديد سيحذفها.';
+
+  @override
+  String get renewNoPackage =>
+      'لا توجد باقة افتراضية لهذا الحساب. أضف الصنف المراد بيعه.';
+
+  @override
+  String get statsRenewals => 'التجديدات';
+
+  @override
+  String get statsTopPackages => 'أكثر الباقات مبيعاً';
+
+  @override
+  String get statsTopCustomers => 'المبيعات حسب الزبون';
+
+  @override
+  String statsInvoicesCount(String count) {
+    return '$count فاتورة';
+  }
+
+  @override
+  String get debugSeedCustomers => 'إنشاء زبائن للتجربة';
+
+  @override
+  String get debugSeedCustomersHint =>
+      'لكل زبون بطاقتان / حسابان، لتجربة البحث السريع وقائمة المستحقات';
+
+  @override
+  String debugSeedCustomersDone(String count) {
+    return 'تم إنشاء $count زبون للتجربة';
+  }
+
+  @override
+  String get debugSeedingCustomersTitle => 'جارٍ إنشاء زبائن التجربة';
 }

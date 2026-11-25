@@ -6,6 +6,7 @@ import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/invoice.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../customers/customers_providers.dart';
 import '../invoice/invoice_actions.dart';
 import '../invoice/invoice_preview.dart';
 import '../invoice/invoice_providers.dart';
@@ -95,7 +96,10 @@ class InvoiceDetailScreen extends ConsumerWidget {
       ..invalidate(archiveListProvider)
       ..invalidate(archiveRangeSummaryProvider)
       ..invalidate(storageStatsProvider)
-      ..invalidate(archivedInvoiceProvider(invoice.id!));
+      ..invalidate(archivedInvoiceProvider(invoice.id!))
+      // The customer's page lists this invoice too.
+      ..invalidate(customerHistoryProvider)
+      ..invalidate(customerTotalsProvider);
     navigator.pop();
     messenger
       ..hideCurrentSnackBar()

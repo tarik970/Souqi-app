@@ -378,7 +378,7 @@ abstract class AppLocalizations {
   /// No description provided for @productDeactivatedMessage.
   ///
   /// In en, this message translates to:
-  /// **'This product is used in invoices, so it was deactivated instead of deleted.'**
+  /// **'This product is used in invoices or as an account\'s default package, so it was deactivated instead of deleted.'**
   String get productDeactivatedMessage;
 
   /// No description provided for @noProducts.
@@ -2042,6 +2042,588 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear the search to delete a period'**
   String get archiveDeleteNeedsNoSearch;
+
+  /// No description provided for @navCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get navCustomers;
+
+  /// No description provided for @navDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due for renewal'**
+  String get navDue;
+
+  /// No description provided for @customerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get customerName;
+
+  /// No description provided for @customerPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get customerPhone;
+
+  /// No description provided for @notesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notesLabel;
+
+  /// No description provided for @addCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add customer'**
+  String get addCustomer;
+
+  /// No description provided for @editCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer'**
+  String get editCustomer;
+
+  /// No description provided for @newCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'New customer'**
+  String get newCustomer;
+
+  /// No description provided for @searchCustomersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or phone'**
+  String get searchCustomersHint;
+
+  /// No description provided for @noCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers yet'**
+  String get noCustomers;
+
+  /// No description provided for @deactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get deactivate;
+
+  /// No description provided for @reactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactivate'**
+  String get reactivate;
+
+  /// No description provided for @deactivateCustomerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate customer?'**
+  String get deactivateCustomerTitle;
+
+  /// No description provided for @deactivateCustomerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will no longer appear in the search or in the due list. Their invoices and accounts are kept, and you can reactivate them at any time.'**
+  String deactivateCustomerMessage(String name);
+
+  /// No description provided for @customerNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer is no longer there'**
+  String get customerNotFound;
+
+  /// No description provided for @callCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get callCustomer;
+
+  /// No description provided for @whatsAppCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get whatsAppCustomer;
+
+  /// No description provided for @cannotDial.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the phone dialer'**
+  String get cannotDial;
+
+  /// No description provided for @whatsAppChatNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp is not installed on this phone'**
+  String get whatsAppChatNotInstalled;
+
+  /// No description provided for @whatsAppChatFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the WhatsApp chat'**
+  String get whatsAppChatFailed;
+
+  /// No description provided for @accountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards & accounts'**
+  String get accountsTitle;
+
+  /// No description provided for @addAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Add card / account'**
+  String get addAccount;
+
+  /// No description provided for @editAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit card / account'**
+  String get editAccount;
+
+  /// No description provided for @noAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'No cards or accounts yet'**
+  String get noAccounts;
+
+  /// No description provided for @accountsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No cards} =1{1 card / account} other{{count} cards / accounts}}'**
+  String accountsCount(int count);
+
+  /// No description provided for @accountNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Card / account number'**
+  String get accountNumberLabel;
+
+  /// No description provided for @accountLabelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type (e.g. internet card, ADSL line)'**
+  String get accountLabelLabel;
+
+  /// No description provided for @accountProviderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get accountProviderLabel;
+
+  /// No description provided for @accountPackageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default package'**
+  String get accountPackageLabel;
+
+  /// No description provided for @accountNoPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get accountNoPackage;
+
+  /// No description provided for @accountRenewalDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewal period (days)'**
+  String get accountRenewalDaysLabel;
+
+  /// No description provided for @accountRenewalDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 30. Leave empty for no schedule.'**
+  String get accountRenewalDaysHint;
+
+  /// No description provided for @accountLastRenewalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last renewal'**
+  String get accountLastRenewalLabel;
+
+  /// No description provided for @accountNextDueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next due date'**
+  String get accountNextDueLabel;
+
+  /// No description provided for @accountNextDueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Last renewal + period. You can also set it by hand.'**
+  String get accountNextDueHint;
+
+  /// No description provided for @accountNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get accountNotSet;
+
+  /// No description provided for @clearDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearDate;
+
+  /// No description provided for @accountDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Number already registered'**
+  String get accountDuplicateTitle;
+
+  /// No description provided for @accountDuplicateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{number} is already registered with the same provider for: {customer}. Save it anyway?'**
+  String accountDuplicateMessage(String number, String customer);
+
+  /// No description provided for @saveAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get saveAnyway;
+
+  /// No description provided for @firstAccountSection.
+  ///
+  /// In en, this message translates to:
+  /// **'First card / account (optional)'**
+  String get firstAccountSection;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases & renewals'**
+  String get historyTitle;
+
+  /// No description provided for @noHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices yet'**
+  String get noHistory;
+
+  /// No description provided for @showMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMore;
+
+  /// No description provided for @customerInvoiceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get customerInvoiceCount;
+
+  /// No description provided for @customerTotalSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get customerTotalSpent;
+
+  /// No description provided for @customerLastPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Last purchase'**
+  String get customerLastPurchase;
+
+  /// No description provided for @historyMoreItems.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String historyMoreItems(String count);
+
+  /// No description provided for @quickSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer, phone or card number'**
+  String get quickSearchHint;
+
+  /// No description provided for @quickSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No customer or card matches \"{query}\"'**
+  String quickSearchEmpty(String query);
+
+  /// No description provided for @quickSearchPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a name, a phone number or a card / account number'**
+  String get quickSearchPrompt;
+
+  /// No description provided for @renew.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew'**
+  String get renew;
+
+  /// No description provided for @packageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Package: {name}'**
+  String packageLabel(String name);
+
+  /// No description provided for @lastRenewalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last renewal: {date}'**
+  String lastRenewalLabel(String date);
+
+  /// No description provided for @dueOverdueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Overdue by 1 day} other{Overdue by {days} days}}'**
+  String dueOverdueBy(int days);
+
+  /// No description provided for @dueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get dueToday;
+
+  /// No description provided for @dueInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Due tomorrow} other{Due in {days} days}}'**
+  String dueInDays(int days);
+
+  /// No description provided for @dueOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get dueOk;
+
+  /// No description provided for @dueNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No due date'**
+  String get dueNoDate;
+
+  /// No description provided for @dueSectionOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue ({count})'**
+  String dueSectionOverdue(String count);
+
+  /// No description provided for @dueSectionToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today ({count})'**
+  String dueSectionToday(String count);
+
+  /// No description provided for @dueSectionSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Due tomorrow ({count})} other{Due in the next {days} days ({count})}}'**
+  String dueSectionSoon(int days, String count);
+
+  /// No description provided for @dueEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is due for renewal'**
+  String get dueEmpty;
+
+  /// No description provided for @dueSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all ({count})'**
+  String dueSeeAll(String count);
+
+  /// No description provided for @sendReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind on WhatsApp'**
+  String get sendReminder;
+
+  /// No description provided for @sectionCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers & renewals'**
+  String get sectionCustomers;
+
+  /// No description provided for @settingDueSoonDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Due-soon window'**
+  String get settingDueSoonDays;
+
+  /// No description provided for @settingDueSoonDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts due within this many days are listed under \"Due for renewal\"'**
+  String get settingDueSoonDaysHint;
+
+  /// No description provided for @daysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day} other{{days} days}}'**
+  String daysCount(int days);
+
+  /// No description provided for @settingReminderText.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewal reminder message'**
+  String get settingReminderText;
+
+  /// No description provided for @settingReminderTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened in the customer\'s WhatsApp chat from the due list. You can still edit it there before sending.'**
+  String get settingReminderTextHint;
+
+  /// No description provided for @reminderDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder message'**
+  String get reminderDialogTitle;
+
+  /// No description provided for @reminderPlaceholdersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These are replaced for each customer: {placeholders}'**
+  String reminderPlaceholdersHint(String placeholders);
+
+  /// No description provided for @reminderResetDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default'**
+  String get reminderResetDefault;
+
+  /// No description provided for @reminderDefaultText.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello {name}, this is a reminder that your subscription ({account}) is due for renewal on {date}.'**
+  String reminderDefaultText(String name, String account, String date);
+
+  /// No description provided for @saleCustomerChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get saleCustomerChip;
+
+  /// No description provided for @saleCustomerRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove customer'**
+  String get saleCustomerRemove;
+
+  /// No description provided for @accountRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" must be linked to a customer\'s card or account'**
+  String accountRequiredMessage(String name);
+
+  /// No description provided for @chooseAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose account'**
+  String get chooseAccount;
+
+  /// No description provided for @customerPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose customer'**
+  String get customerPickerTitle;
+
+  /// No description provided for @newCustomerNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'New customer \"{text}\"'**
+  String newCustomerNamed(String text);
+
+  /// No description provided for @newCustomerWithPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'New customer with phone {text}'**
+  String newCustomerWithPhone(String text);
+
+  /// No description provided for @newCustomerWithAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'New customer with card no. {text}'**
+  String newCustomerWithAccount(String text);
+
+  /// No description provided for @packageChangedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This renewal sold \"{name}\", which is not the account\'s default package.'**
+  String packageChangedNotice(String name);
+
+  /// No description provided for @makeDefaultPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Make this the default package for this account'**
+  String get makeDefaultPackage;
+
+  /// No description provided for @defaultPackageUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Default package updated'**
+  String get defaultPackageUpdated;
+
+  /// No description provided for @renewNewSaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new sale?'**
+  String get renewNewSaleTitle;
+
+  /// No description provided for @renewNewSaleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'There are items in the current sale. Starting the renewal will remove them.'**
+  String get renewNewSaleMessage;
+
+  /// No description provided for @renewNoPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no default package. Add the item to sell.'**
+  String get renewNoPackage;
+
+  /// No description provided for @statsRenewals.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewals'**
+  String get statsRenewals;
+
+  /// No description provided for @statsTopPackages.
+  ///
+  /// In en, this message translates to:
+  /// **'Top packages'**
+  String get statsTopPackages;
+
+  /// No description provided for @statsTopCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales per customer'**
+  String get statsTopCustomers;
+
+  /// No description provided for @statsInvoicesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices'**
+  String statsInvoicesCount(String count);
+
+  /// No description provided for @debugSeedCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Create test customers'**
+  String get debugSeedCustomers;
+
+  /// No description provided for @debugSeedCustomersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each with 2 cards / accounts, for testing the quick search and the due list'**
+  String get debugSeedCustomersHint;
+
+  /// No description provided for @debugSeedCustomersDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} test customers created'**
+  String debugSeedCustomersDone(String count);
+
+  /// No description provided for @debugSeedingCustomersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating test customers'**
+  String get debugSeedingCustomersTitle;
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/features.dart';
 import '../../core/providers.dart';
 import '../../core/utils/date_ranges.dart';
 import '../../data/repositories/archive_repository.dart';
@@ -72,6 +73,9 @@ class StatsReport {
     required this.topBySales,
     required this.topByAmount,
     required this.byCurrency,
+    this.renewals = const RenewalStats(count: 0, totalBaseMinor: 0),
+    this.topPackages = const [],
+    this.topCustomers = const [],
   });
 
   final StatsPeriod period;
@@ -87,6 +91,16 @@ class StatsReport {
   final List<ProductStat> topBySales;
   final List<ProductStat> topByAmount;
   final List<CurrencyTotal> byCurrency;
+
+  /// Renewals of customer accounts in the period (zero when the accounts
+  /// feature is off).
+  final RenewalStats renewals;
+
+  /// The packages those renewals sold, by number of sales.
+  final List<ProductStat> topPackages;
+
+  /// Sales per customer, the biggest first (empty when customers are off).
+  final List<CustomerStat> topCustomers;
 
   Comparison get totalComparison => Comparison(
         current: current.totalBaseMinor,
@@ -116,8 +130,26 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
   final range = period.range;
   final before = range.previous;
 
-  // Five aggregate queries, all on idx_invoices_created. They are
-  // independent, so they go out together.
+  // Aggregate queries, all on idx_invoices_created. They are independent,
+  // so they go out together. The customer and renewal ones are only asked
+  // for when their feature is on: a flag that is off shows nothing anywhere.
+  final customerStats = Future.wait([
+    accountsEnabled
+        ? repository.renewals(from: range.from, to: range.to)
+        : Future.value(const RenewalStats(count: 0, totalBaseMinor: 0)),
+    accountsEnabled
+        ? repository.topProducts(
+            from: range.from,
+            to: range.to,
+            baseDecimals: base.decimalPlaces,
+            ranking: ProductRanking.sales,
+            renewalsOnly: true,
+          )
+        : Future.value(const <ProductStat>[]),
+    customersEnabled
+        ? repository.topCustomers(from: range.from, to: range.to)
+        : Future.value(const <CustomerStat>[]),
+  ]);
   final results = await Future.wait([
     repository.summary(
       from: range.from,
@@ -152,5 +184,8 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
     topBySales: results[2] as List<ProductStat>,
     topByAmount: results[3] as List<ProductStat>,
     byCurrency: results[4] as List<CurrencyTotal>,
+    renewals: (await customerStats)[0] as RenewalStats,
+    topPackages: (await customerStats)[1] as List<ProductStat>,
+    topCustomers: (await customerStats)[2] as List<CustomerStat>,
   );
 });

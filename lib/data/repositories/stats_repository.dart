@@ -199,12 +199,16 @@ class StatsRepository {
   /// three sales without ever being saved as a product is still one row, and
   /// "السكر" and "سكر" are the same row. [ProductStat.salesCount] counts
   /// invoice LINES, which is how the favorites bar ranks best sellers too.
+  ///
+  /// With [renewalsOnly] the table is the "top packages" one: only the
+  /// SERVICE/CARD lines of invoices that carry an account snapshot.
   Future<List<ProductStat>> topProducts({
     required DateTime from,
     required DateTime to,
     required int baseDecimals,
     ProductRanking ranking = ProductRanking.amount,
     int limit = topProductsLimit,
+    bool renewalsOnly = false,
   }) async {
     final amount = _toBaseSql('it.line_total_minor', _pow10(baseDecimals));
     final order = ranking == ProductRanking.sales
@@ -225,6 +229,7 @@ class StatsRepository {
       'JOIN invoices i ON i.id = it.invoice_id '
       'LEFT JOIN currencies c ON c.code = i.currency_code '
       'WHERE i.created_at >= ? AND i.created_at < ? '
+      '${renewalsOnly ? "AND it.kind = 'SERVICE' AND $_hasAccount " : ''}'
       'GROUP BY gkey ORDER BY $order LIMIT ?',
       [
         from.toUtc().millisecondsSinceEpoch,
@@ -244,6 +249,99 @@ class StatsRepository {
         ),
     ];
   }
+
+  /// An invoice linked to a customer's card / account, told by the account
+  /// number SNAPSHOT — it survives the account being edited or deactivated.
+  static const String _hasAccount = 'i.account_number IS NOT NULL';
+
+  /// Renewals in the period: invoices that carry an account snapshot and
+  /// sold at least one SERVICE/CARD item — the same rule that moves an
+  /// account's due date when the invoice is saved.
+  Future<RenewalStats> renewals({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final rows = await _db.rawQuery(
+      'SELECT COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total '
+      'FROM invoices i '
+      'WHERE i.created_at >= ? AND i.created_at < ? AND $_hasAccount '
+      'AND EXISTS (SELECT 1 FROM invoice_items it '
+      "WHERE it.invoice_id = i.id AND it.kind = 'SERVICE')",
+      [
+        from.toUtc().millisecondsSinceEpoch,
+        to.toUtc().millisecondsSinceEpoch,
+      ],
+    );
+    final row = rows.first;
+    return RenewalStats(
+      count: (row['n'] as int?) ?? 0,
+      totalBaseMinor: (row['total'] as int?) ?? 0,
+    );
+  }
+
+  /// Sales per customer in the period, the biggest first, from the invoice
+  /// SNAPSHOTS: grouped by the linked customer when there still is one, and
+  /// otherwise by the normalized name snapshot. The name shown is the one on
+  /// the customer's most recent invoice in the period.
+  Future<List<CustomerStat>> topCustomers({
+    required DateTime from,
+    required DateTime to,
+    int limit = topProductsLimit,
+  }) async {
+    final rows = await _db.rawQuery(
+      "SELECT CASE WHEN i.customer_id IS NOT NULL THEN 'c' || i.customer_id "
+      "ELSE 'n' || COALESCE(i.customer_name_norm, '') END AS gkey, "
+      'i.customer_id AS customer_id, '
+      'MAX(i.created_at) AS last_at, i.customer_name AS name, '
+      'COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total '
+      'FROM invoices i '
+      'WHERE i.created_at >= ? AND i.created_at < ? '
+      'AND i.customer_name IS NOT NULL '
+      'GROUP BY gkey ORDER BY total DESC, n DESC LIMIT ?',
+      [
+        from.toUtc().millisecondsSinceEpoch,
+        to.toUtc().millisecondsSinceEpoch,
+        limit,
+      ],
+    );
+    return [
+      for (final row in rows)
+        CustomerStat(
+          groupKey: row['gkey'] as String,
+          name: row['name'] as String,
+          customerId: row['customer_id'] as int?,
+          invoiceCount: (row['n'] as int?) ?? 0,
+          totalBaseMinor: (row['total'] as int?) ?? 0,
+        ),
+    ];
+  }
+}
+
+/// Renewals in a period, in the BASE currency.
+class RenewalStats {
+  const RenewalStats({required this.count, required this.totalBaseMinor});
+
+  final int count;
+  final int totalBaseMinor;
+}
+
+/// One row of the "sales per customer" table.
+class CustomerStat {
+  const CustomerStat({
+    required this.groupKey,
+    required this.name,
+    required this.customerId,
+    required this.invoiceCount,
+    required this.totalBaseMinor,
+  });
+
+  /// `c<id>` for a linked customer, `n<normalized name>` for a snapshot
+  /// whose customer link is gone.
+  final String groupKey;
+  final String name;
+  final int? customerId;
+  final int invoiceCount;
+  final int totalBaseMinor;
 }
 
 /// Where a figure went against the period before it.

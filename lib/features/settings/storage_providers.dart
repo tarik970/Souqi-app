@@ -7,6 +7,7 @@ import '../../core/utils/temp_files.dart';
 import '../../data/repositories/archive_repository.dart';
 import '../../data/repositories/maintenance_repository.dart';
 import '../archive/archive_providers.dart';
+import '../customers/customers_providers.dart';
 import '../invoice/invoice_output.dart';
 
 final maintenanceRepositoryProvider = Provider<MaintenanceRepository>((ref) {
@@ -281,7 +282,11 @@ class HousekeepingController extends Notifier<HousekeepingState> {
     ref
       ..invalidate(storageStatsProvider)
       ..invalidate(archiveListProvider)
-      ..invalidate(archiveRangeSummaryProvider);
+      ..invalidate(archiveRangeSummaryProvider)
+      // A customer's purchase history and totals are read from the invoices
+      // that are still there.
+      ..invalidate(customerHistoryProvider)
+      ..invalidate(customerTotalsProvider);
   }
 }
 

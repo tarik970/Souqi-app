@@ -7,6 +7,7 @@ import '../../core/utils/normalize.dart';
 import '../../data/repositories/product_repository.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
+import '../../domain/models/customer.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../invoice/invoice_providers.dart';
@@ -67,6 +68,57 @@ class CartNotifier extends Notifier<Cart> {
 }
 
 final cartProvider = NotifierProvider<CartNotifier, Cart>(CartNotifier.new);
+
+/// The customer (and card / account) attached to the sale in progress, or
+/// null. Lives beside the cart and for exactly as long: set from the sale
+/// screen's Customer chip or by "Renew", cleared when the sale is saved.
+class SaleCustomerNotifier extends Notifier<SaleCustomer?> {
+  @override
+  SaleCustomer? build() => null;
+
+  void attach(SaleCustomer customer) =>
+      state = customersEnabled ? customer : null;
+
+  void clear() => state = null;
+}
+
+final saleCustomerProvider =
+    NotifierProvider<SaleCustomerNotifier, SaleCustomer?>(
+  SaleCustomerNotifier.new,
+);
+
+/// The first product in the cart that cannot be sold yet because it is
+/// marked "requires customer account" and no account is attached. Null when
+/// the sale may be saved as far as accounts are concerned.
+final accountBlockerProvider = Provider<CartLine?>((ref) {
+  if (!accountsEnabled) return null;
+  if (ref.watch(saleCustomerProvider)?.hasAccount ?? false) return null;
+  return ref.watch(cartProvider).linesRequiringAccount.firstOrNull;
+});
+
+/// A saved product as a cart line. [unitName] is the unit's name snapshot in
+/// the app language (GOODS only).
+CartLine cartLineForProduct(
+  Product product, {
+  String? unitName,
+  int qtyThousandths = 1000,
+}) =>
+    CartLine(
+      productId: product.id,
+      name: product.name,
+      code: product.code,
+      kind: product.kind,
+      unitId: product.unitId,
+      unitName: product.unitId == null ? null : unitName,
+      unitPriceMinor: product.priceMinor,
+      priceCurrencyCode: product.currencyCode,
+      qtyThousandths: qtyThousandths,
+      // What the product costs right now, so the cart can tell when the
+      // seller changes the price ("remember last price").
+      listPriceMinor: product.priceMinor,
+      listCurrencyCode: product.currencyCode,
+      requiresAccount: accountsEnabled && product.requiresAccount,
+    );
 
 /// The computed cart. Null while the currency table is still loading.
 final cartTotalsProvider = Provider<CartTotals?>((ref) {

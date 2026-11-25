@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -10,6 +11,7 @@ import '../sale/sale_providers.dart';
 import '../setup/setup_screen.dart';
 import '../units/units_screen.dart';
 import 'about_screen.dart';
+import 'renewal_settings.dart';
 import 'retention_tile.dart';
 
 final shopTypeProvider = FutureProvider<String>(
@@ -155,6 +157,20 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const RetentionTile(),
           const Divider(),
+          if (customersEnabled && accountsEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                l10n.sectionCustomers,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ),
+            const DueSoonDaysTile(),
+            const ReminderTextTile(),
+            const Divider(),
+          ],
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.aboutTitle),

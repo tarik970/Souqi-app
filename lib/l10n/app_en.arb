@@ -58,7 +58,7 @@
       "name": {"type": "String"}
     }
   },
-  "productDeactivatedMessage": "This product is used in invoices, so it was deactivated instead of deleted.",
+  "productDeactivatedMessage": "This product is used in invoices or as an account's default package, so it was deactivated instead of deleted.",
   "noProducts": "No products yet",
 
   "unitsTitle": "Units",
@@ -564,5 +564,230 @@
   },
   "housekeepingBusy": "Another cleanup is still running.",
   "debugSeedingTitle": "Creating test invoices",
-  "archiveDeleteNeedsNoSearch": "Clear the search to delete a period"
+  "archiveDeleteNeedsNoSearch": "Clear the search to delete a period",
+
+  "navCustomers": "Customers",
+  "navDue": "Due for renewal",
+  "customerName": "Name",
+  "customerPhone": "Phone (optional)",
+  "notesLabel": "Notes",
+  "addCustomer": "Add customer",
+  "editCustomer": "Edit customer",
+  "newCustomer": "New customer",
+  "searchCustomersHint": "Search by name or phone",
+  "noCustomers": "No customers yet",
+  "deactivate": "Deactivate",
+  "reactivate": "Reactivate",
+  "deactivateCustomerTitle": "Deactivate customer?",
+  "deactivateCustomerMessage": "\"{name}\" will no longer appear in the search or in the due list. Their invoices and accounts are kept, and you can reactivate them at any time.",
+  "@deactivateCustomerMessage": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "customerNotFound": "This customer is no longer there",
+  "callCustomer": "Call",
+  "whatsAppCustomer": "WhatsApp",
+  "cannotDial": "Could not open the phone dialer",
+  "whatsAppChatNotInstalled": "WhatsApp is not installed on this phone",
+  "whatsAppChatFailed": "Could not open the WhatsApp chat",
+
+  "accountsTitle": "Cards & accounts",
+  "addAccount": "Add card / account",
+  "editAccount": "Edit card / account",
+  "noAccounts": "No cards or accounts yet",
+  "accountsCount": "{count, plural, =0{No cards} =1{1 card / account} other{{count} cards / accounts}}",
+  "@accountsCount": {
+    "placeholders": {
+      "count": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "accountNumberLabel": "Card / account number",
+  "accountLabelLabel": "Type (e.g. internet card, ADSL line)",
+  "accountProviderLabel": "Provider",
+  "accountPackageLabel": "Default package",
+  "accountNoPackage": "None",
+  "accountRenewalDaysLabel": "Renewal period (days)",
+  "accountRenewalDaysHint": "e.g. 30. Leave empty for no schedule.",
+  "accountLastRenewalLabel": "Last renewal",
+  "accountNextDueLabel": "Next due date",
+  "accountNextDueHint": "Last renewal + period. You can also set it by hand.",
+  "accountNotSet": "Not set",
+  "clearDate": "Clear",
+  "accountDuplicateTitle": "Number already registered",
+  "accountDuplicateMessage": "{number} is already registered with the same provider for: {customer}. Save it anyway?",
+  "@accountDuplicateMessage": {
+    "placeholders": {
+      "number": {"type": "String"},
+      "customer": {"type": "String"}
+    }
+  },
+  "saveAnyway": "Save anyway",
+  "firstAccountSection": "First card / account (optional)",
+
+  "historyTitle": "Purchases & renewals",
+  "noHistory": "No invoices yet",
+  "showMore": "Show more",
+  "customerInvoiceCount": "Invoices",
+  "customerTotalSpent": "Total",
+  "customerLastPurchase": "Last purchase",
+  "historyMoreItems": "+{count} more",
+  "@historyMoreItems": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+
+  "quickSearchHint": "Customer, phone or card number",
+  "quickSearchEmpty": "No customer or card matches \"{query}\"",
+  "@quickSearchEmpty": {
+    "placeholders": {
+      "query": {"type": "String"}
+    }
+  },
+  "quickSearchPrompt": "Type a name, a phone number or a card / account number",
+  "renew": "Renew",
+  "packageLabel": "Package: {name}",
+  "@packageLabel": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "lastRenewalLabel": "Last renewal: {date}",
+  "@lastRenewalLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+
+  "dueOverdueBy": "{days, plural, =1{Overdue by 1 day} other{Overdue by {days} days}}",
+  "@dueOverdueBy": {
+    "placeholders": {
+      "days": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "dueToday": "Due today",
+  "dueInDays": "{days, plural, =1{Due tomorrow} other{Due in {days} days}}",
+  "@dueInDays": {
+    "placeholders": {
+      "days": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "dueOk": "OK",
+  "dueNoDate": "No due date",
+  "dueSectionOverdue": "Overdue ({count})",
+  "@dueSectionOverdue": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "dueSectionToday": "Due today ({count})",
+  "@dueSectionToday": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "dueSectionSoon": "{days, plural, =1{Due tomorrow ({count})} other{Due in the next {days} days ({count})}}",
+  "@dueSectionSoon": {
+    "placeholders": {
+      "days": {"type": "int", "format": "decimalPattern"},
+      "count": {"type": "String"}
+    }
+  },
+  "dueEmpty": "Nothing is due for renewal",
+  "dueSeeAll": "See all ({count})",
+  "@dueSeeAll": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "sendReminder": "Remind on WhatsApp",
+
+  "sectionCustomers": "Customers & renewals",
+  "settingDueSoonDays": "Due-soon window",
+  "settingDueSoonDaysHint": "Accounts due within this many days are listed under \"Due for renewal\"",
+  "daysCount": "{days, plural, =1{1 day} other{{days} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "days": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "settingReminderText": "Renewal reminder message",
+  "settingReminderTextHint": "Opened in the customer's WhatsApp chat from the due list. You can still edit it there before sending.",
+  "reminderDialogTitle": "Reminder message",
+  "reminderPlaceholdersHint": "These are replaced for each customer: {placeholders}",
+  "@reminderPlaceholdersHint": {
+    "placeholders": {
+      "placeholders": {"type": "String"}
+    }
+  },
+  "reminderResetDefault": "Use default",
+  "reminderDefaultText": "Hello {name}, this is a reminder that your subscription ({account}) is due for renewal on {date}.",
+  "@reminderDefaultText": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "account": {"type": "String"},
+      "date": {"type": "String"}
+    }
+  },
+
+  "saleCustomerChip": "Customer",
+  "saleCustomerRemove": "Remove customer",
+  "accountRequiredMessage": "\"{name}\" must be linked to a customer's card or account",
+  "@accountRequiredMessage": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "chooseAccount": "Choose account",
+  "customerPickerTitle": "Choose customer",
+  "newCustomerNamed": "New customer \"{text}\"",
+  "@newCustomerNamed": {
+    "placeholders": {
+      "text": {"type": "String"}
+    }
+  },
+  "newCustomerWithPhone": "New customer with phone {text}",
+  "@newCustomerWithPhone": {
+    "placeholders": {
+      "text": {"type": "String"}
+    }
+  },
+  "newCustomerWithAccount": "New customer with card no. {text}",
+  "@newCustomerWithAccount": {
+    "placeholders": {
+      "text": {"type": "String"}
+    }
+  },
+  "packageChangedNotice": "This renewal sold \"{name}\", which is not the account's default package.",
+  "@packageChangedNotice": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "makeDefaultPackage": "Make this the default package for this account",
+  "defaultPackageUpdated": "Default package updated",
+  "renewNewSaleTitle": "Start a new sale?",
+  "renewNewSaleMessage": "There are items in the current sale. Starting the renewal will remove them.",
+  "renewNoPackage": "This account has no default package. Add the item to sell.",
+
+  "statsRenewals": "Renewals",
+  "statsTopPackages": "Top packages",
+  "statsTopCustomers": "Sales per customer",
+  "statsInvoicesCount": "{count} invoices",
+  "@statsInvoicesCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+
+  "debugSeedCustomers": "Create test customers",
+  "debugSeedCustomersHint": "Each with 2 cards / accounts, for testing the quick search and the due list",
+  "debugSeedCustomersDone": "{count} test customers created",
+  "@debugSeedCustomersDone": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "debugSeedingCustomersTitle": "Creating test customers"
 }

@@ -270,15 +270,22 @@ class ProductRepository {
   }
 
   /// Hard-deletes the product unless it is referenced by invoice items or
-  /// voucher stock; then it is deactivated so history stays intact.
+  /// voucher stock, or is the default package of a customer's account; then
+  /// it is deactivated so history — and the account's package — stay intact.
+  ///
+  /// The schema alone would let the delete through and quietly clear the
+  /// account's package (ON DELETE SET NULL); a renewal would then open with
+  /// an empty cart and nobody would know why.
   Future<ProductDeleteResult> delete(int id) async {
     final used = Sqflite.firstIntValue(await _db.rawQuery(
           'SELECT EXISTS('
           '  SELECT 1 FROM invoice_items WHERE product_id = ?'
           '  UNION ALL'
           '  SELECT 1 FROM voucher_batches WHERE product_id = ?'
+          '  UNION ALL'
+          '  SELECT 1 FROM customer_accounts WHERE default_product_id = ?'
           ')',
-          [id, id],
+          [id, id, id],
         )) ==
         1;
     if (used) {

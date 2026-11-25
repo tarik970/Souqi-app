@@ -109,6 +109,20 @@ abstract class NativeBridge {
     String? text,
   });
 
+  /// Opens [package] on the chat of [internationalPhone] with [text] already
+  /// typed into the message box, ready to edit and send — nothing is sent by
+  /// the app itself. Returns false when the device cannot open the chat.
+  Future<bool> openWhatsAppChat({
+    required String package,
+    required String internationalPhone,
+    String? text,
+  });
+
+  /// Opens the phone's dialer on [phone] (the number as the shop typed it).
+  /// The seller presses Call there; the app needs no call permission.
+  /// Returns false when the device has no dialer.
+  Future<bool> dial(String phone);
+
   /// Copies the file into Downloads/Souqi through MediaStore and returns the
   /// path to show the user. Throws [OutputException].
   Future<String> saveToDownloads({
@@ -229,6 +243,23 @@ class MethodChannelNativeBridge implements NativeBridge {
         'text': text,
       }) ??
       false;
+
+  @override
+  Future<bool> openWhatsAppChat({
+    required String package,
+    required String internationalPhone,
+    String? text,
+  }) async =>
+      await _invoke<bool>('openWhatsAppChat', {
+        'package': package,
+        'phone': internationalPhone,
+        'text': text,
+      }) ??
+      false;
+
+  @override
+  Future<bool> dial(String phone) async =>
+      await _invoke<bool>('dial', {'phone': phone}) ?? false;
 
   @override
   Future<String> saveToDownloads({

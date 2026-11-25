@@ -74,6 +74,7 @@ class CartLine {
     this.saveAsProduct = false,
     this.listPriceMinor,
     this.listCurrencyCode,
+    this.requiresAccount = false,
   });
 
   /// Stable identity inside one cart (not a database id).
@@ -106,6 +107,10 @@ class CartLine {
   /// that simply is the product's price.
   final int? listPriceMinor;
   final String? listCurrencyCode;
+
+  /// The product is marked "requires customer account": the sale cannot be
+  /// saved until a customer's card / account is attached to it.
+  final bool requiresAccount;
 
   /// A typed item that becomes a product when the invoice is saved.
   bool get createsProduct => productId == null && saveAsProduct;
@@ -163,6 +168,7 @@ class CartLine {
       saveAsProduct: saveAsProduct ?? this.saveAsProduct,
       listPriceMinor: listPriceMinor,
       listCurrencyCode: listCurrencyCode,
+      requiresAccount: requiresAccount,
     );
   }
 }
@@ -232,6 +238,12 @@ class Cart {
 
   String effectiveCurrencyCode(CurrencyContext ctx) =>
       invoiceCurrencyCode ?? ctx.baseCode;
+
+  /// The lines that cannot be sold without a customer account attached
+  /// (products marked "requires customer account"). While this is not empty
+  /// and the sale has no account, the sale must not be saved.
+  List<CartLine> get linesRequiringAccount =>
+      [for (final line in lines) if (line.requiresAccount) line];
 
   CartLine? lineById(int id) {
     for (final line in lines) {

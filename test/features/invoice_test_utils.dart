@@ -171,6 +171,27 @@ class FakeNativeBridge implements NativeBridge {
     return whatsAppOpens;
   }
 
+  bool chatOpens = true;
+  bool dialerOpens = true;
+  final chats = <({String package, String phone, String? text})>[];
+  final dialed = <String>[];
+
+  @override
+  Future<bool> openWhatsAppChat({
+    required String package,
+    required String internationalPhone,
+    String? text,
+  }) async {
+    chats.add((package: package, phone: internationalPhone, text: text));
+    return chatOpens;
+  }
+
+  @override
+  Future<bool> dial(String phone) async {
+    dialed.add(phone);
+    return dialerOpens;
+  }
+
   @override
   Future<String> saveToDownloads({
     required String filePath,

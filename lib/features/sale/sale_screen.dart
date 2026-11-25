@@ -6,14 +6,21 @@ import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/utils/bidi.dart';
 import '../../core/utils/normalize.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
+import '../../domain/models/customer.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../archive/archive_providers.dart';
+import '../customers/customer_picker_screen.dart';
+import '../customers/customers_providers.dart';
 import '../invoice/invoice_providers.dart';
 import '../products/products_providers.dart';
+import '../settings/storage_providers.dart';
+import '../stats/stats_providers.dart';
 import 'discount_sheet.dart';
 import 'quantity_sheet.dart';
 import 'quick_item_sheet.dart';
@@ -54,23 +61,24 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     // gone.
     final locale = _locale;
     final units = await ref.read(saleUnitsProvider.future);
-    return CartLine(
-      productId: product.id,
-      name: product.name,
-      code: product.code,
-      kind: product.kind,
-      unitId: product.unitId,
-      unitName: product.unitId == null
-          ? null
-          : units[product.unitId]?.nameFor(locale),
-      unitPriceMinor: product.priceMinor,
-      priceCurrencyCode: product.currencyCode,
+    return cartLineForProduct(
+      product,
+      unitName: units[product.unitId]?.nameFor(locale),
       qtyThousandths: qtyThousandths,
-      // What the product costs right now, so the cart can tell when the
-      // seller changes the price ("remember last price").
-      listPriceMinor: product.priceMinor,
-      listCurrencyCode: product.currencyCode,
     );
+  }
+
+  /// Opens the customer picker (the quick search) and attaches what was
+  /// picked — a customer, and their account when the row was an account —
+  /// to this sale. Any sale can carry a customer, goods included.
+  Future<void> _pickCustomer() async {
+    final picked = await Navigator.of(context).push(
+      MaterialPageRoute<SaleCustomer>(
+        builder: (_) => const CustomerPickerScreen(),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    ref.read(saleCustomerProvider.notifier).attach(picked);
   }
 
   /// "Type-to-sell": sells [name] as a new item. Opens the quantity sheet
@@ -239,6 +247,16 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final container = ProviderScope.containerOf(context, listen: false);
     final cart = ref.read(cartProvider);
     if (cart.isEmpty || _saving) return;
+    final customer = customersEnabled ? ref.read(saleCustomerProvider) : null;
+    // The button is already disabled for this; the check is repeated here
+    // because Save is also what a hardware keyboard's Enter can reach.
+    final blocker = ref.read(accountBlockerProvider);
+    if (blocker != null) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(l10n.accountRequiredMessage(blocker.name)),
+      ));
+      return;
+    }
     final (ctx, saleSettings) = await (
       ref.read(currencyContextProvider.future),
       ref.read(saleSettingsProvider.future),
@@ -257,23 +275,51 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
 
     setState(() => _saving = true);
     try {
-      // One transaction: the invoice, the products created from typed items
-      // and the prices the seller changed.
+      // One transaction: the invoice, the products created from typed items,
+      // the prices the seller changed — and, for a renewal, the account's
+      // last-renewal and next-due dates. The customer and the account go
+      // onto the invoice as snapshots beside the links to the live records.
+      final hasAccount = accountsEnabled && (customer?.hasAccount ?? false);
       final saved = await container.read(invoiceRepositoryProvider).save(
             Invoice.fromCart(
               cart: cart,
               ctx: ctx,
               createdAt: DateTime.now().toUtc(),
               updateProductPrices: saleSettings.updatePrices,
+              customerId: customer?.customerId,
+              customerName: customer?.name,
+              customerPhone: customer?.phone,
+              accountId: hasAccount ? customer!.accountId : null,
+              accountNumber: hasAccount ? customer!.accountNumber : null,
+              accountProvider: hasAccount ? customer!.accountProvider : null,
             ),
           );
       container.read(cartProvider.notifier).reset();
+      container.read(saleCustomerProvider.notifier).clear();
       // New products, new prices and new "most sold" numbers.
       container.invalidate(productsListProvider);
       container.invalidate(favoriteProductsProvider);
+      // The archive, its summary line, the storage figures and the
+      // statistics all count invoices, and they keep what they last loaded:
+      // without this, an archive opened before the sale would not show it.
+      container
+        ..invalidate(archiveListProvider)
+        ..invalidate(archiveRangeSummaryProvider)
+        ..invalidate(storageStatsProvider)
+        ..invalidate(statsReportProvider);
+      // A new due date, a longer purchase history.
+      if (customer != null) refreshCustomerData(container);
       if (!mounted) return;
       navigator.pushReplacement(MaterialPageRoute(
-        builder: (_) => SaleInvoiceScreen(invoice: saved),
+        builder: (_) => SaleInvoiceScreen(
+          invoice: saved,
+          packageOffer:
+              hasAccount ? defaultPackageOfferFor(saved, customer) : null,
+        ),
+      ));
+    } on AccountRequiredException catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(l10n.accountRequiredMessage(e.productName)),
       ));
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -289,6 +335,8 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final query = ref.watch(saleSearchProvider).trim();
     final sellable = ref.watch(sellableCurrenciesProvider);
     final allCurrencies = ref.watch(currenciesProvider).value ?? const [];
+    final customer = customersEnabled ? ref.watch(saleCustomerProvider) : null;
+    final accountBlocker = ref.watch(accountBlockerProvider);
 
     // The keyboard is up — on this screen that means the seller is typing in
     // the search box. On a small phone the favorites bar, the search box and
@@ -402,6 +450,11 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               },
               onDiscount: _editDiscount,
               onSave: _save,
+              customer: customer,
+              accountBlocker: accountBlocker,
+              onPickCustomer: _pickCustomer,
+              onRemoveCustomer:
+                  ref.read(saleCustomerProvider.notifier).clear,
             ),
           ),
         ],
@@ -945,6 +998,10 @@ class _TotalsPanel extends ConsumerWidget {
     required this.onUpdateRate,
     required this.onDiscount,
     required this.onSave,
+    required this.customer,
+    required this.accountBlocker,
+    required this.onPickCustomer,
+    required this.onRemoveCustomer,
   });
 
   final CartTotals? totals;
@@ -956,6 +1013,14 @@ class _TotalsPanel extends ConsumerWidget {
   final VoidCallback onUpdateRate;
   final VoidCallback onDiscount;
   final VoidCallback onSave;
+
+  /// The customer attached to this sale, if any.
+  final SaleCustomer? customer;
+
+  /// The line that needs a customer account before the sale can be saved.
+  final CartLine? accountBlocker;
+  final VoidCallback onPickCustomer;
+  final VoidCallback onRemoveCustomer;
 
   /// The currency whose rate the quick button talks about: the invoice
   /// currency when it is not the base one, otherwise the first non-base
@@ -1011,6 +1076,13 @@ class _TotalsPanel extends ConsumerWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 spacing: 8,
                 children: [
+                  // Optional on every sale, goods included.
+                  if (customersEnabled)
+                    _CustomerChip(
+                      customer: customer,
+                      onTap: onPickCustomer,
+                      onRemove: onRemoveCustomer,
+                    ),
                   if (sellable.length > 1)
                     DropdownButton<String>(
                       value: sellable.any((c) => c.code == currency.code)
@@ -1074,12 +1146,22 @@ class _TotalsPanel extends ConsumerWidget {
                       l10n.itemsCount(totals.lines.length),
                       style: theme.textTheme.bodySmall,
                     ),
-                    const Spacer(),
-                    if (totals.discountMinor != 0)
-                      Text(
-                        '${l10n.subtotalLabel}: ${money(totals.subtotalMinor)}',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                    const SizedBox(width: 8),
+                    // The one flexible child: a subtotal in the millions at
+                    // a large system font is wider than what is left of the
+                    // row, and then it is cut short instead of overflowing.
+                    Expanded(
+                      child: totals.discountMinor == 0
+                          ? const SizedBox.shrink()
+                          : Text(
+                              '${l10n.subtotalLabel}: '
+                              '${money(totals.subtotalMinor)}',
+                              textAlign: TextAlign.end,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                    ),
                   ],
                 ),
               ],
@@ -1159,28 +1241,124 @@ class _TotalsPanel extends ConsumerWidget {
                         ?.copyWith(color: theme.colorScheme.error),
                   ),
                 ),
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                onPressed:
-                    cart.isEmpty || saving || needRate.isNotEmpty ? null : onSave,
-                icon: saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check),
-                label: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Text(l10n.save,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(color: Colors.white)),
+              // A product marked "requires customer account" is in the cart
+              // and no account is attached. The sale cannot be saved, so
+              // there is no Save to press: a line says why, and the button
+              // in Save's place opens the picker. Once an account is
+              // attached the button is Save again.
+              //
+              // One button, not a disabled Save plus a second one beside
+              // the message: the panel has no height to spare on a small
+              // phone, and a greyed-out Save does not say what to do next.
+              if (accountBlocker != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    key: const ValueKey('account-required'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.badge_outlined,
+                          size: 18, color: theme.colorScheme.error),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          l10n.accountRequiredMessage(accountBlocker!.name),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: theme.colorScheme.error),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              const SizedBox(height: 8),
+              if (accountBlocker != null)
+                FilledButton.icon(
+                  key: const ValueKey('choose-account'),
+                  onPressed: onPickCustomer,
+                  icon: const Icon(Icons.person_search),
+                  label: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Text(
+                      l10n.chooseAccount,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ),
+                )
+              else
+                FilledButton.icon(
+                  key: const ValueKey('sale-save'),
+                  onPressed: cart.isEmpty || saving || needRate.isNotEmpty
+                      ? null
+                      : onSave,
+                  icon: saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  label: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Text(l10n.save,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: Colors.white)),
+                  ),
+                ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The "Customer" chip in the totals area. Empty: tap to attach a customer
+/// to this sale. Filled: the customer's name (and card number), tap to
+/// change, × to remove.
+class _CustomerChip extends StatelessWidget {
+  const _CustomerChip({
+    required this.customer,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final SaleCustomer? customer;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final customer = this.customer;
+    if (customer == null) {
+      return ActionChip(
+        key: const ValueKey('sale-customer-chip'),
+        avatar: const Icon(Icons.person_add_alt, size: 18),
+        label: Text(l10n.saleCustomerChip),
+        onPressed: onTap,
+      );
+    }
+    final label = [
+      customer.name,
+      if (accountsEnabled && customer.accountNumber != null)
+        ltrIsolate(customer.accountNumber!),
+    ].join(' · ');
+    return InputChip(
+      key: const ValueKey('sale-customer-chip'),
+      avatar: const Icon(Icons.person, size: 18),
+      // Bounded: a long name must not push the currency picker and the rate
+      // shortcut off the row.
+      label: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 200),
+        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+      onPressed: onTap,
+      onDeleted: onRemove,
+      deleteButtonTooltipMessage: l10n.saleCustomerRemove,
     );
   }
 }
