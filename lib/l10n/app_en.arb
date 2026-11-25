@@ -789,5 +789,354 @@
       "count": {"type": "String"}
     }
   },
-  "debugSeedingCustomersTitle": "Creating test customers"
+  "debugSeedingCustomersTitle": "Creating test customers",
+
+  "sectionSecurity": "Security",
+  "pinLockTitle": "PIN lock",
+  "pinNotSet": "No PIN set",
+  "pinIsSet": "A PIN is set",
+  "pinSetTitle": "Choose a PIN",
+  "pinChangeTitle": "New PIN",
+  "pinSetIntro": "The PIN protects card codes and other sensitive actions. Use 4 to 6 digits.",
+  "pinNeededIntro": "A PIN is needed here and none is set yet. Choose one now: 4 to 6 digits.",
+  "pinNewLabel": "PIN",
+  "pinConfirmLabel": "Repeat the PIN",
+  "pinInvalid": "The PIN must be 4 to 6 digits",
+  "pinMismatch": "The two PINs are not the same",
+  "pinEnterTitle": "Enter the PIN",
+  "pinLabel": "PIN",
+  "pinWrong": "Wrong PIN. {count, plural, =0{No attempts left} =1{1 attempt left} other{{count} attempts left}}",
+  "@pinWrong": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "pinLocked": "Too many wrong attempts. Try again in {time}.",
+  "@pinLocked": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "pinConfirmAction": "Continue",
+  "pinForgetWarning": "There is no way to recover a forgotten PIN. Write it down somewhere safe.",
+  "pinChangeAction": "Change PIN",
+  "pinRemoveAction": "Remove PIN",
+  "pinRemoveTitle": "Remove the PIN?",
+  "pinRemoveMessage": "Without a PIN, whoever holds this phone can choose a new one and then reveal or reprint card codes.",
+  "pinSaved": "PIN saved",
+  "pinRemoved": "PIN removed",
+  "pinReasonReprint": "This invoice carries card codes. Printing or sharing it again needs the PIN and is marked as a copy.",
+  "pinReasonCodes": "Card codes are protected by the PIN.",
+  "auditLogTitle": "Audit log",
+  "auditLogHint": "Codes revealed, reprinted, voided, loaded or exported",
+  "auditEmpty": "No sensitive actions in this period",
+  "loadMore": "Show more",
+  "auditCodeImport": "Codes loaded",
+  "auditCodeReveal": "Code shown on screen",
+  "auditCodeLookup": "Search by code",
+  "auditCodeVoid": "Code voided",
+  "auditCodeRestore": "Code returned to stock",
+  "auditCodeExport": "Codes exported",
+  "auditCodeExpiryChange": "Expiry date changed",
+  "auditBatchDelete": "Batch deleted",
+  "auditInvoiceReprint": "Invoice with codes printed again",
+  "auditPinSet": "PIN set",
+  "auditPinChange": "PIN changed",
+  "auditPinRemove": "PIN removed",
+  "auditDetailFound": "{count} found",
+  "@auditDetailFound": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "auditDetailReason": "Reason: {reason}",
+  "@auditDetailReason": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  },
+  "cardsCount": "{count} cards",
+  "@cardsCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "serialLabel": "S/N {serial}",
+  "@serialLabel": {
+    "placeholders": {
+      "serial": {"type": "String"}
+    }
+  },
+  "navCardStock": "Card stock",
+  "stockAvailable": "Available",
+  "stockSold": "Sold",
+  "stockVoid": "Void",
+  "stockExpired": "Expired",
+  "stockCount": "In stock: {count}",
+  "@stockCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "stockOut": "Out of stock",
+  "stockLowWarning": "{name}: only {count} left",
+  "@stockLowWarning": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "String"}
+    }
+  },
+  "stockOutWarning": "{name}: out of stock",
+  "@stockOutWarning": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "cardStockEmpty": "No product is sold from code stock yet. Open a card / service product and turn on \"Sold from code stock\".",
+  "cardStockLookup": "Find a card by its code",
+  "expiredCodesTitle": "Expired codes",
+  "expiredCodesNotice": "{count} expired codes are not being sold. Decide what to do with them.",
+  "@expiredCodesNotice": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "expiredEmpty": "No expired codes",
+  "batchesTitle": "Batches",
+  "batchAdd": "Load codes",
+  "batchEmpty": "No codes loaded yet",
+  "batchCostEach": "Cost {amount} each",
+  "@batchCostEach": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "batchExpires": "Valid until {date}",
+  "@batchExpires": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "batchDelete": "Delete batch",
+  "batchDeleteTitle": "Delete this batch?",
+  "batchDeleteMessage": "Its {count} unsold codes will be deleted for good.",
+  "@batchDeleteMessage": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "batchDeleteBlocked": "This batch has sold codes and cannot be deleted.",
+  "batchDeleted": "{count} codes deleted",
+  "@batchDeleted": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "batchShowCodes": "Show the codes",
+  "batchChangeExpiry": "Change expiry date",
+  "expiryChanged": "Expiry date changed",
+  "exportCodes": "Export unsold codes",
+  "exportWarning": "The file holds the codes in the clear. Anyone who gets it can use the cards.",
+  "exportShare": "Share the file",
+  "exportSave": "Save to phone",
+  "exportDone": "{count} codes exported",
+  "@exportDone": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "exportNothing": "No unsold codes to export",
+  "addBatchTitle": "Load codes",
+  "loadMethodPaste": "Paste",
+  "loadMethodFile": "File",
+  "loadMethodScan": "Scan",
+  "pasteLabel": "Codes",
+  "pasteHint": "One card per line",
+  "pickFile": "Choose a .txt or .csv file",
+  "fileReadFailed": "The file could not be read",
+  "columnsLabel": "Each line holds",
+  "columnsCodeOnly": "Code",
+  "columnsSerialCode": "Serial, code",
+  "columnsCodeSerial": "Code, serial",
+  "importToAdd": "{count} to add",
+  "@importToAdd": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "importAdded": "{count} added",
+  "@importAdded": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "importDuplicates": "{count, plural, =1{1 duplicate skipped} other{{count} duplicates skipped}}",
+  "@importDuplicates": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importEmpty": "{count, plural, =1{1 empty line} other{{count} empty lines}}",
+  "@importEmpty": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importInvalid": "{count, plural, =1{1 line without a code} other{{count} lines without a code}}",
+  "@importInvalid": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "importHeaderSkipped": "heading line left out",
+  "batchExpiryLabel": "Expiry date (optional)",
+  "noExpiry": "No expiry",
+  "batchCostLabel": "Cost per card, {currency} (optional)",
+  "@batchCostLabel": {
+    "placeholders": {
+      "currency": {"type": "String"}
+    }
+  },
+  "saveBatch": "Save the batch",
+  "nothingToAdd": "Nothing new to add",
+  "scanStart": "Scan cards with the camera",
+  "scanTitle": "Scan cards",
+  "scanCount": "{count} scanned",
+  "@scanCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "scanDuplicate": "Already scanned",
+  "scanHint": "Point the camera at the QR code or barcode on the card",
+  "scanCameraError": "The camera could not be opened. Allow camera access for Souqi in the phone settings.",
+  "scannedCards": "Scanned cards: {count}",
+  "@scannedCards": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "clearScanned": "Clear",
+  "codesTitle": "Card codes",
+  "codesMaskedNote": "Codes are hidden on screen. They are printed and shared in full.",
+  "codeStatusAvailable": "In stock",
+  "codeStatusSold": "Sold",
+  "codeStatusVoid": "Void",
+  "codeStatusExpired": "Expired",
+  "codeReveal": "Show the code",
+  "codeVoid": "Void",
+  "codeReturn": "Return to stock",
+  "codeRevealedTitle": "Card code",
+  "codeUnreadable": "This code cannot be read on this device.",
+  "voidCodeTitle": "Void this code?",
+  "voidCodeMessage": "The card will count as neither sold nor in stock. This is written to the audit log.",
+  "returnCodeTitle": "Return this code to stock?",
+  "returnCodeMessage": "The card becomes available for sale again. This is written to the audit log.",
+  "reasonLabel": "Reason",
+  "codeVoided": "Code voided",
+  "codeReturned": "Code returned to stock",
+  "voidExpiredAction": "Void them",
+  "voidExpiredTitle": "Void the expired codes?",
+  "voidExpiredMessage": "{count} expired codes of \"{name}\" will be voided.",
+  "@voidExpiredMessage": {
+    "placeholders": {
+      "count": {"type": "String"},
+      "name": {"type": "String"}
+    }
+  },
+  "expiredVoided": "{count} codes voided",
+  "@expiredVoided": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "batchCodesTitle": "Codes of the batch",
+  "lookupTitle": "Find a card",
+  "lookupHint": "Type or paste the full code",
+  "lookupAction": "Search",
+  "lookupNotFound": "No card with this code",
+  "lookupSoldOn": "Sold on {date}",
+  "@lookupSoldOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "lookupCustomer": "Customer: {name}",
+  "@lookupCustomer": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "lookupAccount": "Account: {number}",
+  "@lookupAccount": {
+    "placeholders": {
+      "number": {"type": "String"}
+    }
+  },
+  "lookupOpenInvoice": "Open the invoice",
+  "lookupInvoiceDeleted": "The invoice itself was deleted from the archive",
+  "codeStockOnly": "Only {count} in stock",
+  "@codeStockOnly": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "codeStockShort": "\"{name}\": {wanted} wanted, {available} in stock",
+  "@codeStockShort": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "wanted": {"type": "String"},
+      "available": {"type": "String"}
+    }
+  },
+  "codeStockUnreadable": "The card codes cannot be read on this device, so nothing was sold.",
+  "codeStockWholeCards": "\"{name}\" is sold in whole cards",
+  "@codeStockWholeCards": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "soldFromCodeStock": "Sold from code stock",
+  "soldFromCodeStockHint": "Each sale takes a card code from the loaded stock and prints it on the invoice",
+  "lowStockThresholdLabel": "Warn when stock falls to",
+  "lowStockThresholdHint": "Empty = no warning",
+  "manageStock": "Card stock of this product",
+  "sectionCardCodes": "Card codes",
+  "printCodeQrLabel": "Print a QR code of each card code",
+  "codesSeparateSlipsLabel": "Print each card on a separate slip",
+  "codesSeparateSlipsHint": "The printer feeds (and cuts) between slips. A shared image or PDF always holds everything.",
+  "invoiceSerialLabel": "S/N",
+  "invoiceExpiryLabel": "Valid until {date}",
+  "@invoiceExpiryLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "invoiceCodeUnreadable": "Code unavailable on this device",
+  "statsCardsSold": "Cards sold",
+  "statsCardsProfit": "Profit {amount}",
+  "@statsCardsProfit": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "statsCardsProfitPartial": "Profit {amount} (on the {count} with a known cost)",
+  "@statsCardsProfitPartial": {
+    "placeholders": {
+      "amount": {"type": "String"},
+      "count": {"type": "String"}
+    }
+  },
+  "debugSeedCards": "Create test card codes",
+  "debugSeedCardsHint": "Two card products with made-up codes, one batch near expiry, for testing card sales",
+  "debugSeedCardsDone": "{count} test codes created",
+  "@debugSeedCardsDone": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+
+  "batchSaveFailed": "The batch could not be saved. Nothing was added.",
+
+  "importPreviewTitle": "Preview (first 5)"
 }

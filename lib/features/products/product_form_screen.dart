@@ -4,10 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/utils/normalize.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../vouchers/product_stock_screen.dart';
+import '../vouchers/voucher_providers.dart';
 import 'products_providers.dart';
 
 class ProductFormScreen extends ConsumerStatefulWidget {
@@ -25,12 +28,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late final TextEditingController _name;
   late final TextEditingController _code;
   late final TextEditingController _price;
+  late final TextEditingController _threshold;
 
   late ProductKind _kind;
   int? _unitId;
   String? _currencyCode; // null until currencies load (then base)
   late bool _favorite;
   late bool _requiresAccount;
+  late bool _codeStock;
   late bool _active;
   String? _codeError;
   bool _saving = false;
@@ -44,11 +49,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _name = TextEditingController(text: p?.name ?? '');
     _code = TextEditingController(text: p?.code ?? '');
     _price = TextEditingController();
+    _threshold = TextEditingController(
+      text: p?.lowStockThreshold == null ? '' : '${p!.lowStockThreshold}',
+    );
     _kind = p?.kind ?? ProductKind.goods;
     _unitId = p?.unitId;
     _currencyCode = p?.currencyCode;
     _favorite = p?.isFavorite ?? false;
     _requiresAccount = p?.requiresAccount ?? false;
+    _codeStock = p?.soldFromCodeStock ?? false;
     _active = p?.isActive ?? true;
   }
 
@@ -57,7 +66,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _name.dispose();
     _code.dispose();
     _price.dispose();
+    _threshold.dispose();
     super.dispose();
+  }
+
+  /// "Sold from code stock" is offered for SERVICE/CARD products only, and
+  /// only while the feature is on.
+  bool get _offersCodeStock =>
+      voucherStockEnabled && _kind == ProductKind.service;
+
+  /// The threshold field: empty = no warning. Null when it is not a whole
+  /// number of cards.
+  static (bool ok, int? value) _parseThreshold(String text) {
+    final trimmed = normalizeDigits(text.trim());
+    if (trimmed.isEmpty) return (true, null);
+    final value = int.tryParse(trimmed);
+    if (value == null || value < 0) return (false, null);
+    return (true, value);
   }
 
   Currency? _selectedCurrency(Map<String, Currency> currencies, String base) {
@@ -101,8 +126,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       isFavorite: _favorite,
       isActive: _active,
       requiresAccount: _requiresAccount,
-      soldFromCodeStock: _initial?.soldFromCodeStock ?? false,
-      lowStockThreshold: _initial?.lowStockThreshold,
+      // With the feature off the form shows neither field and leaves both
+      // as they were.
+      soldFromCodeStock: voucherStockEnabled
+          ? _offersCodeStock && _codeStock
+          : _initial?.soldFromCodeStock ?? false,
+      lowStockThreshold: voucherStockEnabled
+          ? (_offersCodeStock && _codeStock
+              ? _parseThreshold(_threshold.text).$2
+              : null)
+          : _initial?.lowStockThreshold,
     );
     if (_initial == null) {
       await repo.insert(product);
@@ -110,6 +143,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       await repo.update(product);
     }
     container.invalidate(productsListProvider);
+    // The switch decides whether the product is on the stock screen at all.
+    refreshVoucherData(container);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -262,6 +297,48 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               value: _requiresAccount,
               onChanged: (v) => setState(() => _requiresAccount = v),
             ),
+          if (_offersCodeStock) ...[
+            SwitchListTile(
+              key: const ValueKey('product-code-stock'),
+              title: Text(l10n.soldFromCodeStock),
+              subtitle: Text(l10n.soldFromCodeStockHint),
+              value: _codeStock,
+              onChanged: (v) => setState(() => _codeStock = v),
+            ),
+            if (_codeStock) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextFormField(
+                  key: const ValueKey('product-low-stock'),
+                  controller: _threshold,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: l10n.lowStockThresholdLabel,
+                    helperText: l10n.lowStockThresholdHint,
+                  ),
+                  validator: (v) => _parseThreshold(v ?? '').$1
+                      ? null
+                      : l10n.invalidNumber,
+                ),
+              ),
+              // Loading codes needs a saved product to load them for.
+              if (_initial != null && _initial!.soldFromCodeStock)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    key: const ValueKey('product-open-stock'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            ProductStockScreen(productId: _initial!.id!),
+                      ),
+                    ),
+                    icon: const Icon(Icons.confirmation_number_outlined),
+                    label: Text(l10n.manageStock),
+                  ),
+                ),
+            ],
+          ],
           if (_initial != null && !_initial!.isActive)
             SwitchListTile(
               title: Text(l10n.activeLabel),

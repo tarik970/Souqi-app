@@ -315,6 +315,78 @@ class StatsRepository {
         ),
     ];
   }
+
+  /// Prepaid cards sold in the period, per product, the best seller first.
+  ///
+  /// Counted from the CODES, not from the invoices: every sold code carries
+  /// its own sale time and its price and cost in base currency as they were
+  /// at the sale. So the figures survive the invoice being deleted by the
+  /// archive's retention sweep, and a card voided or returned to stock since
+  /// is no longer counted.
+  ///
+  /// The price is the line's unit price — before any discount on the whole
+  /// invoice, which belongs to no single card.
+  Future<List<CardSaleStat>> cardSales({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final rows = await _db.rawQuery(
+      'SELECT c.product_id AS product_id, p.name AS name, COUNT(*) AS n, '
+      'COALESCE(SUM(c.sold_price_base_minor), 0) AS revenue, '
+      'SUM(CASE WHEN c.sold_cost_base_minor IS NOT NULL THEN 1 ELSE 0 END) '
+      'AS n_cost, '
+      'COALESCE(SUM(CASE WHEN c.sold_cost_base_minor IS NOT NULL '
+      'THEN COALESCE(c.sold_price_base_minor, 0) - c.sold_cost_base_minor '
+      'END), 0) AS profit '
+      'FROM voucher_codes c JOIN products p ON p.id = c.product_id '
+      "WHERE c.status = 'SOLD' AND c.sold_at >= ? AND c.sold_at < ? "
+      'GROUP BY c.product_id ORDER BY n DESC, revenue DESC',
+      [
+        from.toUtc().millisecondsSinceEpoch,
+        to.toUtc().millisecondsSinceEpoch,
+      ],
+    );
+    return [
+      for (final row in rows)
+        CardSaleStat(
+          productId: row['product_id'] as int,
+          name: row['name'] as String,
+          count: (row['n'] as int?) ?? 0,
+          revenueBaseMinor: (row['revenue'] as int?) ?? 0,
+          costKnownCount: (row['n_cost'] as int?) ?? 0,
+          profitBaseMinor: (row['profit'] as int?) ?? 0,
+        ),
+    ];
+  }
+}
+
+/// Cards of one product sold in a period, in the BASE currency.
+class CardSaleStat {
+  const CardSaleStat({
+    required this.productId,
+    required this.name,
+    required this.count,
+    required this.revenueBaseMinor,
+    required this.costKnownCount,
+    required this.profitBaseMinor,
+  });
+
+  final int productId;
+  final String name;
+  final int count;
+  final int revenueBaseMinor;
+
+  /// How many of the [count] cards came from a batch with a cost entered.
+  /// Profit is only known for those.
+  final int costKnownCount;
+
+  /// Sale price − cost, over the [costKnownCount] cards. Can be negative.
+  final int profitBaseMinor;
+
+  bool get hasProfit => costKnownCount > 0;
+
+  /// Some of the cards had no cost entered: the profit covers only a part.
+  bool get profitIsPartial => costKnownCount < count;
 }
 
 /// Renewals in a period, in the BASE currency.

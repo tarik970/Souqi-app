@@ -2624,6 +2624,1002 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Creating test customers'**
   String get debugSeedingCustomersTitle;
+
+  /// No description provided for @sectionSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get sectionSecurity;
+
+  /// No description provided for @pinLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN lock'**
+  String get pinLockTitle;
+
+  /// No description provided for @pinNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No PIN set'**
+  String get pinNotSet;
+
+  /// No description provided for @pinIsSet.
+  ///
+  /// In en, this message translates to:
+  /// **'A PIN is set'**
+  String get pinIsSet;
+
+  /// No description provided for @pinSetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a PIN'**
+  String get pinSetTitle;
+
+  /// No description provided for @pinChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New PIN'**
+  String get pinChangeTitle;
+
+  /// No description provided for @pinSetIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'The PIN protects card codes and other sensitive actions. Use 4 to 6 digits.'**
+  String get pinSetIntro;
+
+  /// No description provided for @pinNeededIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'A PIN is needed here and none is set yet. Choose one now: 4 to 6 digits.'**
+  String get pinNeededIntro;
+
+  /// No description provided for @pinNewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN'**
+  String get pinNewLabel;
+
+  /// No description provided for @pinConfirmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat the PIN'**
+  String get pinConfirmLabel;
+
+  /// No description provided for @pinInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The PIN must be 4 to 6 digits'**
+  String get pinInvalid;
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The two PINs are not the same'**
+  String get pinMismatch;
+
+  /// No description provided for @pinEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN'**
+  String get pinEnterTitle;
+
+  /// No description provided for @pinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN'**
+  String get pinLabel;
+
+  /// No description provided for @pinWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong PIN. {count, plural, =0{No attempts left} =1{1 attempt left} other{{count} attempts left}}'**
+  String pinWrong(int count);
+
+  /// No description provided for @pinLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many wrong attempts. Try again in {time}.'**
+  String pinLocked(String time);
+
+  /// No description provided for @pinConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get pinConfirmAction;
+
+  /// No description provided for @pinForgetWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no way to recover a forgotten PIN. Write it down somewhere safe.'**
+  String get pinForgetWarning;
+
+  /// No description provided for @pinChangeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change PIN'**
+  String get pinChangeAction;
+
+  /// No description provided for @pinRemoveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove PIN'**
+  String get pinRemoveAction;
+
+  /// No description provided for @pinRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the PIN?'**
+  String get pinRemoveTitle;
+
+  /// No description provided for @pinRemoveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a PIN, whoever holds this phone can choose a new one and then reveal or reprint card codes.'**
+  String get pinRemoveMessage;
+
+  /// No description provided for @pinSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN saved'**
+  String get pinSaved;
+
+  /// No description provided for @pinRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN removed'**
+  String get pinRemoved;
+
+  /// No description provided for @pinReasonReprint.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice carries card codes. Printing or sharing it again needs the PIN and is marked as a copy.'**
+  String get pinReasonReprint;
+
+  /// No description provided for @pinReasonCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Card codes are protected by the PIN.'**
+  String get pinReasonCodes;
+
+  /// No description provided for @auditLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit log'**
+  String get auditLogTitle;
+
+  /// No description provided for @auditLogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes revealed, reprinted, voided, loaded or exported'**
+  String get auditLogHint;
+
+  /// No description provided for @auditEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No sensitive actions in this period'**
+  String get auditEmpty;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get loadMore;
+
+  /// No description provided for @auditCodeImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes loaded'**
+  String get auditCodeImport;
+
+  /// No description provided for @auditCodeReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Code shown on screen'**
+  String get auditCodeReveal;
+
+  /// No description provided for @auditCodeLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by code'**
+  String get auditCodeLookup;
+
+  /// No description provided for @auditCodeVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Code voided'**
+  String get auditCodeVoid;
+
+  /// No description provided for @auditCodeRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Code returned to stock'**
+  String get auditCodeRestore;
+
+  /// No description provided for @auditCodeExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes exported'**
+  String get auditCodeExport;
+
+  /// No description provided for @auditCodeExpiryChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date changed'**
+  String get auditCodeExpiryChange;
+
+  /// No description provided for @auditBatchDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch deleted'**
+  String get auditBatchDelete;
+
+  /// No description provided for @auditInvoiceReprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice with codes printed again'**
+  String get auditInvoiceReprint;
+
+  /// No description provided for @auditPinSet.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN set'**
+  String get auditPinSet;
+
+  /// No description provided for @auditPinChange.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN changed'**
+  String get auditPinChange;
+
+  /// No description provided for @auditPinRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN removed'**
+  String get auditPinRemove;
+
+  /// No description provided for @auditDetailFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} found'**
+  String auditDetailFound(String count);
+
+  /// No description provided for @auditDetailReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String auditDetailReason(String reason);
+
+  /// No description provided for @cardsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cards'**
+  String cardsCount(String count);
+
+  /// No description provided for @serialLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'S/N {serial}'**
+  String serialLabel(String serial);
+
+  /// No description provided for @navCardStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Card stock'**
+  String get navCardStock;
+
+  /// No description provided for @stockAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get stockAvailable;
+
+  /// No description provided for @stockSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold'**
+  String get stockSold;
+
+  /// No description provided for @stockVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Void'**
+  String get stockVoid;
+
+  /// No description provided for @stockExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get stockExpired;
+
+  /// No description provided for @stockCount.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock: {count}'**
+  String stockCount(String count);
+
+  /// No description provided for @stockOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of stock'**
+  String get stockOut;
+
+  /// No description provided for @stockLowWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: only {count} left'**
+  String stockLowWarning(String name, String count);
+
+  /// No description provided for @stockOutWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: out of stock'**
+  String stockOutWarning(String name);
+
+  /// No description provided for @cardStockEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No product is sold from code stock yet. Open a card / service product and turn on \"Sold from code stock\".'**
+  String get cardStockEmpty;
+
+  /// No description provided for @cardStockLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a card by its code'**
+  String get cardStockLookup;
+
+  /// No description provided for @expiredCodesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired codes'**
+  String get expiredCodesTitle;
+
+  /// No description provided for @expiredCodesNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} expired codes are not being sold. Decide what to do with them.'**
+  String expiredCodesNotice(String count);
+
+  /// No description provided for @expiredEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expired codes'**
+  String get expiredEmpty;
+
+  /// No description provided for @batchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Batches'**
+  String get batchesTitle;
+
+  /// No description provided for @batchAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Load codes'**
+  String get batchAdd;
+
+  /// No description provided for @batchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No codes loaded yet'**
+  String get batchEmpty;
+
+  /// No description provided for @batchCostEach.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost {amount} each'**
+  String batchCostEach(String amount);
+
+  /// No description provided for @batchExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String batchExpires(String date);
+
+  /// No description provided for @batchDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete batch'**
+  String get batchDelete;
+
+  /// No description provided for @batchDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this batch?'**
+  String get batchDeleteTitle;
+
+  /// No description provided for @batchDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Its {count} unsold codes will be deleted for good.'**
+  String batchDeleteMessage(String count);
+
+  /// No description provided for @batchDeleteBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This batch has sold codes and cannot be deleted.'**
+  String get batchDeleteBlocked;
+
+  /// No description provided for @batchDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} codes deleted'**
+  String batchDeleted(String count);
+
+  /// No description provided for @batchShowCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the codes'**
+  String get batchShowCodes;
+
+  /// No description provided for @batchChangeExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Change expiry date'**
+  String get batchChangeExpiry;
+
+  /// No description provided for @expiryChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date changed'**
+  String get expiryChanged;
+
+  /// No description provided for @exportCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Export unsold codes'**
+  String get exportCodes;
+
+  /// No description provided for @exportWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The file holds the codes in the clear. Anyone who gets it can use the cards.'**
+  String get exportWarning;
+
+  /// No description provided for @exportShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the file'**
+  String get exportShare;
+
+  /// No description provided for @exportSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to phone'**
+  String get exportSave;
+
+  /// No description provided for @exportDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} codes exported'**
+  String exportDone(String count);
+
+  /// No description provided for @exportNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No unsold codes to export'**
+  String get exportNothing;
+
+  /// No description provided for @addBatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Load codes'**
+  String get addBatchTitle;
+
+  /// No description provided for @loadMethodPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get loadMethodPaste;
+
+  /// No description provided for @loadMethodFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get loadMethodFile;
+
+  /// No description provided for @loadMethodScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get loadMethodScan;
+
+  /// No description provided for @pasteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes'**
+  String get pasteLabel;
+
+  /// No description provided for @pasteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One card per line'**
+  String get pasteHint;
+
+  /// No description provided for @pickFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a .txt or .csv file'**
+  String get pickFile;
+
+  /// No description provided for @fileReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be read'**
+  String get fileReadFailed;
+
+  /// No description provided for @columnsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Each line holds'**
+  String get columnsLabel;
+
+  /// No description provided for @columnsCodeOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get columnsCodeOnly;
+
+  /// No description provided for @columnsSerialCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Serial, code'**
+  String get columnsSerialCode;
+
+  /// No description provided for @columnsCodeSerial.
+  ///
+  /// In en, this message translates to:
+  /// **'Code, serial'**
+  String get columnsCodeSerial;
+
+  /// No description provided for @importToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to add'**
+  String importToAdd(String count);
+
+  /// No description provided for @importAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added'**
+  String importAdded(String count);
+
+  /// No description provided for @importDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 duplicate skipped} other{{count} duplicates skipped}}'**
+  String importDuplicates(int count);
+
+  /// No description provided for @importEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 empty line} other{{count} empty lines}}'**
+  String importEmpty(int count);
+
+  /// No description provided for @importInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line without a code} other{{count} lines without a code}}'**
+  String importInvalid(int count);
+
+  /// No description provided for @importHeaderSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'heading line left out'**
+  String get importHeaderSkipped;
+
+  /// No description provided for @batchExpiryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date (optional)'**
+  String get batchExpiryLabel;
+
+  /// No description provided for @noExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'No expiry'**
+  String get noExpiry;
+
+  /// No description provided for @batchCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per card, {currency} (optional)'**
+  String batchCostLabel(String currency);
+
+  /// No description provided for @saveBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the batch'**
+  String get saveBatch;
+
+  /// No description provided for @nothingToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new to add'**
+  String get nothingToAdd;
+
+  /// No description provided for @scanStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan cards with the camera'**
+  String get scanStart;
+
+  /// No description provided for @scanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan cards'**
+  String get scanTitle;
+
+  /// No description provided for @scanCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scanned'**
+  String scanCount(String count);
+
+  /// No description provided for @scanDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Already scanned'**
+  String get scanDuplicate;
+
+  /// No description provided for @scanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the QR code or barcode on the card'**
+  String get scanHint;
+
+  /// No description provided for @scanCameraError.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera could not be opened. Allow camera access for Souqi in the phone settings.'**
+  String get scanCameraError;
+
+  /// No description provided for @scannedCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned cards: {count}'**
+  String scannedCards(String count);
+
+  /// No description provided for @clearScanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearScanned;
+
+  /// No description provided for @codesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Card codes'**
+  String get codesTitle;
+
+  /// No description provided for @codesMaskedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes are hidden on screen. They are printed and shared in full.'**
+  String get codesMaskedNote;
+
+  /// No description provided for @codeStatusAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock'**
+  String get codeStatusAvailable;
+
+  /// No description provided for @codeStatusSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold'**
+  String get codeStatusSold;
+
+  /// No description provided for @codeStatusVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Void'**
+  String get codeStatusVoid;
+
+  /// No description provided for @codeStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get codeStatusExpired;
+
+  /// No description provided for @codeReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the code'**
+  String get codeReveal;
+
+  /// No description provided for @codeVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Void'**
+  String get codeVoid;
+
+  /// No description provided for @codeReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to stock'**
+  String get codeReturn;
+
+  /// No description provided for @codeRevealedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Card code'**
+  String get codeRevealedTitle;
+
+  /// No description provided for @codeUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This code cannot be read on this device.'**
+  String get codeUnreadable;
+
+  /// No description provided for @voidCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void this code?'**
+  String get voidCodeTitle;
+
+  /// No description provided for @voidCodeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The card will count as neither sold nor in stock. This is written to the audit log.'**
+  String get voidCodeMessage;
+
+  /// No description provided for @returnCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return this code to stock?'**
+  String get returnCodeTitle;
+
+  /// No description provided for @returnCodeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The card becomes available for sale again. This is written to the audit log.'**
+  String get returnCodeMessage;
+
+  /// No description provided for @reasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get reasonLabel;
+
+  /// No description provided for @codeVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Code voided'**
+  String get codeVoided;
+
+  /// No description provided for @codeReturned.
+  ///
+  /// In en, this message translates to:
+  /// **'Code returned to stock'**
+  String get codeReturned;
+
+  /// No description provided for @voidExpiredAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Void them'**
+  String get voidExpiredAction;
+
+  /// No description provided for @voidExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void the expired codes?'**
+  String get voidExpiredTitle;
+
+  /// No description provided for @voidExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} expired codes of \"{name}\" will be voided.'**
+  String voidExpiredMessage(String count, String name);
+
+  /// No description provided for @expiredVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} codes voided'**
+  String expiredVoided(String count);
+
+  /// No description provided for @batchCodesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes of the batch'**
+  String get batchCodesTitle;
+
+  /// No description provided for @lookupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a card'**
+  String get lookupTitle;
+
+  /// No description provided for @lookupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste the full code'**
+  String get lookupHint;
+
+  /// No description provided for @lookupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get lookupAction;
+
+  /// No description provided for @lookupNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No card with this code'**
+  String get lookupNotFound;
+
+  /// No description provided for @lookupSoldOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold on {date}'**
+  String lookupSoldOn(String date);
+
+  /// No description provided for @lookupCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer: {name}'**
+  String lookupCustomer(String name);
+
+  /// No description provided for @lookupAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account: {number}'**
+  String lookupAccount(String number);
+
+  /// No description provided for @lookupOpenInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the invoice'**
+  String get lookupOpenInvoice;
+
+  /// No description provided for @lookupInvoiceDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'The invoice itself was deleted from the archive'**
+  String get lookupInvoiceDeleted;
+
+  /// No description provided for @codeStockOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {count} in stock'**
+  String codeStockOnly(String count);
+
+  /// No description provided for @codeStockShort.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\": {wanted} wanted, {available} in stock'**
+  String codeStockShort(String name, String wanted, String available);
+
+  /// No description provided for @codeStockUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The card codes cannot be read on this device, so nothing was sold.'**
+  String get codeStockUnreadable;
+
+  /// No description provided for @codeStockWholeCards.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" is sold in whole cards'**
+  String codeStockWholeCards(String name);
+
+  /// No description provided for @soldFromCodeStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold from code stock'**
+  String get soldFromCodeStock;
+
+  /// No description provided for @soldFromCodeStockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each sale takes a card code from the loaded stock and prints it on the invoice'**
+  String get soldFromCodeStockHint;
+
+  /// No description provided for @lowStockThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn when stock falls to'**
+  String get lowStockThresholdLabel;
+
+  /// No description provided for @lowStockThresholdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty = no warning'**
+  String get lowStockThresholdHint;
+
+  /// No description provided for @manageStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Card stock of this product'**
+  String get manageStock;
+
+  /// No description provided for @sectionCardCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Card codes'**
+  String get sectionCardCodes;
+
+  /// No description provided for @printCodeQrLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Print a QR code of each card code'**
+  String get printCodeQrLabel;
+
+  /// No description provided for @codesSeparateSlipsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Print each card on a separate slip'**
+  String get codesSeparateSlipsLabel;
+
+  /// No description provided for @codesSeparateSlipsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The printer feeds (and cuts) between slips. A shared image or PDF always holds everything.'**
+  String get codesSeparateSlipsHint;
+
+  /// No description provided for @invoiceSerialLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'S/N'**
+  String get invoiceSerialLabel;
+
+  /// No description provided for @invoiceExpiryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String invoiceExpiryLabel(String date);
+
+  /// No description provided for @invoiceCodeUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Code unavailable on this device'**
+  String get invoiceCodeUnreadable;
+
+  /// No description provided for @statsCardsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards sold'**
+  String get statsCardsSold;
+
+  /// No description provided for @statsCardsProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit {amount}'**
+  String statsCardsProfit(String amount);
+
+  /// No description provided for @statsCardsProfitPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit {amount} (on the {count} with a known cost)'**
+  String statsCardsProfitPartial(String amount, String count);
+
+  /// No description provided for @debugSeedCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Create test card codes'**
+  String get debugSeedCards;
+
+  /// No description provided for @debugSeedCardsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Two card products with made-up codes, one batch near expiry, for testing card sales'**
+  String get debugSeedCardsHint;
+
+  /// No description provided for @debugSeedCardsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} test codes created'**
+  String debugSeedCardsDone(String count);
+
+  /// No description provided for @batchSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The batch could not be saved. Nothing was added.'**
+  String get batchSaveFailed;
+
+  /// No description provided for @importPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview (first 5)'**
+  String get importPreviewTitle;
 }
 
 class _AppLocalizationsDelegate

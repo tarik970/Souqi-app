@@ -3,11 +3,16 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../config/features.dart';
 import '../../core/platform/native_bridge.dart';
+import '../../core/providers.dart';
 import '../../core/utils/normalize.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../customers/contact_actions.dart';
+import '../security/audit_providers.dart';
+import '../security/pin_dialogs.dart';
+import '../vouchers/voucher_providers.dart';
 import 'invoice_output.dart';
 import 'invoice_providers.dart';
 import 'output_messages.dart';
@@ -30,6 +35,12 @@ enum InvoiceAction {
 ///
 /// Reusable: the post-sale screen shows it now, and the archive / reprint
 /// screens of phase 4 drop in the same widget for any stored [Invoice].
+///
+/// AN INVOICE THAT CARRIES CARD CODES is cash on paper, so putting it out a
+/// second time is guarded: the PIN is asked for, the output is marked
+/// "COPY / نسخة" and the action is written to the audit log. "A second time"
+/// is every output from the archive ([copy]), and — on the screen right
+/// after the sale — every output after the first one that succeeded.
 class InvoiceActions extends ConsumerStatefulWidget {
   const InvoiceActions({
     super.key,
@@ -49,6 +60,26 @@ class InvoiceActions extends ConsumerStatefulWidget {
 
 class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
   InvoiceAction? _running;
+
+  /// Outputs that went through since this bar was built. Only matters for
+  /// an invoice with card codes: its first output is the original, the rest
+  /// are copies.
+  int _outputs = 0;
+
+  /// The codes [invoice] still carries (status SOLD), masked. Empty for an
+  /// invoice without cards and when the feature is off.
+  static Future<List<VoucherCodeView>> _soldCodes(
+    ProviderContainer container,
+    Invoice invoice,
+  ) async {
+    final id = invoice.id;
+    if (!voucherStockEnabled || id == null) return const [];
+    final codes = await container.read(invoiceCodesProvider(id).future);
+    return [
+      for (final code in codes)
+        if (code.status == VoucherStatus.sold) code,
+    ];
+  }
 
   Invoice get _invoice => widget.invoice;
 
@@ -92,8 +123,30 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     // [_snack] checks `mounted` itself.
     final output = _output;
     final invoice = _invoice;
-    final isCopy = copy;
+    final container = ProviderScope.containerOf(context, listen: false);
+    var isCopy = copy;
     try {
+      final sold = await _soldCodes(container, invoice);
+      if (sold.isNotEmpty) {
+        isCopy = isCopy || _outputs > 0;
+        if (isCopy) {
+          if (!mounted) return;
+          if (!await requirePin(context, reason: l10n.pinReasonReprint)) {
+            return;
+          }
+          final oneProduct =
+              sold.every((code) => code.productId == sold.first.productId);
+          await container.read(voucherRepositoryProvider).logReprint(
+                invoiceNo: invoice.invoiceNo,
+                codeCount: sold.length,
+                output: action.name,
+                productId: oneProduct ? sold.first.productId : null,
+                productName: oneProduct ? sold.first.productName : null,
+              );
+          container.invalidate(auditLogProvider);
+        }
+      }
+      var done = true;
       switch (action) {
         case InvoiceAction.print:
           await output.printInvoice(invoice, copy: isCopy);
@@ -103,12 +156,13 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
         case InvoiceAction.sharePdf:
           await output.sharePdfFile(invoice, copy: isCopy);
         case InvoiceAction.whatsApp:
-          await _sendOnWhatsApp(l10n);
+          done = await _sendOnWhatsApp(l10n, isCopy);
         case InvoiceAction.saveImage:
           _snack(l10n.savedToPhone(await output.saveImage(invoice, copy: isCopy)));
         case InvoiceAction.savePdf:
           _snack(l10n.savedToPhone(await output.savePdf(invoice, copy: isCopy)));
       }
+      if (done) _outputs++;
     } on OutputException catch (e) {
       if (mounted) showOutputError(context, ref, e);
     } catch (e) {
@@ -137,19 +191,20 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     );
   }
 
-  Future<void> _sendOnWhatsApp(AppLocalizations l10n) async {
+  /// Returns whether the invoice left the app (to WhatsApp or, failing
+  /// that, to the share sheet) — false when the user backed out.
+  Future<bool> _sendOnWhatsApp(AppLocalizations l10n, bool isCopy) async {
     // Taken before the first await: the two dialogs below can outlive this
     // widget, and neither `ref` nor `widget` may be touched after that.
     final output = _output;
     final bridge = ref.read(nativeBridgeProvider);
     final invoice = _invoice;
-    final isCopy = copy;
     final settings = await ref.read(invoiceSettingsProvider.future);
-    if (!mounted) return;
+    if (!mounted) return false;
     // No customer phone on the invoice: ask for a number for this one send.
     final phone = _customerPhone(settings) ??
         await _askPhone(settings.defaultCountryCode);
-    if (phone == null || !mounted) return;
+    if (phone == null || !mounted) return false;
 
     List<String> packages;
     try {
@@ -157,15 +212,15 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     } on OutputException {
       packages = const [];
     }
-    if (!mounted) return;
+    if (!mounted) return false;
     if (packages.isEmpty) {
       _snack(l10n.whatsAppNotInstalled);
       await output.shareImage(invoice, copy: isCopy);
-      return;
+      return true;
     }
     final package =
         packages.length == 1 ? packages.single : await _askPackage(packages);
-    if (package == null || !mounted) return;
+    if (package == null || !mounted) return false;
 
     final opened = await output.sendToWhatsApp(
       invoice,
@@ -177,6 +232,7 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
       _snack(l10n.whatsAppUnsupported); // checks `mounted` itself
       await output.shareImage(invoice, copy: isCopy);
     }
+    return true;
   }
 
   Future<String?> _askPhone(String countryCode) {

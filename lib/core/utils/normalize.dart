@@ -47,6 +47,13 @@ String normalizeCode(String input) {
       .toUpperCase();
 }
 
+/// A voucher code the way it is PRINTED and compared by eye: trimmed, no
+/// spaces or dashes, Arabic-Indic digits as 0-9. Unlike [normalizeCode] the
+/// letters keep their case — that form is only for hashing and lookup, while
+/// this one is what the customer types into the provider's page.
+String stripCodeSeparators(String input) =>
+    normalizeDigits(input.trim()).replaceAll(_spacesAndDashes, '');
+
 /// Inclusive code-unit ranges dropped from names: tatweel, Arabic diacritics
 /// (tashkeel, Quranic marks, superscript alef) and the invisible direction /
 /// joiner marks keyboards sometimes insert. Written as numbers on purpose:

@@ -35,12 +35,17 @@ class DueSoonDaysTile extends ConsumerWidget {
           DropdownButton<int>(
             key: const ValueKey('setting-due-soon-dropdown'),
             value: days,
+            isExpanded: true,
             underline: const SizedBox.shrink(),
             items: [
               for (final value in options)
                 DropdownMenuItem(
                   value: value,
-                  child: Text(l10n.daysCount(value)),
+                  child: Text(
+                    l10n.daysCount(value),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
             onChanged: (value) async {

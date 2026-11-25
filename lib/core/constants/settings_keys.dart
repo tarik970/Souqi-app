@@ -69,8 +69,22 @@ abstract final class SettingsKeys {
   /// Epoch milliseconds of the last retention sweep. The sweep runs on app
   /// start at most once a day, and this is what 'already today' is read from.
   static const autoDeleteLastRunAt = 'auto_delete_last_run_at';
+  /// `pbkdf2-sha256$<iterations>$<base64>`; '' = no PIN. See `pin_hash.dart`.
   static const pinHash = 'pin_hash';
-  static const pinSalt = 'pin_salt';
+  static const pinSalt = 'pin_salt'; // base64
+
+  /// Wrong PIN attempts in a row, and the epoch milliseconds a lock-out ends
+  /// at. In the database, so closing the app does not reset the count.
+  static const pinFailedAttempts = 'pin_failed_attempts';
+  static const pinLockedUntil = 'pin_locked_until';
+
+  // Prepaid card codes on the invoice.
+  /// Print a QR code of each sold card code under its digits.
+  static const printCodeQr = 'print_code_qr';
+
+  /// Print every sold card on its own slip (feed / cut between slips)
+  /// instead of on the invoice itself.
+  static const codesOnSeparateSlips = 'codes_on_separate_slips';
 
   // Customers / renewals.
   /// The "due in the next N days" window of the due-for-renewal list.
@@ -124,6 +138,12 @@ abstract final class SettingsKeys {
     lastNewItemUnitId: '',
     autoDeleteDays: '0',
     autoDeleteLastRunAt: '0',
+    pinHash: '',
+    pinSalt: '',
+    pinFailedAttempts: '0',
+    pinLockedUntil: '0',
+    printCodeQr: '0',
+    codesOnSeparateSlips: '0',
     dueSoonDays: '3',
     renewalReminderText: '',
   };

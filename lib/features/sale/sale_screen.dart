@@ -6,6 +6,7 @@ import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/security/code_cipher.dart';
 import '../../core/utils/bidi.dart';
 import '../../core/utils/normalize.dart';
 import '../../domain/models/cart.dart';
@@ -13,6 +14,7 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/customer.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
+import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/archive_providers.dart';
 import '../customers/customer_picker_screen.dart';
@@ -21,6 +23,7 @@ import '../invoice/invoice_providers.dart';
 import '../products/products_providers.dart';
 import '../settings/storage_providers.dart';
 import '../stats/stats_providers.dart';
+import '../vouchers/voucher_providers.dart';
 import 'discount_sheet.dart';
 import 'quantity_sheet.dart';
 import 'quick_item_sheet.dart';
@@ -169,6 +172,30 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     if (byCode != null) {
       final line = await _lineFor(byCode);
       if (!mounted) return;
+      // No sheet on this path, so the stock check the sheet makes for a
+      // card product is made here: one more must still be in stock.
+      if (line.codeStock) {
+        final locale = _locale;
+        final stock = await ref.read(voucherAvailabilityProvider.future);
+        if (!mounted) return;
+        final have = stock[byCode.id] ?? 0;
+        final wanted =
+            (ref.read(cartProvider).codeStockQuantities[byCode.id] ?? 0) + 1;
+        if (wanted > have) {
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(
+              content: Text(have == 0
+                  ? l10n.stockOutWarning(byCode.name)
+                  : l10n.codeStockShort(
+                      byCode.name,
+                      formatMinor(wanted, decimals: 0, locale: locale),
+                      formatMinor(have, decimals: 0, locale: locale),
+                    )),
+            ));
+          return;
+        }
+      }
       ref.read(cartProvider.notifier).add(line);
       _clearSearch();
       _searchFocus.requestFocus();
@@ -247,6 +274,9 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final container = ProviderScope.containerOf(context, listen: false);
     final cart = ref.read(cartProvider);
     if (cart.isEmpty || _saving) return;
+    final locale = _locale;
+    String number(int value) =>
+        formatMinor(value, decimals: 0, locale: locale);
     final customer = customersEnabled ? ref.read(saleCustomerProvider) : null;
     // The button is already disabled for this; the check is repeated here
     // because Save is also what a hardware keyboard's Enter can reach.
@@ -309,6 +339,8 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         ..invalidate(statsReportProvider);
       // A new due date, a longer purchase history.
       if (customer != null) refreshCustomerData(container);
+      // Card codes left the stock with this sale.
+      if (voucherStockEnabled) refreshVoucherData(container);
       if (!mounted) return;
       navigator.pushReplacement(MaterialPageRoute(
         builder: (_) => SaleInvoiceScreen(
@@ -321,6 +353,27 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       messenger.showSnackBar(SnackBar(
         content: Text(l10n.accountRequiredMessage(e.productName)),
       ));
+    } on InsufficientCodeStockException catch (e) {
+      // Nothing was saved and no card left the stock. The counts on screen
+      // were stale, or another sale got there first: read them again.
+      refreshVoucherData(container);
+      messenger.showSnackBar(SnackBar(
+        content: Text(e.available == 0
+            ? l10n.stockOutWarning(e.productName)
+            : l10n.codeStockShort(
+                e.productName,
+                number(e.requested),
+                number(e.available),
+              )),
+      ));
+    } on CodeQuantityException catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(l10n.codeStockWholeCards(e.productName)),
+      ));
+    } on CodeUnreadableException {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.codeStockUnreadable)),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -337,6 +390,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final allCurrencies = ref.watch(currenciesProvider).value ?? const [];
     final customer = customersEnabled ? ref.watch(saleCustomerProvider) : null;
     final accountBlocker = ref.watch(accountBlockerProvider);
+    final codeShortage = ref.watch(codeStockShortageProvider);
 
     // The keyboard is up — on this screen that means the seller is typing in
     // the search box. On a small phone the favorites bar, the search box and
@@ -452,6 +506,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               onSave: _save,
               customer: customer,
               accountBlocker: accountBlocker,
+              codeShortage: codeShortage,
               onPickCustomer: _pickCustomer,
               onRemoveCustomer:
                   ref.read(saleCustomerProvider.notifier).clear,
@@ -510,6 +565,7 @@ class _FavoritesBar extends ConsumerWidget {
     final theme = Theme.of(context);
     final favorites = ref.watch(favoriteProductsProvider).value;
     final currencies = ref.watch(currencyContextProvider).value;
+    final stock = ref.watch(voucherAvailabilityProvider).value;
     // The bar is one fixed-height row, so a large system font has to grow it
     // — otherwise the name and the price inside a button overflow it.
     final height = MediaQuery.textScalerOf(context).scale(96).clamp(96.0, 160.0);
@@ -546,7 +602,11 @@ class _FavoritesBar extends ConsumerWidget {
         itemBuilder: (context, index) {
           final product = favorites[index];
           final currency = currencies?.lookup(product.currencyCode);
-          return SizedBox(
+          final isCard = voucherStockEnabled &&
+              product.kind == ProductKind.service &&
+              product.soldFromCodeStock;
+          final have = stock?[product.id] ?? 0;
+          final button = SizedBox(
             width: 132,
             child: FilledButton.tonal(
               onPressed: () => onTap(product),
@@ -581,6 +641,44 @@ class _FavoritesBar extends ConsumerWidget {
                 ],
               ),
             ),
+          );
+          if (!isCard || stock == null) return button;
+          // The stock of a card product, as a count in the corner of its
+          // button: inside the button's own box, so the fixed-height bar
+          // needs no extra line for it.
+          final count = formatMinor(have, decimals: 0, locale: locale);
+          return Stack(
+            children: [
+              button,
+              PositionedDirectional(
+                top: 2,
+                end: 2,
+                child: IgnorePointer(
+                  child: Semantics(
+                    label: l10n.stockCount(count),
+                    excludeSemantics: true,
+                    child: Container(
+                      key: ValueKey('favorite-stock-${product.id}'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: have == 0
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        count,
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -690,6 +788,7 @@ class _SearchResults extends ConsumerWidget {
     final theme = Theme.of(context);
     final results = ref.watch(saleSearchResultsProvider);
     final ctx = ref.watch(currencyContextProvider).value;
+    final stock = ref.watch(voucherAvailabilityProvider).value;
     final typed =
         ref.watch(saleSearchProvider).trim().replaceAll(RegExp(r'\s+'), ' ');
 
@@ -727,6 +826,10 @@ class _SearchResults extends ConsumerWidget {
             }
             final product = products[index - offset];
             final currency = ctx?.lookup(product.currencyCode);
+            final isCard = voucherStockEnabled &&
+                product.kind == ProductKind.service &&
+                product.soldFromCodeStock;
+            final have = stock?[product.id] ?? 0;
             return ListTile(
               leading: Icon(product.kind == ProductKind.goods
                   ? Icons.shopping_basket
@@ -744,6 +847,12 @@ class _SearchResults extends ConsumerWidget {
                             : currency.symbol,
                       ),
                       if (product.code != null) '#${product.code}',
+                      if (isCard && stock != null)
+                        have == 0
+                            ? l10n.stockOut
+                            : l10n.stockCount(
+                                formatMinor(have, decimals: 0, locale: locale),
+                              ),
                     ].join(' · ')),
               trailing: const Icon(Icons.add_circle_outline),
               onTap: () => onTap(product),
@@ -802,10 +911,21 @@ class _CartList extends ConsumerWidget {
     final ctx = ref.watch(currencyContextProvider).value;
     final updatePrices =
         ref.watch(saleSettingsProvider).value?.updatePrices ?? true;
+    final shortage = ref.watch(codeStockShortageProvider);
 
     /// What saving the invoice will do to the catalog for this line, if
-    /// anything: create the product, or remember the changed price.
+    /// anything: create the product, or remember the changed price. A card
+    /// line the stock cannot cover says that instead.
     String? catalogHint(CartLine line) {
+      if (shortage != null &&
+          line.codeStock &&
+          line.productId == shortage.productId) {
+        return shortage.available == 0
+            ? l10n.stockOut
+            : l10n.codeStockOnly(
+                formatMinor(shortage.available, decimals: 0, locale: locale),
+              );
+      }
       if (line.createsProduct) return l10n.cartNewProduct;
       if (updatePrices && line.hasPriceOverride) {
         return l10n.cartPriceWillUpdate;
@@ -1000,9 +1120,13 @@ class _TotalsPanel extends ConsumerWidget {
     required this.onSave,
     required this.customer,
     required this.accountBlocker,
+    required this.codeShortage,
     required this.onPickCustomer,
     required this.onRemoveCustomer,
   });
+
+  /// A card product in the cart asks for more codes than the stock holds.
+  final CodeStockShortage? codeShortage;
 
   final CartTotals? totals;
   final Cart cart;
@@ -1241,6 +1365,28 @@ class _TotalsPanel extends ConsumerWidget {
                         ?.copyWith(color: theme.colorScheme.error),
                   ),
                 ),
+              // More cards than codes: the sale cannot be saved until the
+              // quantity comes down or more codes are loaded.
+              if (codeShortage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    codeShortage!.available == 0
+                        ? l10n.stockOutWarning(codeShortage!.name)
+                        : l10n.codeStockShort(
+                            codeShortage!.name,
+                            formatMinor(codeShortage!.wanted,
+                                decimals: 0, locale: locale),
+                            formatMinor(codeShortage!.available,
+                                decimals: 0, locale: locale),
+                          ),
+                    key: const ValueKey('code-stock-short'),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.error),
+                  ),
+                ),
               // A product marked "requires customer account" is in the cart
               // and no account is attached. The sale cannot be saved, so
               // there is no Save to press: a line says why, and the button
@@ -1291,7 +1437,10 @@ class _TotalsPanel extends ConsumerWidget {
               else
                 FilledButton.icon(
                   key: const ValueKey('sale-save'),
-                  onPressed: cart.isEmpty || saving || needRate.isNotEmpty
+                  onPressed: cart.isEmpty ||
+                          saving ||
+                          needRate.isNotEmpty ||
+                          codeShortage != null
                       ? null
                       : onSave,
                   icon: saving

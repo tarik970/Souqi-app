@@ -2,19 +2,25 @@ import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/features.dart';
 import '../data/db/app_database.dart';
 import '../data/repositories/archive_repository.dart';
+import '../data/repositories/audit_repository.dart';
 import '../data/repositories/currency_repository.dart';
 import '../data/repositories/customer_repository.dart';
 import '../data/repositories/invoice_repository.dart';
+import '../data/repositories/pin_repository.dart';
 import '../data/repositories/product_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/stats_repository.dart';
 import '../data/repositories/unit_repository.dart';
+import '../data/repositories/voucher_repository.dart';
 import '../domain/models/currency.dart';
 import '../domain/models/unit.dart';
 import 'constants/settings_keys.dart';
 import 'money/exchange.dart';
+import 'security/code_cipher.dart';
+import 'security/secure_key_store.dart';
 
 /// Overridden in main() with the opened database.
 final databaseProvider = Provider<AppDatabase>(
@@ -33,8 +39,39 @@ final unitRepositoryProvider = Provider<UnitRepository>(
   (ref) => UnitRepository(ref.watch(databaseProvider).db),
 );
 
+/// Where the card-code keys are kept: the Android Keystore. Tests override
+/// it with an in-memory store.
+final secretKeyStoreProvider = Provider<SecretKeyStore>(
+  (ref) => const SecureStorageKeyStore(),
+);
+
+/// One cipher for the life of the app — it holds the loaded keys.
+final codeCipherProvider = Provider<CodeCipher>(
+  (ref) => CodeCipher(ref.watch(secretKeyStoreProvider)),
+);
+
 final invoiceRepositoryProvider = Provider<InvoiceRepository>(
-  (ref) => InvoiceRepository(ref.watch(databaseProvider).db),
+  (ref) => InvoiceRepository(
+    ref.watch(databaseProvider).db,
+    // With the flag off no code is ever taken: a product marked "sold from
+    // code stock" then sells like any other service.
+    codeCipher: voucherStockEnabled ? ref.watch(codeCipherProvider) : null,
+  ),
+);
+
+final voucherRepositoryProvider = Provider<VoucherRepository>(
+  (ref) => VoucherRepository(
+    ref.watch(databaseProvider).db,
+    ref.watch(codeCipherProvider),
+  ),
+);
+
+final auditRepositoryProvider = Provider<AuditRepository>(
+  (ref) => AuditRepository(ref.watch(databaseProvider).db),
+);
+
+final pinRepositoryProvider = Provider<PinRepository>(
+  (ref) => PinRepository(ref.watch(settingsRepositoryProvider)),
 );
 
 final archiveRepositoryProvider = Provider<ArchiveRepository>(

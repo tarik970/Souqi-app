@@ -1,10 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../../core/security/code_cipher.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import 'counter_repository.dart';
 import 'customer_repository.dart';
 import 'product_repository.dart';
+import 'voucher_repository.dart';
 
 /// Reads and writes invoices.
 ///
@@ -14,9 +16,15 @@ import 'product_repository.dart';
 /// sale and the renewal dates of the attached account either all land or
 /// none do.
 class InvoiceRepository {
-  InvoiceRepository(this._db);
+  InvoiceRepository(this._db, {this.codeCipher});
 
   final Database _db;
+
+  /// Set when prepaid card codes are sold from stock (the
+  /// `voucherStockEnabled` flag): saving an invoice then takes the codes of
+  /// its card lines in the same transaction. Null = the feature is off and
+  /// such a product sells like any other service.
+  final CodeCipher? codeCipher;
 
   static const _counters = CounterRepository();
 
@@ -63,6 +71,24 @@ class InvoiceRepository {
           'product_id': productId,
         });
         saved.add(item.saved(id: itemId, productId: productId));
+        // A product sold from code stock: its codes are taken here, so the
+        // invoice and the cards it hands out exist together or not at all.
+        // Two sales can never be given the same card — transactions run one
+        // at a time — and a sale that cannot get all its cards throws and
+        // is rolled back whole.
+        final cipher = codeCipher;
+        if (cipher != null && productId != null) {
+          await VoucherRepository.sellForItem(
+            txn,
+            cipher: cipher,
+            invoice: draft,
+            invoiceId: id,
+            invoiceNo: invoiceNo,
+            item: item,
+            itemId: itemId,
+            productId: productId,
+          );
+        }
       }
       return draft.copyWith(id: id, invoiceNo: invoiceNo, items: saved);
     });

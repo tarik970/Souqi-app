@@ -1489,4 +1489,617 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debugSeedingCustomersTitle => 'Creating test customers';
+
+  @override
+  String get sectionSecurity => 'Security';
+
+  @override
+  String get pinLockTitle => 'PIN lock';
+
+  @override
+  String get pinNotSet => 'No PIN set';
+
+  @override
+  String get pinIsSet => 'A PIN is set';
+
+  @override
+  String get pinSetTitle => 'Choose a PIN';
+
+  @override
+  String get pinChangeTitle => 'New PIN';
+
+  @override
+  String get pinSetIntro =>
+      'The PIN protects card codes and other sensitive actions. Use 4 to 6 digits.';
+
+  @override
+  String get pinNeededIntro =>
+      'A PIN is needed here and none is set yet. Choose one now: 4 to 6 digits.';
+
+  @override
+  String get pinNewLabel => 'PIN';
+
+  @override
+  String get pinConfirmLabel => 'Repeat the PIN';
+
+  @override
+  String get pinInvalid => 'The PIN must be 4 to 6 digits';
+
+  @override
+  String get pinMismatch => 'The two PINs are not the same';
+
+  @override
+  String get pinEnterTitle => 'Enter the PIN';
+
+  @override
+  String get pinLabel => 'PIN';
+
+  @override
+  String pinWrong(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attempts left',
+      one: '1 attempt left',
+      zero: 'No attempts left',
+    );
+    return 'Wrong PIN. $_temp0';
+  }
+
+  @override
+  String pinLocked(String time) {
+    return 'Too many wrong attempts. Try again in $time.';
+  }
+
+  @override
+  String get pinConfirmAction => 'Continue';
+
+  @override
+  String get pinForgetWarning =>
+      'There is no way to recover a forgotten PIN. Write it down somewhere safe.';
+
+  @override
+  String get pinChangeAction => 'Change PIN';
+
+  @override
+  String get pinRemoveAction => 'Remove PIN';
+
+  @override
+  String get pinRemoveTitle => 'Remove the PIN?';
+
+  @override
+  String get pinRemoveMessage =>
+      'Without a PIN, whoever holds this phone can choose a new one and then reveal or reprint card codes.';
+
+  @override
+  String get pinSaved => 'PIN saved';
+
+  @override
+  String get pinRemoved => 'PIN removed';
+
+  @override
+  String get pinReasonReprint =>
+      'This invoice carries card codes. Printing or sharing it again needs the PIN and is marked as a copy.';
+
+  @override
+  String get pinReasonCodes => 'Card codes are protected by the PIN.';
+
+  @override
+  String get auditLogTitle => 'Audit log';
+
+  @override
+  String get auditLogHint =>
+      'Codes revealed, reprinted, voided, loaded or exported';
+
+  @override
+  String get auditEmpty => 'No sensitive actions in this period';
+
+  @override
+  String get loadMore => 'Show more';
+
+  @override
+  String get auditCodeImport => 'Codes loaded';
+
+  @override
+  String get auditCodeReveal => 'Code shown on screen';
+
+  @override
+  String get auditCodeLookup => 'Search by code';
+
+  @override
+  String get auditCodeVoid => 'Code voided';
+
+  @override
+  String get auditCodeRestore => 'Code returned to stock';
+
+  @override
+  String get auditCodeExport => 'Codes exported';
+
+  @override
+  String get auditCodeExpiryChange => 'Expiry date changed';
+
+  @override
+  String get auditBatchDelete => 'Batch deleted';
+
+  @override
+  String get auditInvoiceReprint => 'Invoice with codes printed again';
+
+  @override
+  String get auditPinSet => 'PIN set';
+
+  @override
+  String get auditPinChange => 'PIN changed';
+
+  @override
+  String get auditPinRemove => 'PIN removed';
+
+  @override
+  String auditDetailFound(String count) {
+    return '$count found';
+  }
+
+  @override
+  String auditDetailReason(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String cardsCount(String count) {
+    return '$count cards';
+  }
+
+  @override
+  String serialLabel(String serial) {
+    return 'S/N $serial';
+  }
+
+  @override
+  String get navCardStock => 'Card stock';
+
+  @override
+  String get stockAvailable => 'Available';
+
+  @override
+  String get stockSold => 'Sold';
+
+  @override
+  String get stockVoid => 'Void';
+
+  @override
+  String get stockExpired => 'Expired';
+
+  @override
+  String stockCount(String count) {
+    return 'In stock: $count';
+  }
+
+  @override
+  String get stockOut => 'Out of stock';
+
+  @override
+  String stockLowWarning(String name, String count) {
+    return '$name: only $count left';
+  }
+
+  @override
+  String stockOutWarning(String name) {
+    return '$name: out of stock';
+  }
+
+  @override
+  String get cardStockEmpty =>
+      'No product is sold from code stock yet. Open a card / service product and turn on \"Sold from code stock\".';
+
+  @override
+  String get cardStockLookup => 'Find a card by its code';
+
+  @override
+  String get expiredCodesTitle => 'Expired codes';
+
+  @override
+  String expiredCodesNotice(String count) {
+    return '$count expired codes are not being sold. Decide what to do with them.';
+  }
+
+  @override
+  String get expiredEmpty => 'No expired codes';
+
+  @override
+  String get batchesTitle => 'Batches';
+
+  @override
+  String get batchAdd => 'Load codes';
+
+  @override
+  String get batchEmpty => 'No codes loaded yet';
+
+  @override
+  String batchCostEach(String amount) {
+    return 'Cost $amount each';
+  }
+
+  @override
+  String batchExpires(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get batchDelete => 'Delete batch';
+
+  @override
+  String get batchDeleteTitle => 'Delete this batch?';
+
+  @override
+  String batchDeleteMessage(String count) {
+    return 'Its $count unsold codes will be deleted for good.';
+  }
+
+  @override
+  String get batchDeleteBlocked =>
+      'This batch has sold codes and cannot be deleted.';
+
+  @override
+  String batchDeleted(String count) {
+    return '$count codes deleted';
+  }
+
+  @override
+  String get batchShowCodes => 'Show the codes';
+
+  @override
+  String get batchChangeExpiry => 'Change expiry date';
+
+  @override
+  String get expiryChanged => 'Expiry date changed';
+
+  @override
+  String get exportCodes => 'Export unsold codes';
+
+  @override
+  String get exportWarning =>
+      'The file holds the codes in the clear. Anyone who gets it can use the cards.';
+
+  @override
+  String get exportShare => 'Share the file';
+
+  @override
+  String get exportSave => 'Save to phone';
+
+  @override
+  String exportDone(String count) {
+    return '$count codes exported';
+  }
+
+  @override
+  String get exportNothing => 'No unsold codes to export';
+
+  @override
+  String get addBatchTitle => 'Load codes';
+
+  @override
+  String get loadMethodPaste => 'Paste';
+
+  @override
+  String get loadMethodFile => 'File';
+
+  @override
+  String get loadMethodScan => 'Scan';
+
+  @override
+  String get pasteLabel => 'Codes';
+
+  @override
+  String get pasteHint => 'One card per line';
+
+  @override
+  String get pickFile => 'Choose a .txt or .csv file';
+
+  @override
+  String get fileReadFailed => 'The file could not be read';
+
+  @override
+  String get columnsLabel => 'Each line holds';
+
+  @override
+  String get columnsCodeOnly => 'Code';
+
+  @override
+  String get columnsSerialCode => 'Serial, code';
+
+  @override
+  String get columnsCodeSerial => 'Code, serial';
+
+  @override
+  String importToAdd(String count) {
+    return '$count to add';
+  }
+
+  @override
+  String importAdded(String count) {
+    return '$count added';
+  }
+
+  @override
+  String importDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count duplicates skipped',
+      one: '1 duplicate skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importEmpty(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count empty lines',
+      one: '1 empty line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importInvalid(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines without a code',
+      one: '1 line without a code',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importHeaderSkipped => 'heading line left out';
+
+  @override
+  String get batchExpiryLabel => 'Expiry date (optional)';
+
+  @override
+  String get noExpiry => 'No expiry';
+
+  @override
+  String batchCostLabel(String currency) {
+    return 'Cost per card, $currency (optional)';
+  }
+
+  @override
+  String get saveBatch => 'Save the batch';
+
+  @override
+  String get nothingToAdd => 'Nothing new to add';
+
+  @override
+  String get scanStart => 'Scan cards with the camera';
+
+  @override
+  String get scanTitle => 'Scan cards';
+
+  @override
+  String scanCount(String count) {
+    return '$count scanned';
+  }
+
+  @override
+  String get scanDuplicate => 'Already scanned';
+
+  @override
+  String get scanHint =>
+      'Point the camera at the QR code or barcode on the card';
+
+  @override
+  String get scanCameraError =>
+      'The camera could not be opened. Allow camera access for Souqi in the phone settings.';
+
+  @override
+  String scannedCards(String count) {
+    return 'Scanned cards: $count';
+  }
+
+  @override
+  String get clearScanned => 'Clear';
+
+  @override
+  String get codesTitle => 'Card codes';
+
+  @override
+  String get codesMaskedNote =>
+      'Codes are hidden on screen. They are printed and shared in full.';
+
+  @override
+  String get codeStatusAvailable => 'In stock';
+
+  @override
+  String get codeStatusSold => 'Sold';
+
+  @override
+  String get codeStatusVoid => 'Void';
+
+  @override
+  String get codeStatusExpired => 'Expired';
+
+  @override
+  String get codeReveal => 'Show the code';
+
+  @override
+  String get codeVoid => 'Void';
+
+  @override
+  String get codeReturn => 'Return to stock';
+
+  @override
+  String get codeRevealedTitle => 'Card code';
+
+  @override
+  String get codeUnreadable => 'This code cannot be read on this device.';
+
+  @override
+  String get voidCodeTitle => 'Void this code?';
+
+  @override
+  String get voidCodeMessage =>
+      'The card will count as neither sold nor in stock. This is written to the audit log.';
+
+  @override
+  String get returnCodeTitle => 'Return this code to stock?';
+
+  @override
+  String get returnCodeMessage =>
+      'The card becomes available for sale again. This is written to the audit log.';
+
+  @override
+  String get reasonLabel => 'Reason';
+
+  @override
+  String get codeVoided => 'Code voided';
+
+  @override
+  String get codeReturned => 'Code returned to stock';
+
+  @override
+  String get voidExpiredAction => 'Void them';
+
+  @override
+  String get voidExpiredTitle => 'Void the expired codes?';
+
+  @override
+  String voidExpiredMessage(String count, String name) {
+    return '$count expired codes of \"$name\" will be voided.';
+  }
+
+  @override
+  String expiredVoided(String count) {
+    return '$count codes voided';
+  }
+
+  @override
+  String get batchCodesTitle => 'Codes of the batch';
+
+  @override
+  String get lookupTitle => 'Find a card';
+
+  @override
+  String get lookupHint => 'Type or paste the full code';
+
+  @override
+  String get lookupAction => 'Search';
+
+  @override
+  String get lookupNotFound => 'No card with this code';
+
+  @override
+  String lookupSoldOn(String date) {
+    return 'Sold on $date';
+  }
+
+  @override
+  String lookupCustomer(String name) {
+    return 'Customer: $name';
+  }
+
+  @override
+  String lookupAccount(String number) {
+    return 'Account: $number';
+  }
+
+  @override
+  String get lookupOpenInvoice => 'Open the invoice';
+
+  @override
+  String get lookupInvoiceDeleted =>
+      'The invoice itself was deleted from the archive';
+
+  @override
+  String codeStockOnly(String count) {
+    return 'Only $count in stock';
+  }
+
+  @override
+  String codeStockShort(String name, String wanted, String available) {
+    return '\"$name\": $wanted wanted, $available in stock';
+  }
+
+  @override
+  String get codeStockUnreadable =>
+      'The card codes cannot be read on this device, so nothing was sold.';
+
+  @override
+  String codeStockWholeCards(String name) {
+    return '\"$name\" is sold in whole cards';
+  }
+
+  @override
+  String get soldFromCodeStock => 'Sold from code stock';
+
+  @override
+  String get soldFromCodeStockHint =>
+      'Each sale takes a card code from the loaded stock and prints it on the invoice';
+
+  @override
+  String get lowStockThresholdLabel => 'Warn when stock falls to';
+
+  @override
+  String get lowStockThresholdHint => 'Empty = no warning';
+
+  @override
+  String get manageStock => 'Card stock of this product';
+
+  @override
+  String get sectionCardCodes => 'Card codes';
+
+  @override
+  String get printCodeQrLabel => 'Print a QR code of each card code';
+
+  @override
+  String get codesSeparateSlipsLabel => 'Print each card on a separate slip';
+
+  @override
+  String get codesSeparateSlipsHint =>
+      'The printer feeds (and cuts) between slips. A shared image or PDF always holds everything.';
+
+  @override
+  String get invoiceSerialLabel => 'S/N';
+
+  @override
+  String invoiceExpiryLabel(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get invoiceCodeUnreadable => 'Code unavailable on this device';
+
+  @override
+  String get statsCardsSold => 'Cards sold';
+
+  @override
+  String statsCardsProfit(String amount) {
+    return 'Profit $amount';
+  }
+
+  @override
+  String statsCardsProfitPartial(String amount, String count) {
+    return 'Profit $amount (on the $count with a known cost)';
+  }
+
+  @override
+  String get debugSeedCards => 'Create test card codes';
+
+  @override
+  String get debugSeedCardsHint =>
+      'Two card products with made-up codes, one batch near expiry, for testing card sales';
+
+  @override
+  String debugSeedCardsDone(String count) {
+    return '$count test codes created';
+  }
+
+  @override
+  String get batchSaveFailed =>
+      'The batch could not be saved. Nothing was added.';
+
+  @override
+  String get importPreviewTitle => 'Preview (first 5)';
 }

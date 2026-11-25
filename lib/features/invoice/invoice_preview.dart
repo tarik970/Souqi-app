@@ -6,6 +6,7 @@ import '../../core/printing/print_geometry.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../../domain/models/voucher.dart';
 import 'invoice_view.dart';
 
 /// The invoice on a strip of "paper", scaled down to fit the available
@@ -24,7 +25,13 @@ class InvoicePaperPreview extends StatelessWidget {
     this.logo,
     this.maxWidth = 340,
     this.isCopy = false,
+    this.codes = const [],
   });
+
+  /// The card codes the invoice sold, WITHOUT the secret
+  /// ([InvoiceCode.hidden]): the preview shows them masked, where the print
+  /// shows the digits.
+  final List<InvoiceCode> codes;
 
   final Invoice invoice;
   final InvoiceSettings settings;
@@ -66,6 +73,7 @@ class InvoicePaperPreview extends StatelessWidget {
                   currencies: currencies,
                   logo: logo,
                   isCopy: isCopy,
+                  codes: codes,
                 ),
               ),
             ),

@@ -9,9 +9,14 @@ import '../../core/providers.dart';
 import '../../core/utils/byte_size.dart';
 import '../../data/dev/customer_seeder.dart';
 import '../../data/dev/invoice_seeder.dart';
+import '../../data/dev/voucher_seeder.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/archive_providers.dart';
 import '../customers/customers_providers.dart';
+import '../products/products_providers.dart';
+import '../sale/sale_providers.dart';
+import '../security/pin_dialogs.dart';
+import '../vouchers/voucher_providers.dart';
 import 'storage_providers.dart';
 
 class AboutScreen extends ConsumerWidget {
@@ -80,6 +85,7 @@ class AboutScreen extends ConsumerWidget {
             ),
             const _SeedInvoicesTile(),
             if (customersEnabled) const _SeedCustomersTile(),
+            if (voucherStockEnabled) const _SeedCardsTile(),
           ],
         ],
       ),
@@ -304,6 +310,52 @@ class _SeedCustomersTile extends ConsumerWidget {
       ..showSnackBar(SnackBar(
         content: Text(l10n.debugSeedCustomersDone(
           formatMinor(created, decimals: 0, locale: locale),
+        )),
+      ));
+  }
+}
+
+/// Debug builds only: two card products with made-up codes — a batch near
+/// its expiry, one already expired and one under its low-stock threshold —
+/// for trying card sales, the warnings and the expired list on a phone.
+class _SeedCardsTile extends ConsumerWidget {
+  const _SeedCardsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const ValueKey('about-seed-cards'),
+      leading: const Icon(Icons.science_outlined),
+      title: Text(l10n.debugSeedCards),
+      subtitle: Text(l10n.debugSeedCardsHint),
+      trailing: const Icon(Icons.add),
+      onTap: () => _seed(context),
+    );
+  }
+
+  Future<void> _seed(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final locale = container.read(appLocaleProvider).languageCode;
+    // Like a real batch: codes never sit in stock without a PIN.
+    if (!await ensurePinIsSet(context, reason: l10n.pinReasonCodes)) return;
+
+    final added = await seedTestCards(
+      products: container.read(productRepositoryProvider),
+      vouchers: container.read(voucherRepositoryProvider),
+      currencyCode: await container.read(baseCurrencyCodeProvider.future),
+    );
+    container
+      ..invalidate(productsListProvider)
+      ..invalidate(favoriteProductsProvider);
+    refreshVoucherData(container);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l10n.debugSeedCardsDone(
+          formatMinor(added, decimals: 0, locale: locale),
         )),
       ));
   }

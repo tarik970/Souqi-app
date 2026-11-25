@@ -6,12 +6,15 @@ import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/customer.dart';
 import '../../domain/models/invoice.dart';
+import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../customers/customers_providers.dart';
 import '../invoice/invoice_actions.dart';
 import '../invoice/invoice_preview.dart';
 import '../invoice/invoice_providers.dart';
 import '../invoice/invoice_settings_screen.dart';
+import '../vouchers/code_widgets.dart';
+import '../vouchers/voucher_providers.dart';
 import 'sale_providers.dart';
 import 'sale_screen.dart';
 
@@ -44,6 +47,13 @@ class SaleInvoiceScreen extends ConsumerWidget {
         ? invoice.currencyCode
         : (currency.symbol.isEmpty ? currency.code : currency.symbol);
     final render = ref.watch(invoiceRenderContextProvider).value;
+    // The cards this sale handed out, masked: on paper they are printed in
+    // full, on this screen they are not.
+    final invoiceId = invoice.id;
+    final codes = invoiceId == null
+        ? const <InvoiceCode>[]
+        : ref.watch(invoicePreviewCodesProvider(invoiceId)).value ??
+            const <InvoiceCode>[];
 
     String money(int minor) => formatMinor(
           minor,
@@ -140,8 +150,10 @@ class SaleInvoiceScreen extends ConsumerWidget {
             child: Text(l10n.backToHome),
           ),
           const SizedBox(height: 8),
+          if (invoiceId != null) InvoiceCodesSection(invoiceId: invoiceId),
           // The on-screen invoice view: the very widget that is printed and
-          // shared, so what is seen here is what the customer gets.
+          // shared, so what is seen here is what the customer gets — except
+          // for card codes, which the screen shows masked.
           if (render != null)
             InvoicePaperPreview(
               key: const ValueKey('saved-invoice-view'),
@@ -149,6 +161,7 @@ class SaleInvoiceScreen extends ConsumerWidget {
               settings: render.settings,
               currencies: render.currencies,
               logo: render.logo,
+              codes: codes,
               maxWidth: 380,
             ),
         ],

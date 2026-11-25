@@ -1494,4 +1494,621 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get debugSeedingCustomersTitle => 'جارٍ إنشاء زبائن التجربة';
+
+  @override
+  String get sectionSecurity => 'الأمان';
+
+  @override
+  String get pinLockTitle => 'رمز القفل';
+
+  @override
+  String get pinNotSet => 'لم يُحدَّد رمز';
+
+  @override
+  String get pinIsSet => 'تم تحديد رمز';
+
+  @override
+  String get pinSetTitle => 'اختر رمز القفل';
+
+  @override
+  String get pinChangeTitle => 'رمز القفل الجديد';
+
+  @override
+  String get pinSetIntro =>
+      'يحمي رمز القفل رموز البطاقات والعمليات الحساسة. من 4 إلى 6 أرقام.';
+
+  @override
+  String get pinNeededIntro =>
+      'هذه العملية تحتاج رمز قفل ولم يُحدَّد رمز بعد. اختر رمزاً الآن: من 4 إلى 6 أرقام.';
+
+  @override
+  String get pinNewLabel => 'رمز القفل';
+
+  @override
+  String get pinConfirmLabel => 'أعد كتابة الرمز';
+
+  @override
+  String get pinInvalid => 'يجب أن يكون الرمز من 4 إلى 6 أرقام';
+
+  @override
+  String get pinMismatch => 'الرمزان غير متطابقين';
+
+  @override
+  String get pinEnterTitle => 'أدخل رمز القفل';
+
+  @override
+  String get pinLabel => 'رمز القفل';
+
+  @override
+  String pinWrong(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'بقيت $count محاولة',
+      few: 'بقيت $count محاولات',
+      two: 'بقيت محاولتان',
+      one: 'بقيت محاولة واحدة',
+      zero: 'لا محاولات متبقية',
+    );
+    return 'الرمز غير صحيح. $_temp0';
+  }
+
+  @override
+  String pinLocked(String time) {
+    return 'محاولات خاطئة كثيرة. حاول مجدداً بعد $time.';
+  }
+
+  @override
+  String get pinConfirmAction => 'متابعة';
+
+  @override
+  String get pinForgetWarning =>
+      'لا يمكن استرجاع الرمز إذا نُسي. اكتبه في مكان آمن.';
+
+  @override
+  String get pinChangeAction => 'تغيير الرمز';
+
+  @override
+  String get pinRemoveAction => 'إزالة الرمز';
+
+  @override
+  String get pinRemoveTitle => 'إزالة رمز القفل؟';
+
+  @override
+  String get pinRemoveMessage =>
+      'بدون رمز قفل يستطيع أي شخص يحمل هذا الهاتف اختيار رمز جديد ثم إظهار رموز البطاقات أو إعادة طباعتها.';
+
+  @override
+  String get pinSaved => 'تم حفظ الرمز';
+
+  @override
+  String get pinRemoved => 'تمت إزالة الرمز';
+
+  @override
+  String get pinReasonReprint =>
+      'هذه الفاتورة تحتوي رموز بطاقات. إعادة طباعتها أو مشاركتها تحتاج رمز القفل وتحمل علامة «نسخة».';
+
+  @override
+  String get pinReasonCodes => 'رموز البطاقات محمية برمز القفل.';
+
+  @override
+  String get auditLogTitle => 'سجل العمليات الحساسة';
+
+  @override
+  String get auditLogHint =>
+      'إظهار الرموز وإعادة طباعتها وإلغاؤها وتحميلها وتصديرها';
+
+  @override
+  String get auditEmpty => 'لا توجد عمليات حساسة في هذه الفترة';
+
+  @override
+  String get loadMore => 'عرض المزيد';
+
+  @override
+  String get auditCodeImport => 'تحميل رموز';
+
+  @override
+  String get auditCodeReveal => 'إظهار رمز على الشاشة';
+
+  @override
+  String get auditCodeLookup => 'بحث برمز بطاقة';
+
+  @override
+  String get auditCodeVoid => 'إلغاء رمز';
+
+  @override
+  String get auditCodeRestore => 'إعادة رمز إلى المخزون';
+
+  @override
+  String get auditCodeExport => 'تصدير رموز';
+
+  @override
+  String get auditCodeExpiryChange => 'تغيير تاريخ الانتهاء';
+
+  @override
+  String get auditBatchDelete => 'حذف دفعة';
+
+  @override
+  String get auditInvoiceReprint => 'إعادة طباعة فاتورة فيها رموز';
+
+  @override
+  String get auditPinSet => 'تحديد رمز القفل';
+
+  @override
+  String get auditPinChange => 'تغيير رمز القفل';
+
+  @override
+  String get auditPinRemove => 'إزالة رمز القفل';
+
+  @override
+  String auditDetailFound(String count) {
+    return 'النتائج: $count';
+  }
+
+  @override
+  String auditDetailReason(String reason) {
+    return 'السبب: $reason';
+  }
+
+  @override
+  String cardsCount(String count) {
+    return '$count بطاقة';
+  }
+
+  @override
+  String serialLabel(String serial) {
+    return 'تسلسلي $serial';
+  }
+
+  @override
+  String get navCardStock => 'مخزون البطاقات';
+
+  @override
+  String get stockAvailable => 'متوفر';
+
+  @override
+  String get stockSold => 'مباع';
+
+  @override
+  String get stockVoid => 'ملغى';
+
+  @override
+  String get stockExpired => 'منتهي';
+
+  @override
+  String stockCount(String count) {
+    return 'المخزون: $count';
+  }
+
+  @override
+  String get stockOut => 'نفد المخزون';
+
+  @override
+  String stockLowWarning(String name, String count) {
+    return '$name: بقي $count فقط';
+  }
+
+  @override
+  String stockOutWarning(String name) {
+    return '$name: نفد المخزون';
+  }
+
+  @override
+  String get cardStockEmpty =>
+      'لا يوجد منتج يُباع من مخزون الرموز بعد. افتح منتجاً من نوع كرت / خدمة وفعّل «يُباع من مخزون الرموز».';
+
+  @override
+  String get cardStockLookup => 'البحث عن بطاقة برمزها';
+
+  @override
+  String get expiredCodesTitle => 'الرموز المنتهية';
+
+  @override
+  String expiredCodesNotice(String count) {
+    return '$count رمز منتهي الصلاحية لا يُباع. قرّر ما تفعل بها.';
+  }
+
+  @override
+  String get expiredEmpty => 'لا توجد رموز منتهية';
+
+  @override
+  String get batchesTitle => 'الدفعات';
+
+  @override
+  String get batchAdd => 'تحميل رموز';
+
+  @override
+  String get batchEmpty => 'لم تُحمَّل أي رموز بعد';
+
+  @override
+  String batchCostEach(String amount) {
+    return 'التكلفة $amount للبطاقة';
+  }
+
+  @override
+  String batchExpires(String date) {
+    return 'صالحة حتى $date';
+  }
+
+  @override
+  String get batchDelete => 'حذف الدفعة';
+
+  @override
+  String get batchDeleteTitle => 'حذف هذه الدفعة؟';
+
+  @override
+  String batchDeleteMessage(String count) {
+    return 'ستُحذف رموزها غير المباعة ($count) نهائياً.';
+  }
+
+  @override
+  String get batchDeleteBlocked => 'في هذه الدفعة رموز مباعة ولا يمكن حذفها.';
+
+  @override
+  String batchDeleted(String count) {
+    return 'تم حذف $count رمز';
+  }
+
+  @override
+  String get batchShowCodes => 'عرض الرموز';
+
+  @override
+  String get batchChangeExpiry => 'تغيير تاريخ الانتهاء';
+
+  @override
+  String get expiryChanged => 'تم تغيير تاريخ الانتهاء';
+
+  @override
+  String get exportCodes => 'تصدير الرموز غير المباعة';
+
+  @override
+  String get exportWarning =>
+      'الملف يحتوي الرموز مكشوفة، وكل من يحصل عليه يستطيع استخدام البطاقات.';
+
+  @override
+  String get exportShare => 'مشاركة الملف';
+
+  @override
+  String get exportSave => 'حفظ في الهاتف';
+
+  @override
+  String exportDone(String count) {
+    return 'تم تصدير $count رمز';
+  }
+
+  @override
+  String get exportNothing => 'لا توجد رموز غير مباعة للتصدير';
+
+  @override
+  String get addBatchTitle => 'تحميل رموز';
+
+  @override
+  String get loadMethodPaste => 'لصق';
+
+  @override
+  String get loadMethodFile => 'ملف';
+
+  @override
+  String get loadMethodScan => 'مسح';
+
+  @override
+  String get pasteLabel => 'الرموز';
+
+  @override
+  String get pasteHint => 'بطاقة في كل سطر';
+
+  @override
+  String get pickFile => 'اختر ملف .txt أو .csv';
+
+  @override
+  String get fileReadFailed => 'تعذّرت قراءة الملف';
+
+  @override
+  String get columnsLabel => 'كل سطر يحتوي';
+
+  @override
+  String get columnsCodeOnly => 'الرمز';
+
+  @override
+  String get columnsSerialCode => 'التسلسلي، الرمز';
+
+  @override
+  String get columnsCodeSerial => 'الرمز، التسلسلي';
+
+  @override
+  String importToAdd(String count) {
+    return 'سيُضاف $count';
+  }
+
+  @override
+  String importAdded(String count) {
+    return 'أُضيف $count';
+  }
+
+  @override
+  String importDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تخطّي $count رمزاً مكرراً',
+      few: 'تخطّي $count رموز مكررة',
+      two: 'تخطّي رمزين مكررين',
+      one: 'تخطّي رمز مكرر واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importEmpty(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سطراً فارغاً',
+      few: '$count أسطر فارغة',
+      two: 'سطران فارغان',
+      one: 'سطر فارغ واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importInvalid(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سطراً بلا رمز',
+      few: '$count أسطر بلا رمز',
+      two: 'سطران بلا رمز',
+      one: 'سطر واحد بلا رمز',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importHeaderSkipped => 'تم تجاهل سطر العناوين';
+
+  @override
+  String get batchExpiryLabel => 'تاريخ الانتهاء (اختياري)';
+
+  @override
+  String get noExpiry => 'بلا تاريخ انتهاء';
+
+  @override
+  String batchCostLabel(String currency) {
+    return 'تكلفة البطاقة، $currency (اختياري)';
+  }
+
+  @override
+  String get saveBatch => 'حفظ الدفعة';
+
+  @override
+  String get nothingToAdd => 'لا يوجد جديد للإضافة';
+
+  @override
+  String get scanStart => 'مسح البطاقات بالكاميرا';
+
+  @override
+  String get scanTitle => 'مسح البطاقات';
+
+  @override
+  String scanCount(String count) {
+    return 'تم مسح $count';
+  }
+
+  @override
+  String get scanDuplicate => 'تم مسحها من قبل';
+
+  @override
+  String get scanHint => 'وجّه الكاميرا نحو رمز QR أو الباركود على البطاقة';
+
+  @override
+  String get scanCameraError =>
+      'تعذّر فتح الكاميرا. اسمح لتطبيق سوقي باستخدام الكاميرا من إعدادات الهاتف.';
+
+  @override
+  String scannedCards(String count) {
+    return 'البطاقات الممسوحة: $count';
+  }
+
+  @override
+  String get clearScanned => 'مسح القائمة';
+
+  @override
+  String get codesTitle => 'رموز البطاقات';
+
+  @override
+  String get codesMaskedNote =>
+      'الرموز مخفية على الشاشة، وتُطبع وتُشارك كاملة.';
+
+  @override
+  String get codeStatusAvailable => 'في المخزون';
+
+  @override
+  String get codeStatusSold => 'مباع';
+
+  @override
+  String get codeStatusVoid => 'ملغى';
+
+  @override
+  String get codeStatusExpired => 'منتهي';
+
+  @override
+  String get codeReveal => 'إظهار الرمز';
+
+  @override
+  String get codeVoid => 'إلغاء الرمز';
+
+  @override
+  String get codeReturn => 'إعادة إلى المخزون';
+
+  @override
+  String get codeRevealedTitle => 'رمز البطاقة';
+
+  @override
+  String get codeUnreadable => 'لا يمكن قراءة هذا الرمز على هذا الجهاز.';
+
+  @override
+  String get voidCodeTitle => 'إلغاء هذا الرمز؟';
+
+  @override
+  String get voidCodeMessage =>
+      'لن تُحتسب البطاقة مباعة ولا في المخزون. تُسجَّل العملية في سجل العمليات الحساسة.';
+
+  @override
+  String get returnCodeTitle => 'إعادة هذا الرمز إلى المخزون؟';
+
+  @override
+  String get returnCodeMessage =>
+      'تصبح البطاقة متاحة للبيع من جديد. تُسجَّل العملية في سجل العمليات الحساسة.';
+
+  @override
+  String get reasonLabel => 'السبب';
+
+  @override
+  String get codeVoided => 'تم إلغاء الرمز';
+
+  @override
+  String get codeReturned => 'أُعيد الرمز إلى المخزون';
+
+  @override
+  String get voidExpiredAction => 'إلغاؤها';
+
+  @override
+  String get voidExpiredTitle => 'إلغاء الرموز المنتهية؟';
+
+  @override
+  String voidExpiredMessage(String count, String name) {
+    return 'سيُلغى $count رمز منتهٍ من «$name».';
+  }
+
+  @override
+  String expiredVoided(String count) {
+    return 'تم إلغاء $count رمز';
+  }
+
+  @override
+  String get batchCodesTitle => 'رموز الدفعة';
+
+  @override
+  String get lookupTitle => 'البحث عن بطاقة';
+
+  @override
+  String get lookupHint => 'اكتب أو الصق الرمز كاملاً';
+
+  @override
+  String get lookupAction => 'بحث';
+
+  @override
+  String get lookupNotFound => 'لا توجد بطاقة بهذا الرمز';
+
+  @override
+  String lookupSoldOn(String date) {
+    return 'بيعت بتاريخ $date';
+  }
+
+  @override
+  String lookupCustomer(String name) {
+    return 'الزبون: $name';
+  }
+
+  @override
+  String lookupAccount(String number) {
+    return 'الحساب: $number';
+  }
+
+  @override
+  String get lookupOpenInvoice => 'فتح الفاتورة';
+
+  @override
+  String get lookupInvoiceDeleted => 'الفاتورة نفسها حُذفت من السجل';
+
+  @override
+  String codeStockOnly(String count) {
+    return 'المتوفر $count فقط';
+  }
+
+  @override
+  String codeStockShort(String name, String wanted, String available) {
+    return '«$name»: المطلوب $wanted والمتوفر $available';
+  }
+
+  @override
+  String get codeStockUnreadable =>
+      'لا يمكن قراءة رموز البطاقات على هذا الجهاز، فلم يُبَع شيء.';
+
+  @override
+  String codeStockWholeCards(String name) {
+    return '«$name» يُباع بطاقات كاملة فقط';
+  }
+
+  @override
+  String get soldFromCodeStock => 'يُباع من مخزون الرموز';
+
+  @override
+  String get soldFromCodeStockHint =>
+      'كل عملية بيع تأخذ رمز بطاقة من المخزون وتطبعه على الفاتورة';
+
+  @override
+  String get lowStockThresholdLabel => 'التنبيه عند انخفاض المخزون إلى';
+
+  @override
+  String get lowStockThresholdHint => 'فارغ = بلا تنبيه';
+
+  @override
+  String get manageStock => 'مخزون بطاقات هذا المنتج';
+
+  @override
+  String get sectionCardCodes => 'رموز البطاقات';
+
+  @override
+  String get printCodeQrLabel => 'طباعة رمز QR لكل رمز بطاقة';
+
+  @override
+  String get codesSeparateSlipsLabel => 'طباعة كل بطاقة على قصاصة منفصلة';
+
+  @override
+  String get codesSeparateSlipsHint =>
+      'تسحب الطابعة الورق (وتقطعه) بين القصاصات. الصورة أو ملف PDF المشارَك يحتوي كل شيء دائماً.';
+
+  @override
+  String get invoiceSerialLabel => 'التسلسلي';
+
+  @override
+  String invoiceExpiryLabel(String date) {
+    return 'صالحة حتى $date';
+  }
+
+  @override
+  String get invoiceCodeUnreadable => 'الرمز غير متاح على هذا الجهاز';
+
+  @override
+  String get statsCardsSold => 'البطاقات المباعة';
+
+  @override
+  String statsCardsProfit(String amount) {
+    return 'الربح $amount';
+  }
+
+  @override
+  String statsCardsProfitPartial(String amount, String count) {
+    return 'الربح $amount (على $count معروفة التكلفة)';
+  }
+
+  @override
+  String get debugSeedCards => 'إنشاء رموز بطاقات للتجربة';
+
+  @override
+  String get debugSeedCardsHint =>
+      'منتجا بطاقات برموز وهمية، وإحدى الدفعات قريبة الانتهاء، لتجربة بيع البطاقات';
+
+  @override
+  String debugSeedCardsDone(String count) {
+    return 'تم إنشاء $count رمز للتجربة';
+  }
+
+  @override
+  String get batchSaveFailed => 'تعذّر حفظ الدفعة ولم يُضَف شيء.';
+
+  @override
+  String get importPreviewTitle => 'معاينة (أول 5)';
 }

@@ -66,6 +66,14 @@ class PairedDevice {
   final bool looksLikePrinter;
 }
 
+/// A text file the user picked, already read.
+class PickedTextFile {
+  const PickedTextFile({required this.name, required this.content});
+
+  final String name;
+  final String content;
+}
+
 const whatsAppPackage = 'com.whatsapp';
 const whatsAppBusinessPackage = 'com.whatsapp.w4b';
 
@@ -137,6 +145,14 @@ abstract class NativeBridge {
     required String mimeType,
     String? text,
   });
+
+  /// Opens the system file picker and returns the chosen file read as text
+  /// (a .txt or .csv list of card codes), or null when the user backs out.
+  /// Throws [OutputException] when the file cannot be read or is not text.
+  Future<PickedTextFile?> pickTextFile();
+
+  /// A short beep confirming a scanned card. Never throws.
+  Future<void> beep();
 }
 
 class MethodChannelNativeBridge implements NativeBridge {
@@ -273,6 +289,25 @@ class MethodChannelNativeBridge implements NativeBridge {
         'mimeType': mimeType,
       }) ??
       fileName;
+
+  @override
+  Future<PickedTextFile?> pickTextFile() async {
+    final map = await _invoke<Map<Object?, Object?>>('pickTextFile');
+    if (map == null) return null;
+    return PickedTextFile(
+      name: (map['name'] as String?) ?? '',
+      content: (map['content'] as String?) ?? '',
+    );
+  }
+
+  @override
+  Future<void> beep() async {
+    try {
+      await _invoke<void>('beep');
+    } on OutputException {
+      // Feedback only: a phone that cannot beep still scans.
+    }
+  }
 
   @override
   Future<void> shareFile({

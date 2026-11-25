@@ -76,6 +76,7 @@ class StatsReport {
     this.renewals = const RenewalStats(count: 0, totalBaseMinor: 0),
     this.topPackages = const [],
     this.topCustomers = const [],
+    this.cardSales = const [],
   });
 
   final StatsPeriod period;
@@ -101,6 +102,10 @@ class StatsReport {
 
   /// Sales per customer, the biggest first (empty when customers are off).
   final List<CustomerStat> topCustomers;
+
+  /// Prepaid cards sold per product, with the profit where the cost is
+  /// known (empty when card stock is off).
+  final List<CardSaleStat> cardSales;
 
   Comparison get totalComparison => Comparison(
         current: current.totalBaseMinor,
@@ -149,6 +154,9 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
     customersEnabled
         ? repository.topCustomers(from: range.from, to: range.to)
         : Future.value(const <CustomerStat>[]),
+    voucherStockEnabled
+        ? repository.cardSales(from: range.from, to: range.to)
+        : Future.value(const <CardSaleStat>[]),
   ]);
   final results = await Future.wait([
     repository.summary(
@@ -187,5 +195,6 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
     renewals: (await customerStats)[0] as RenewalStats,
     topPackages: (await customerStats)[1] as List<ProductStat>,
     topCustomers: (await customerStats)[2] as List<CustomerStat>,
+    cardSales: (await customerStats)[3] as List<CardSaleStat>,
   );
 });

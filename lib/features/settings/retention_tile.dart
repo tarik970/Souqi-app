@@ -36,25 +36,42 @@ class RetentionTile extends ConsumerWidget {
       key: const ValueKey('setting-auto-delete'),
       leading: const Icon(Icons.auto_delete_outlined),
       title: Text(l10n.settingAutoDelete),
-      subtitle: Text(l10n.settingAutoDeleteHint),
-      isThreeLine: true,
-      trailing: DropdownButton<int>(
-        key: const ValueKey('setting-auto-delete-dropdown'),
-        // A number the user typed is shown alongside the presets rather than
-        // snapping to the nearest one.
-        value: presets.contains(days) ? days : customValue,
-        underline: const SizedBox.shrink(),
-        items: [
-          for (final value in presets)
-            DropdownMenuItem(value: value, child: Text(label(value))),
-          DropdownMenuItem(
-            value: customValue,
-            child: Text(
-              presets.contains(days) ? l10n.retentionCustom : label(days),
-            ),
+      // The picker sits UNDER the explanation and is as wide as the tile,
+      // like the shop type and the due-soon window: as a trailing widget it
+      // squeezed the hint into a narrow column at a large system font.
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.settingAutoDeleteHint),
+          DropdownButton<int>(
+            key: const ValueKey('setting-auto-delete-dropdown'),
+            // A number the user typed is shown alongside the presets rather
+            // than snapping to the nearest one.
+            value: presets.contains(days) ? days : customValue,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            items: [
+              for (final value in presets)
+                DropdownMenuItem(
+                  value: value,
+                  child: Text(
+                    label(value),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              DropdownMenuItem(
+                value: customValue,
+                child: Text(
+                  presets.contains(days) ? l10n.retentionCustom : label(days),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+            onChanged: (value) => _choose(context, ref, value, current: days),
           ),
         ],
-        onChanged: (value) => _choose(context, ref, value, current: days),
       ),
     );
   }
@@ -145,6 +162,9 @@ class _CustomDaysDialogState extends State<_CustomDaysDialog> {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(l10n.retentionCustomTitle),
+      // Scrolls: with the keyboard up on a small phone at a large system
+      // font the title, the field and the buttons do not all fit.
+      scrollable: true,
       content: TextField(
         controller: _controller,
         autofocus: true,

@@ -39,6 +39,19 @@ dependencies:
   # Pure Dart: wraps the rendered invoice image in a paper-width PDF page.
   pdf: ^3.13.1
 
+  # Phase 4c (prepaid card codes).
+  # The key that encrypts card codes lives in the Android Keystore.
+  flutter_secure_storage: ^11.2.0
+  # AES-256-GCM for the codes (pure Dart).
+  cryptography: ^2.9.0
+  # HMAC-SHA-256 for the code lookup hash, PBKDF2 for the PIN (synchronous).
+  crypto: ^3.0.8
+  # Scanning the QR code / barcode on a card. Uses the BUNDLED ML Kit model:
+  # works offline and without Google Play services. Do not set
+  # dev.steenbakker.mobile_scanner.useUnbundled in android/gradle.properties.
+  mobile_scanner: ^7.5.0
+  # Pure Dart: the module matrix of the optional QR code printed with a card.
+  qr: ^3.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

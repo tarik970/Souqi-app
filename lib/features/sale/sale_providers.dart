@@ -11,6 +11,7 @@ import '../../domain/models/customer.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../invoice/invoice_providers.dart';
+import '../vouchers/voucher_providers.dart';
 
 /// Up to two extra currencies shown under the invoice total. One source of
 /// truth: the invoice settings (edited there, or by the sale screen's
@@ -96,6 +97,54 @@ final accountBlockerProvider = Provider<CartLine?>((ref) {
   return ref.watch(cartProvider).linesRequiringAccount.firstOrNull;
 });
 
+/// A card product in the cart that the code stock cannot cover.
+class CodeStockShortage {
+  const CodeStockShortage({
+    required this.productId,
+    required this.name,
+    required this.wanted,
+    required this.available,
+  });
+
+  final int productId;
+  final String name;
+
+  /// Cards of this product in the cart, over all its lines.
+  final int wanted;
+  final int available;
+}
+
+/// The first product in the cart that asks for more cards than there are
+/// codes to sell. Null when the sale may be saved as far as stock goes.
+///
+/// The sheet that sets the quantity already refuses to go over; this is for
+/// what gets past it — a renewal that drops its package straight into the
+/// cart, a code typed with Enter, stock sold from under an open cart. And
+/// whatever gets past this is stopped by the save itself, in its
+/// transaction.
+final codeStockShortageProvider = Provider<CodeStockShortage?>((ref) {
+  if (!voucherStockEnabled) return null;
+  final cart = ref.watch(cartProvider);
+  final wanted = cart.codeStockQuantities;
+  if (wanted.isEmpty) return null;
+  final stock = ref.watch(voucherAvailabilityProvider).value;
+  if (stock == null) return null; // still loading: the save decides
+  for (final line in cart.lines) {
+    final id = line.productId;
+    if (!line.codeStock || id == null) continue;
+    final have = stock[id] ?? 0;
+    if (wanted[id]! > have) {
+      return CodeStockShortage(
+        productId: id,
+        name: line.name,
+        wanted: wanted[id]!,
+        available: have,
+      );
+    }
+  }
+  return null;
+});
+
 /// A saved product as a cart line. [unitName] is the unit's name snapshot in
 /// the app language (GOODS only).
 CartLine cartLineForProduct(
@@ -118,6 +167,9 @@ CartLine cartLineForProduct(
       listPriceMinor: product.priceMinor,
       listCurrencyCode: product.currencyCode,
       requiresAccount: accountsEnabled && product.requiresAccount,
+      codeStock: voucherStockEnabled &&
+          product.kind == ProductKind.service &&
+          product.soldFromCodeStock,
     );
 
 /// The computed cart. Null while the currency table is still loading.

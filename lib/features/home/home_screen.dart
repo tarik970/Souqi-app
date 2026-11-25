@@ -19,6 +19,8 @@ import '../sale/sale_screen.dart';
 import '../settings/settings_screen.dart';
 import '../setup/setup_screen.dart';
 import '../stats/stats_screen.dart';
+import '../vouchers/card_stock_screen.dart';
+import '../vouchers/voucher_providers.dart';
 
 /// The home screen.
 ///
@@ -68,7 +70,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (state != AppLifecycleState.resumed || !mounted) return;
     ref
       ..invalidate(dueOverviewProvider)
-      ..invalidate(dueCountProvider);
+      ..invalidate(dueCountProvider)
+      // Cards may have expired overnight.
+      ..invalidate(voucherAvailabilityProvider)
+      ..invalidate(lowStockCountProvider);
   }
 
   void _push(WidgetBuilder builder) =>
@@ -86,6 +91,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         customersEnabled && accountsEnabled && shopType != shopTypeGrocery;
     final dueCount =
         accountsEnabled ? ref.watch(dueCountProvider).value ?? 0 : 0;
+    final lowStock =
+        voucherStockEnabled ? ref.watch(lowStockCountProvider).value ?? 0 : 0;
     final query = _query.trim();
 
     final items = <_NavItem>[
@@ -116,6 +123,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         icon: Icons.inventory_2,
         builder: (_) => const ProductsScreen(),
       ),
+      if (voucherStockEnabled)
+        _NavItem(
+          id: 'cards',
+          label: l10n.navCardStock,
+          icon: Icons.confirmation_number_outlined,
+          // Card products that are out of stock or at their threshold.
+          badge: lowStock,
+          builder: (_) => const CardStockScreen(),
+        ),
       _NavItem(
         id: 'archive',
         label: l10n.navArchive,

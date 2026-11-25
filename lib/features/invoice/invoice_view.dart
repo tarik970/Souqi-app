@@ -1,14 +1,17 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
+import 'package:qr/qr.dart';
 
 import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/utils/normalize.dart';
+import '../../core/utils/voucher_format.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'invoice_text.dart';
 
@@ -36,10 +39,18 @@ class InvoiceView extends StatelessWidget {
     this.logo,
     this.padding = const EdgeInsets.symmetric(vertical: 8),
     this.isCopy = false,
+    this.codes = const [],
   });
 
   final Invoice invoice;
   final InvoiceSettings settings;
+
+  /// The prepaid card codes this invoice sold, printed under the totals:
+  /// each in a large block with its product name and serial. The printer and
+  /// share pipeline passes them in full — the customer is buying exactly
+  /// these digits; the on-screen previews pass them with the secret dropped
+  /// ([InvoiceCode.hidden]) and get the masked form.
+  final List<InvoiceCode> codes;
 
   /// The currency table by code (symbols and decimal places).
   final Map<String, Currency> currencies;
@@ -266,6 +277,16 @@ class InvoiceView extends StatelessWidget {
                             '${money.label(invoice.baseCurrencyCode)}'),
                       ],
                     ),
+                  if (voucherStockEnabled)
+                    for (final code in codes) ...[
+                      rule,
+                      InvoiceCodeBlock(
+                        code: code,
+                        base: base,
+                        language: s.language,
+                        showQr: s.printCodeQr,
+                      ),
+                    ],
                   if (footer.isNotEmpty) ...[
                     rule,
                     Text(footer, textAlign: TextAlign.center),
@@ -483,6 +504,320 @@ class _CopyMark extends StatelessWidget {
           style: style.copyWith(
             fontSize: base * 1.1,
             letterSpacing: base * 0.15,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "2026/12/31" — numeric, the same in every language (only the digit shapes
+/// follow [locale]).
+String formatInvoiceDate(DateTime day, {required String locale}) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  return localizeDigits('${day.year}/${two(day.month)}/${two(day.day)}', locale);
+}
+
+/// One sold card on the paper: the product name, the code in a large
+/// fixed-pitch block grouped in fours ("1234 5678 9012 3456"), its serial,
+/// its expiry and — when the setting is on — a QR code of the code.
+///
+/// The code is what the customer will type into the provider's page, often
+/// reading it off a thermal print in poor light. So it is big and bold, every
+/// character sits in a cell of the same width (the invoice font is not a
+/// monospace one; the cells make it read like one), the groups never break
+/// in the middle — a narrow paper wraps BETWEEN groups — and the block is
+/// left-to-right even on an Arabic invoice.
+class InvoiceCodeBlock extends StatelessWidget {
+  const InvoiceCodeBlock({
+    super.key,
+    required this.code,
+    required this.base,
+    required this.language,
+    required this.showQr,
+  });
+
+  final InvoiceCode code;
+
+  /// The invoice's base font size, in printer dots.
+  final double base;
+
+  /// The INVOICE language.
+  final String language;
+  final bool showQr;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = lookupAppLocalizations(Locale(language));
+    final plain = code.code;
+    final small = TextStyle(fontSize: base * 0.8);
+    final digits = base * 1.5;
+    final serial = code.serial?.trim() ?? '';
+    final expiry = code.expiryAt;
+    // The masked form is already grouped: "•••• •••• 3456".
+    final groups = plain == null ? code.masked.split(' ') : codeGroups(plain);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: base * 0.1),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            code.productName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          SizedBox(height: base * 0.2),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: digits * 0.45,
+              runSpacing: digits * 0.1,
+              children: [
+                for (final group in groups)
+                  _CodeGroup(text: group, fontSize: digits),
+              ],
+            ),
+          ),
+          if (code.unreadable)
+            Text(
+              l10n.invoiceCodeUnreadable,
+              textAlign: TextAlign.center,
+              style: small,
+            ),
+          if (serial.isNotEmpty)
+            DefaultTextStyle.merge(
+              style: small,
+              // Two runs: the serial keeps its own order beside Arabic.
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: base * 0.3,
+                children: [
+                  Text('${l10n.invoiceSerialLabel}:'),
+                  Text(serial, textDirection: TextDirection.ltr),
+                ],
+              ),
+            ),
+          if (expiry != null)
+            Text(
+              l10n.invoiceExpiryLabel(
+                formatInvoiceDate(expiryLastDay(expiry), locale: language),
+              ),
+              textAlign: TextAlign.center,
+              style: small,
+            ),
+          if (showQr && plain != null)
+            Padding(
+              padding: EdgeInsets.only(top: base * 0.3),
+              child: Center(
+                child: _CodeQr(
+                  data: stripCodeSeparators(plain),
+                  target: base * 12,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One group of the code, each character centred in a cell of the same
+/// width. A wide letter is scaled down to its cell rather than pushing its
+/// neighbours aside.
+class _CodeGroup extends StatelessWidget {
+  const _CodeGroup({required this.text, required this.fontSize});
+
+  final String text;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final cell = (fontSize * 0.64).roundToDouble();
+    final style = TextStyle(
+      fontSize: fontSize,
+      height: 1.15,
+      fontWeight: FontWeight.w700,
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final char in text.split(''))
+          SizedBox(
+            width: cell,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(char, style: style),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A QR code of the card code, drawn on whole printer dots with antialiasing
+/// off — every module is solid black after the 1-bit conversion — and with
+/// the quiet zone a scanner needs around it.
+class _CodeQr extends StatelessWidget {
+  const _CodeQr({required this.data, required this.target});
+
+  final String data;
+
+  /// The side the symbol may take, quiet zone included, in dots.
+  final double target;
+
+  static const int _quietModules = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    final QrImage image;
+    try {
+      image = QrImage(
+        QrCode.fromData(data: data, errorCorrectLevel: QrErrorCorrectLevel.M),
+      );
+    } on Exception {
+      // Longer than a QR code can hold: the digits above are the code.
+      return const SizedBox.shrink();
+    }
+    final modules = image.moduleCount;
+    var dot = (target / (modules + 2 * _quietModules)).floorToDouble();
+    if (dot < 3) dot = 3;
+    return Padding(
+      padding: EdgeInsets.all(dot * _quietModules),
+      child: SizedBox(
+        width: dot * modules,
+        height: dot * modules,
+        child: CustomPaint(painter: _QrPainter(image, dot)),
+      ),
+    );
+  }
+}
+
+class _QrPainter extends CustomPainter {
+  _QrPainter(this.image, this.dot);
+
+  final QrImage image;
+  final double dot;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = _ink
+      ..isAntiAlias = false;
+    for (var row = 0; row < image.moduleCount; row++) {
+      for (var col = 0; col < image.moduleCount; col++) {
+        if (!image.isDark(row, col)) continue;
+        canvas.drawRect(
+          Rect.fromLTWH(col * dot, row * dot, dot, dot),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_QrPainter oldDelegate) =>
+      oldDelegate.image != image || oldDelegate.dot != dot;
+}
+
+/// One sold card on a slip of its own — the "print each card on a separate
+/// slip" option: for the customer who buys five cards to hand out. The shop
+/// name, the card, and the invoice it belongs to.
+///
+/// Self-contained exactly like [InvoiceView], because it goes through the
+/// same off-screen capture.
+class CodeSlipView extends StatelessWidget {
+  const CodeSlipView({
+    super.key,
+    required this.invoice,
+    required this.code,
+    required this.settings,
+    this.isCopy = false,
+    this.padding = const EdgeInsets.symmetric(vertical: 8),
+  });
+
+  final Invoice invoice;
+  final InvoiceCode code;
+  final InvoiceSettings settings;
+  final bool isCopy;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = settings;
+    final l10n = lookupAppLocalizations(Locale(s.language));
+    final base = s.baseFontSize.toDouble();
+    final gap = base * 0.4;
+    final body = TextStyle(
+      fontFamily: 'Tajawal',
+      fontSize: base,
+      height: 1.3,
+      color: _ink,
+      fontWeight: FontWeight.w500,
+      decoration: TextDecoration.none,
+    );
+    final bold = body.copyWith(fontWeight: FontWeight.w700);
+    final rule = _DashedRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
+    final shopName = s.shopName.trim();
+
+    return MediaQuery(
+      data: const MediaQueryData(),
+      child: Directionality(
+        textDirection: s.isRtl ? TextDirection.rtl : TextDirection.ltr,
+        child: ColoredBox(
+          color: _paper,
+          child: DefaultTextStyle(
+            style: body,
+            child: Padding(
+              padding: padding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (isCopy) ...[
+                    _CopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
+                    SizedBox(height: gap),
+                  ],
+                  if (shopName.isNotEmpty) ...[
+                    Text(
+                      shopName,
+                      textAlign: TextAlign.center,
+                      style: bold.copyWith(fontSize: base * 1.2, height: 1.25),
+                    ),
+                    rule,
+                  ],
+                  InvoiceCodeBlock(
+                    code: code,
+                    base: base,
+                    language: s.language,
+                    showQr: s.printCodeQr,
+                  ),
+                  rule,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: gap,
+                    children: [
+                      Text(
+                        l10n.invoiceNoLabel(
+                          localizeDigits('${invoice.invoiceNo}', s.language),
+                        ),
+                        style: TextStyle(fontSize: base * 0.8),
+                      ),
+                      Text(
+                        formatInvoiceDateTime(
+                          invoice.createdAt,
+                          locale: s.language,
+                        ),
+                        textDirection: TextDirection.ltr,
+                        style: TextStyle(fontSize: base * 0.8),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

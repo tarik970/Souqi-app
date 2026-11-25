@@ -3,8 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/core/platform/native_bridge.dart';
+import 'package:souqi/core/security/code_cipher.dart';
+import 'package:souqi/core/vouchers/code_import.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/customer_repository.dart';
+import 'package:souqi/data/repositories/pin_repository.dart';
+import 'package:souqi/data/repositories/settings_repository.dart';
+import 'package:souqi/data/repositories/voucher_repository.dart';
 import 'package:souqi/domain/models/cart.dart';
 import 'package:souqi/domain/models/customer.dart';
 import 'package:souqi/features/archive/archive_screen.dart';
@@ -30,9 +35,13 @@ import 'package:souqi/features/sale/quick_item_sheet.dart';
 import 'package:souqi/features/sale/rates_sheet.dart';
 import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
+import 'package:souqi/features/security/pin_dialogs.dart';
 import 'package:souqi/features/settings/renewal_settings.dart';
 import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/units/units_screen.dart';
+import 'package:souqi/features/vouchers/add_batch_screen.dart';
+import 'package:souqi/features/vouchers/code_widgets.dart';
+import 'package:souqi/features/vouchers/product_stock_screen.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -115,6 +124,10 @@ void main() {
   late AppDatabase database;
   late FakeNativeBridge bridge;
 
+  /// Where the card-code key lives in these tests (the Android Keystore in
+  /// the app).
+  late InMemoryKeyStore keyStore;
+
   Future<void> settle(WidgetTester tester, [int rounds = 12]) async {
     for (var i = 0; i < rounds; i++) {
       await tester.pump(const Duration(milliseconds: 16));
@@ -154,6 +167,7 @@ void main() {
           appLocaleProvider
               .overrideWith(() => AppLocaleNotifier(const Locale('en'))),
           nativeBridgeProvider.overrideWithValue(bridge),
+          secretKeyStoreProvider.overrideWithValue(keyStore),
         ],
         child: MaterialApp(
           locale: const Locale('en'),
@@ -239,6 +253,48 @@ void main() {
       provider: 'MTN',
       nextDueAt: DateTime(2020),
     ));
+  }
+
+  /// A PIN ("2580") is set.
+  Future<void> withPin(AppDatabase database) =>
+      PinRepository(SettingsRepository(database.db)).set('2580');
+
+  /// Product 1: "Card 5000", sold from code stock, a favorite, with one
+  /// batch of two codes.
+  Future<void> cardWithCodes(AppDatabase database) async {
+    final id = await insertProduct(
+      database.db,
+      name: 'Card 5000',
+      kind: 'SERVICE',
+      soldFromCodeStock: 1,
+    );
+    await database.db.update('products', {'is_favorite': 1},
+        where: 'id = ?', whereArgs: [id]);
+    await VoucherRepository(database.db, CodeCipher(keyStore)).addBatch(
+      productId: id,
+      parsed: parseCodeList(
+        '1111222233334444\n5555666677778888',
+        columns: CodeColumns.codeOnly,
+      ),
+    );
+  }
+
+  /// A bare screen with one button that opens [show] — for the dialogs that
+  /// are reached from many places.
+  Widget host(Future<void> Function(BuildContext context) show) => Scaffold(
+        body: Center(
+          child: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => show(context),
+              child: const Text('open it'),
+            ),
+          ),
+        ),
+      );
+
+  Future<void> openHost(WidgetTester tester) async {
+    await tester.tap(find.text('open it'));
+    await animated(tester);
   }
 
   // --- Ways in -----------------------------------------------------------
@@ -802,11 +858,160 @@ void main() {
       button: cancel,
       keyboard: true,
     ),
+    // --- Phase 4c: the PIN and prepaid card codes -------------------------
+    Closable(
+      'PIN entry dialog',
+      home: host((context) => requirePin(context, reason: 'why')),
+      seed: withPin,
+      open: openHost,
+      shown: find.byType(PinEntryDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'choose-a-PIN dialog, when an action needs one',
+      home: host((context) => requirePin(context)),
+      open: openHost,
+      shown: find.byType(SetPinDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'choose-a-PIN dialog, from the settings',
+      home: const SettingsScreen(),
+      open: (tester) async {
+        final tile = find.byKey(const ValueKey('setting-pin'));
+        await tester.scrollUntilVisible(
+          tile,
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(tile);
+        await animated(tester);
+      },
+      shown: find.byType(SetPinDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'PIN options sheet',
+      home: const SettingsScreen(),
+      seed: withPin,
+      open: (tester) async {
+        final tile = find.byKey(const ValueKey('setting-pin'));
+        await tester.scrollUntilVisible(
+          tile,
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(tile);
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('pin-options-sheet')),
+    ),
+    Closable(
+      'reason dialog (void / return to stock)',
+      home: host(
+        (context) => showDialog<String>(
+          context: context,
+          builder: (_) => const ReasonDialog(
+            title: 'Void this code?',
+            message: 'The card will count as neither sold nor in stock.',
+            confirmLabel: 'Void',
+          ),
+        ),
+      ),
+      open: openHost,
+      shown: find.byType(ReasonDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'revealed-code dialog',
+      home: host(
+        (context) => showDialog<void>(
+          context: context,
+          builder: (_) => const RevealedCodeDialog(
+            productName: 'Card 5000',
+            code: '1111222233334444',
+            serial: 'SN1',
+          ),
+        ),
+      ),
+      open: openHost,
+      shown: find.byType(RevealedCodeDialog),
+      button: find.text('Done'),
+    ),
+    Closable(
+      'load-codes page',
+      home: const ProductStockScreen(productId: 1),
+      seed: cardWithCodes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('batch-add')));
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('paste-field')));
+        await settle(tester, 4);
+      },
+      shown: find.byType(AddBatchScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+    ),
+    Closable(
+      'codes-of-a-batch page',
+      home: const ProductStockScreen(productId: 1),
+      seed: cardWithCodes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('batch-1')));
+        await animated(tester);
+      },
+      shown: find.byType(BatchCodesScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'export-codes dialog',
+      home: const ProductStockScreen(productId: 1),
+      seed: cardWithCodes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('product-stock-menu')));
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('product-stock-export')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('export-dialog')),
+      button: cancel,
+    ),
+    Closable(
+      'delete-batch dialog',
+      home: const ProductStockScreen(productId: 1),
+      seed: cardWithCodes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('batch-menu-1')));
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('batch-action-delete')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('batch-delete-dialog')),
+      button: cancel,
+    ),
+    Closable(
+      'quantity sheet of a card sold from code stock',
+      home: const SaleScreen(),
+      seed: cardWithCodes,
+      open: (tester) async {
+        await tester.tap(find.widgetWithText(FilledButton, 'Card 5000'));
+        await animated(tester);
+      },
+      shown: find.byType(QuantitySheet),
+      button: cancel,
+    ),
   ];
 
   setUp(() async {
     database = await openTestDb();
     bridge = FakeNativeBridge();
+    keyStore = InMemoryKeyStore();
   });
 
   tearDown(() async => database.close());

@@ -11,13 +11,16 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.media.MediaScannerConnection
+import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
@@ -36,6 +39,8 @@ import java.util.concurrent.Executors
  *  - Bluetooth receipt printing (paired devices, connect, chunked write),
  *  - the direct "send to this WhatsApp chat" intent,
  *  - saving a file to Downloads/Souqi,
+ *  - picking a .txt / .csv file of card codes and reading it as text,
+ *  - the beep that confirms a scanned card,
  *  - shortcuts into the system Bluetooth and app settings.
  *
  * Nothing here uses the network.
@@ -50,6 +55,12 @@ class MainActivity : FlutterActivity() {
     /** Completion of the runtime-permission request in flight, if any. */
     private var pendingPermission: ((Boolean) -> Unit)? = null
 
+    /** The "pick a text file" call waiting for the system picker to return. */
+    private var pendingPick: MethodChannel.Result? = null
+
+    /** Created on the first beep and kept: creating one per beep is slow. */
+    private var tone: ToneGenerator? = null
+
     private val adapter: BluetoothAdapter?
         get() = (getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
 
@@ -62,6 +73,8 @@ class MainActivity : FlutterActivity() {
     override fun onDestroy() {
         io.execute { printer.close() }
         io.shutdown()
+        tone?.release()
+        tone = null
         super.onDestroy()
     }
 
@@ -99,6 +112,11 @@ class MainActivity : FlutterActivity() {
             "openWhatsAppChat" -> openWhatsAppChat(call, result)
             "dial" -> dial(call, result)
             "saveToDownloads" -> saveToDownloads(call, result)
+            "pickTextFile" -> pickTextFile(result)
+            "beep" -> {
+                beep()
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }
@@ -428,10 +446,112 @@ class MainActivity : FlutterActivity() {
         return "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/${target.name}"
     }
 
+    // ---- Card codes: file import and the scan beep ----------------------
+
+    /**
+     * Opens the system file picker (Storage Access Framework — no storage
+     * permission on any Android version) and replies with the chosen file
+     * as text: {"name": …, "content": …}, or null when the user backs out.
+     *
+     * Any file can be chosen: phones disagree on the MIME type of a .csv, so
+     * filtering by type would grey out real card lists. What is read is
+     * checked instead — at most [MAX_TEXT_BYTES], and it must be text.
+     */
+    private fun pickTextFile(result: MethodChannel.Result) {
+        // A second pick while one is open: answer the first as cancelled.
+        pendingPick?.success(null)
+        pendingPick = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        try {
+            @Suppress("DEPRECATION")
+            startActivityForResult(intent, REQUEST_PICK_TEXT)
+        } catch (e: ActivityNotFoundException) {
+            pendingPick = null
+            result.error(PICK_FAILED, e.message, null)
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_PICK_TEXT) return
+        val result = pendingPick ?: return
+        pendingPick = null
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) {
+            result.success(null)
+            return
+        }
+        io.execute {
+            try {
+                val picked = mapOf("name" to displayName(uri), "content" to readText(uri))
+                main.post { result.success(picked) }
+            } catch (e: Exception) {
+                main.post { result.error(PICK_FAILED, e.message, null) }
+            }
+        }
+    }
+
+    private fun displayName(uri: Uri): String {
+        val name = contentResolver.query(
+            uri,
+            arrayOf(OpenableColumns.DISPLAY_NAME),
+            null,
+            null,
+            null,
+        )?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+        return name ?: uri.lastPathSegment ?: ""
+    }
+
+    /** Reads [uri] as text: UTF-8, or UTF-16 when it starts with that BOM. */
+    private fun readText(uri: Uri): String {
+        val bytes = contentResolver.openInputStream(uri)?.use { stream ->
+            val buffer = ByteArray(MAX_TEXT_BYTES + 1)
+            var total = 0
+            while (total < buffer.size) {
+                val read = stream.read(buffer, total, buffer.size - total)
+                if (read < 0) break
+                total += read
+            }
+            if (total > MAX_TEXT_BYTES) throw IOException("the file is too large")
+            buffer.copyOf(total)
+        } ?: throw IOException("could not open the file")
+        val utf16le = bytes.size >= 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte()
+        val utf16be = bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte()
+        val text = when {
+            utf16le -> String(bytes, 2, bytes.size - 2, Charsets.UTF_16LE)
+            utf16be -> String(bytes, 2, bytes.size - 2, Charsets.UTF_16BE)
+            else -> String(bytes, Charsets.UTF_8)
+        }
+        // A picture or a spreadsheet file picked by mistake: text has no NUL.
+        if (text.indexOf(Char(0)) >= 0) throw IOException("not a text file")
+        return text
+    }
+
+    /** A short beep, at the phone's notification volume. */
+    private fun beep() {
+        try {
+            val generator = tone
+                ?: ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80).also { tone = it }
+            generator.startTone(ToneGenerator.TONE_PROP_BEEP, 120)
+        } catch (_: RuntimeException) {
+            // No tone generator on this device: the vibration still confirms.
+        }
+    }
+
     companion object {
         private const val CHANNEL = "souqi/native"
         private const val FOLDER = "Souqi"
         private const val REQUEST_PERMISSIONS = 48731
+        private const val REQUEST_PICK_TEXT = 48732
+
+        /** Far more than any card list: 100,000 codes are about 2 MB. */
+        private const val MAX_TEXT_BYTES = 4 * 1024 * 1024
+        private const val PICK_FAILED = "PICK_FAILED"
 
         private const val BT_UNSUPPORTED = "BT_UNSUPPORTED"
         private const val BT_OFF = "BT_OFF"

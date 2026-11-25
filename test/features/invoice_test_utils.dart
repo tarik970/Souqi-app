@@ -210,4 +210,14 @@ class FakeNativeBridge implements NativeBridge {
   }) async {
     shared.add((path: filePath, mimeType: mimeType, text: text));
   }
+
+  /// What the file picker returns; null = the user backed out.
+  PickedTextFile? fileToPick;
+  int beeps = 0;
+
+  @override
+  Future<PickedTextFile?> pickTextFile() async => fileToPick;
+
+  @override
+  Future<void> beep() async => beeps++;
 }

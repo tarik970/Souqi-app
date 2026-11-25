@@ -66,6 +66,8 @@ class InvoiceSettings {
     this.showAccountNumber = true,
     this.maskAccountNumber = false,
     this.showPoweredBy = true,
+    this.printCodeQr = false,
+    this.codesOnSeparateSlips = false,
     this.currencyDisplay = CurrencyDisplay.symbol,
     this.extraCurrencies = const [],
     this.outputMode = OutputMode.print,
@@ -110,6 +112,14 @@ class InvoiceSettings {
   final bool showAccountNumber;
   final bool maskAccountNumber;
   final bool showPoweredBy;
+
+  /// Print a QR code of each sold card code under its digits.
+  final bool printCodeQr;
+
+  /// Print each sold card on its own slip after the invoice, with a feed
+  /// (and a cut) between slips. Printer only: a shared image or PDF always
+  /// holds the invoice and its cards together.
+  final bool codesOnSeparateSlips;
   final CurrencyDisplay currencyDisplay;
 
   /// Up to two extra currencies the total is also shown in.
@@ -230,6 +240,8 @@ class InvoiceSettings {
       showAccountNumber: _bool(get(SettingsKeys.showAccountNumber)),
       maskAccountNumber: _bool(get(SettingsKeys.maskAccountNumber)),
       showPoweredBy: _bool(get(SettingsKeys.showPoweredBy)),
+      printCodeQr: _bool(get(SettingsKeys.printCodeQr)),
+      codesOnSeparateSlips: _bool(get(SettingsKeys.codesOnSeparateSlips)),
       currencyDisplay:
           CurrencyDisplay.fromDb(get(SettingsKeys.currencyDisplay)),
       extraCurrencies: extras,
@@ -270,6 +282,8 @@ class InvoiceSettings {
         SettingsKeys.showAccountNumber: showAccountNumber ? '1' : '0',
         SettingsKeys.maskAccountNumber: maskAccountNumber ? '1' : '0',
         SettingsKeys.showPoweredBy: showPoweredBy ? '1' : '0',
+        SettingsKeys.printCodeQr: printCodeQr ? '1' : '0',
+        SettingsKeys.codesOnSeparateSlips: codesOnSeparateSlips ? '1' : '0',
         SettingsKeys.currencyDisplay: currencyDisplay.db,
         SettingsKeys.extraTotalCurrencies: jsonEncode(extraCurrencies),
         SettingsKeys.outputMode: outputMode.db,
@@ -303,6 +317,8 @@ class InvoiceSettings {
     bool? showAccountNumber,
     bool? maskAccountNumber,
     bool? showPoweredBy,
+    bool? printCodeQr,
+    bool? codesOnSeparateSlips,
     CurrencyDisplay? currencyDisplay,
     List<String>? extraCurrencies,
     OutputMode? outputMode,
@@ -337,6 +353,8 @@ class InvoiceSettings {
       showAccountNumber: showAccountNumber ?? this.showAccountNumber,
       maskAccountNumber: maskAccountNumber ?? this.maskAccountNumber,
       showPoweredBy: showPoweredBy ?? this.showPoweredBy,
+      printCodeQr: printCodeQr ?? this.printCodeQr,
+      codesOnSeparateSlips: codesOnSeparateSlips ?? this.codesOnSeparateSlips,
       currencyDisplay: currencyDisplay ?? this.currencyDisplay,
       extraCurrencies: extraCurrencies ?? this.extraCurrencies,
       outputMode: outputMode ?? this.outputMode,

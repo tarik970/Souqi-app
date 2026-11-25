@@ -8,6 +8,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../currencies/currencies_screen.dart';
 import '../invoice/invoice_settings_screen.dart';
 import '../sale/sale_providers.dart';
+import '../security/security_settings.dart';
 import '../setup/setup_screen.dart';
 import '../units/units_screen.dart';
 import 'about_screen.dart';
@@ -185,6 +186,18 @@ class SettingsScreen extends ConsumerWidget {
             const ReminderTextTile(),
             const Divider(),
           ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              l10n.sectionSecurity,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+          const PinSettingsTile(),
+          const AuditLogTile(),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.aboutTitle),

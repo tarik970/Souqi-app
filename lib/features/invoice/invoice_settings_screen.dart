@@ -689,6 +689,17 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
       ],
       toggle(l10n.showPoweredBy, s.showPoweredBy,
           (s, v) => s.copyWith(showPoweredBy: v)),
+      // How sold prepaid card codes are printed.
+      if (voucherStockEnabled) ...[
+        _SectionTitle(l10n.sectionCardCodes),
+        toggle(l10n.printCodeQrLabel, s.printCodeQr,
+            (s, v) => s.copyWith(printCodeQr: v),
+            key: const ValueKey('toggle-code-qr')),
+        toggle(l10n.codesSeparateSlipsLabel, s.codesOnSeparateSlips,
+            (s, v) => s.copyWith(codesOnSeparateSlips: v),
+            key: const ValueKey('toggle-code-slips')),
+        _Hint(l10n.codesSeparateSlipsHint),
+      ],
     ];
   }
 

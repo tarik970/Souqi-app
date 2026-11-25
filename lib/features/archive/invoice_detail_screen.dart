@@ -11,6 +11,8 @@ import '../invoice/invoice_actions.dart';
 import '../invoice/invoice_preview.dart';
 import '../invoice/invoice_providers.dart';
 import '../settings/storage_providers.dart';
+import '../vouchers/code_widgets.dart';
+import '../vouchers/voucher_providers.dart';
 import 'archive_providers.dart';
 
 /// One archived invoice: the receipt itself through [InvoicePaperPreview],
@@ -123,6 +125,9 @@ class _Body extends ConsumerWidget {
     final currencies = ref.watch(currenciesProvider).value;
     final currency =
         currencies?.where((c) => c.code == invoice.currencyCode).firstOrNull;
+    // Masked: the preview never holds a code in the clear.
+    final codes =
+        ref.watch(invoicePreviewCodesProvider(invoice.id!)).value ?? const [];
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -176,6 +181,9 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 12),
         InvoiceActions(invoice: invoice, copy: true),
         const SizedBox(height: 16),
+        // The cards this invoice sold: masked, each with show / void /
+        // return to stock behind the PIN.
+        InvoiceCodesSection(invoiceId: invoice.id!),
         if (render != null)
           InvoicePaperPreview(
             key: const ValueKey('archive-invoice-view'),
@@ -184,6 +192,7 @@ class _Body extends ConsumerWidget {
             currencies: render.currencies,
             logo: render.logo,
             isCopy: true,
+            codes: codes,
             maxWidth: 380,
           ),
       ],

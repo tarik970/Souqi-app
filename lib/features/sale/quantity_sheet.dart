@@ -8,6 +8,7 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../vouchers/voucher_providers.dart';
 import 'sale_providers.dart';
 
 /// Opens the quantity / unit-price sheet for [line] and returns the edited
@@ -154,8 +155,10 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     });
   }
 
-  int get _maxDecimals =>
-      _active == _Field.qty ? _maxQtyDecimals : _priceDecimals;
+  /// A card sold from code stock is sold in whole cards.
+  int get _maxDecimals => _active == _Field.qty
+      ? (widget.line.codeStock ? 0 : _maxQtyDecimals)
+      : _priceDecimals;
 
   void _tapDigit(String digit) {
     var text = _pristine[_active]! ? '' : _buffer;
@@ -206,7 +209,32 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     final qty = parseQuantityThousandths(_qtyText);
     final priceMinor =
         parseAmountMinor(_priceText, decimals: priceCurrency.decimalPlaces);
-    final valid = qty != null && qty > 0 && priceMinor != null;
+    // A product sold from code stock: whole cards, and never more than the
+    // stock holds. What the other lines of the cart already take counts —
+    // the same card at two prices is two lines drawing on one stock.
+    final cardId = widget.line.codeStock ? widget.line.productId : null;
+    int? cardsLeft;
+    if (cardId != null) {
+      final stock = ref.watch(voucherAvailabilityProvider).value;
+      if (stock != null) {
+        var taken = 0;
+        for (final other in ref.watch(cartProvider).lines) {
+          if (!other.codeStock || other.productId != cardId) continue;
+          if (widget.isEdit && other.id == widget.line.id) continue;
+          taken += (other.qtyThousandths + 999) ~/ 1000;
+        }
+        cardsLeft = (stock[cardId] ?? 0) - taken;
+        if (cardsLeft < 0) cardsLeft = 0;
+      }
+    }
+    final wholeCards = cardId == null || (qty != null && qty % 1000 == 0);
+    final overStock =
+        cardsLeft != null && qty != null && qty > cardsLeft * 1000;
+    final valid = qty != null &&
+        qty > 0 &&
+        priceMinor != null &&
+        wholeCards &&
+        !overStock;
     final kind = _effectiveKind;
     final unitName = _shownUnit;
     final updatesProductPrice =
@@ -259,6 +287,8 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
               priceMinor: priceMinor,
               lineTotal: lineTotal,
               updatesProductPrice: updatesProductPrice,
+              cardsLeft: cardsLeft,
+              overStock: overStock,
             ),
           ),
         ),
@@ -326,6 +356,8 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
     required int? priceMinor,
     required int lineTotal,
     required bool updatesProductPrice,
+    required int? cardsLeft,
+    required bool overStock,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -354,6 +386,31 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: theme.colorScheme.outline),
               textAlign: TextAlign.center,
+            ),
+          ),
+        // A card sold from code stock: how many there are to sell — and, in
+        // the error colour, that the quantity asks for more than that.
+        if (cardsLeft != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              cardsLeft == 0
+                  ? l10n.stockOut
+                  : overStock
+                      ? l10n.codeStockOnly(
+                          formatMinor(cardsLeft, decimals: 0, locale: locale),
+                        )
+                      : l10n.stockCount(
+                          formatMinor(cardsLeft, decimals: 0, locale: locale),
+                        ),
+              key: const ValueKey('qty-stock'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: cardsLeft == 0 || overStock
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+              ),
             ),
           ),
         // The unit, right under the name and one tap away. A service or a

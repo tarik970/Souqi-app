@@ -179,6 +179,30 @@ class _Report extends ConsumerWidget {
           comparison: report.discountComparison,
           format: money,
         ),
+        // Cards sold: counted from the codes themselves, so the figures
+        // are still here after the invoices of the period were deleted.
+        if (voucherStockEnabled && report.cardSales.isNotEmpty)
+          _RowsCard(
+            keyName: 'stats-cards',
+            title: l10n.statsCardsSold,
+            rows: [
+              for (final card in report.cardSales)
+                (
+                  title: card.name,
+                  subtitle: [
+                    l10n.cardsCount(count(card.count)),
+                    if (card.hasProfit)
+                      card.profitIsPartial
+                          ? l10n.statsCardsProfitPartial(
+                              money(card.profitBaseMinor),
+                              count(card.costKnownCount),
+                            )
+                          : l10n.statsCardsProfit(money(card.profitBaseMinor)),
+                  ].join(' · '),
+                  trailing: money(card.revenueBaseMinor),
+                ),
+            ],
+          ),
         if (report.current.invoiceCount == 0)
           Padding(
             padding: const EdgeInsets.all(24),

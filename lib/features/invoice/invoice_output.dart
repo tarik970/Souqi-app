@@ -7,14 +7,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../config/features.dart';
 import '../../core/platform/native_bridge.dart';
 import '../../core/printing/escpos.dart';
 import '../../core/printing/pdf_builder.dart';
 import '../../core/printing/png_encoder.dart';
 import '../../core/printing/raster.dart';
 import '../../core/printing/widget_capture.dart';
+import '../../core/providers.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'invoice_providers.dart';
 import 'invoice_view.dart';
@@ -55,12 +58,28 @@ class InvoiceOutput {
   Future<InvoiceRenderContext> _context() =>
       _ref.read(invoiceRenderContextProvider.future);
 
+  // ---- Card codes ------------------------------------------------------
+
+  /// The prepaid card codes [invoice] sold, IN THE CLEAR, for the paper and
+  /// the shared file — the one place besides "show the code" where a code is
+  /// decrypted. They are handed to the renderer and dropped; nothing here
+  /// logs or keeps them. Empty for an invoice that sold none, for a draft
+  /// (the settings preview) and when the feature is off.
+  Future<List<InvoiceCode>> codesOf(Invoice invoice) async {
+    final id = invoice.id;
+    if (!voucherStockEnabled || id == null) return const [];
+    return _ref.read(voucherRepositoryProvider).printableCodes(id);
+  }
+
   // ---- Rendering -------------------------------------------------------
 
+  /// [codes] defaults to the invoice's own ([codesOf]); pass an empty list
+  /// to leave them off (they are then printed as separate slips).
   Future<RgbaImage> renderForPrinter(
     Invoice invoice, {
     InvoiceRenderContext? context,
     bool copy = false,
+    List<InvoiceCode>? codes,
   }) async {
     final c = context ?? await _context();
     return captureWidget(
@@ -69,16 +88,40 @@ class InvoiceOutput {
         settings: c.settings,
         currencies: c.currencies,
         logo: c.logo,
+        isCopy: copy,
+        codes: codes ?? await codesOf(invoice),
+      ),
+      logicalWidth: c.settings.printableDots,
+    );
+  }
+
+  /// One card on a slip of its own, at the printer's width.
+  Future<RgbaImage> renderSlip(
+    Invoice invoice,
+    InvoiceCode code, {
+    InvoiceRenderContext? context,
+    bool copy = false,
+  }) async {
+    final c = context ?? await _context();
+    return captureWidget(
+      CodeSlipView(
+        invoice: invoice,
+        code: code,
+        settings: c.settings,
         isCopy: copy,
       ),
       logicalWidth: c.settings.printableDots,
     );
   }
 
+  /// The shared image always carries the codes with the invoice — the
+  /// "separate slips" setting is about paper only. That is the point of
+  /// sending it: the customer receives the cards.
   Future<RgbaImage> renderForShare(
     Invoice invoice, {
     InvoiceRenderContext? context,
     bool copy = false,
+    List<InvoiceCode>? codes,
   }) async {
     final c = context ?? await _context();
     return captureWidget(
@@ -88,6 +131,7 @@ class InvoiceOutput {
         currencies: c.currencies,
         logo: c.logo,
         isCopy: copy,
+        codes: codes ?? await codesOf(invoice),
         // A shared image has no physical paper margin around it.
         padding: EdgeInsets.all(c.settings.baseFontSize.toDouble()),
       ),
@@ -96,19 +140,50 @@ class InvoiceOutput {
     );
   }
 
+  /// Lines fed between two card slips even when the invoice setting is 0:
+  /// without a gap there is nowhere to tear.
+  static const int minSlipFeedLines = 3;
+
   /// The complete ESC/POS byte stream for [invoice].
+  ///
+  /// With "print each card on a separate slip" on, the invoice is printed
+  /// without its codes and each sold card follows as its own job — its own
+  /// feed and (when the printer has a cutter) its own cut.
   Future<Uint8List> printJob(
     Invoice invoice, {
     InvoiceRenderContext? context,
     bool copy = false,
+    List<InvoiceCode>? codes,
   }) async {
     final c = context ?? await _context();
-    final image = await renderForPrinter(invoice, context: c, copy: copy);
-    return buildRasterJob(
+    final sold = codes ?? await codesOf(invoice);
+    final slips = c.settings.codesOnSeparateSlips && sold.isNotEmpty;
+    final image = await renderForPrinter(
+      invoice,
+      context: c,
+      copy: copy,
+      codes: slips ? const [] : sold,
+    );
+    final main = buildRasterJob(
       toMonochrome(image),
       feedLines: c.settings.feedLines,
       cut: c.settings.cutPaper,
     );
+    if (!slips) return main;
+
+    final job = BytesBuilder(copy: false)..add(main);
+    final feed = c.settings.feedLines < minSlipFeedLines
+        ? minSlipFeedLines
+        : c.settings.feedLines;
+    for (final code in sold) {
+      final slip = await renderSlip(invoice, code, context: c, copy: copy);
+      job.add(buildRasterJob(
+        toMonochrome(slip),
+        feedLines: feed,
+        cut: c.settings.cutPaper,
+      ));
+    }
+    return job.toBytes();
   }
 
   /// The share image as PNG bytes, `2 × shareDots` pixels wide.

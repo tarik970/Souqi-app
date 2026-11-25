@@ -75,6 +75,7 @@ class CartLine {
     this.listPriceMinor,
     this.listCurrencyCode,
     this.requiresAccount = false,
+    this.codeStock = false,
   });
 
   /// Stable identity inside one cart (not a database id).
@@ -111,6 +112,11 @@ class CartLine {
   /// The product is marked "requires customer account": the sale cannot be
   /// saved until a customer's card / account is attached to it.
   final bool requiresAccount;
+
+  /// The product is "sold from code stock": every unit sold takes one
+  /// prepaid card code when the invoice is saved. Such a line is sold in
+  /// whole cards and never beyond what is in stock.
+  final bool codeStock;
 
   /// A typed item that becomes a product when the invoice is saved.
   bool get createsProduct => productId == null && saveAsProduct;
@@ -169,6 +175,7 @@ class CartLine {
       listPriceMinor: listPriceMinor,
       listCurrencyCode: listCurrencyCode,
       requiresAccount: requiresAccount,
+      codeStock: codeStock,
     );
   }
 }
@@ -244,6 +251,20 @@ class Cart {
   /// and the sale has no account, the sale must not be saved.
   List<CartLine> get linesRequiringAccount =>
       [for (final line in lines) if (line.requiresAccount) line];
+
+  /// Whole cards each "sold from code stock" product has in this cart, by
+  /// product id — summed over its lines, because the same card at two
+  /// prices is two lines drawing on one stock.
+  Map<int, int> get codeStockQuantities {
+    final wanted = <int, int>{};
+    for (final line in lines) {
+      final id = line.productId;
+      if (!line.codeStock || id == null) continue;
+      // Rounded up: half a card still needs a whole one to exist.
+      wanted[id] = (wanted[id] ?? 0) + (line.qtyThousandths + 999) ~/ 1000;
+    }
+    return wanted;
+  }
 
   CartLine? lineById(int id) {
     for (final line in lines) {

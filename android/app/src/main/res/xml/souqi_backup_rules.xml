@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older: what Auto Backup may copy to the user's Google
+     account. Everything as before, EXCEPT the two preference files of
+     flutter_secure_storage, which hold the card-code key wrapped by a
+     Keystore key. A Keystore key never leaves the phone, so a restored copy
+     of those files cannot be opened and makes the plugin fail on its first
+     read ("Failed to unwrap key"). Without them a restored app starts clean:
+     the invoices are back, the card codes of the old phone are unreadable
+     (and say so), new codes get a new key. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
+</full-backup-content>

@@ -2,12 +2,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/core/constants/settings_keys.dart';
+import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/core/providers.dart';
+import 'package:souqi/core/security/code_cipher.dart';
 import 'package:souqi/core/utils/due_dates.dart';
+import 'package:souqi/core/vouchers/code_import.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/customer_repository.dart';
+import 'package:souqi/data/repositories/invoice_repository.dart';
+import 'package:souqi/data/repositories/pin_repository.dart';
+import 'package:souqi/data/repositories/settings_repository.dart';
+import 'package:souqi/data/repositories/voucher_repository.dart';
 import 'package:souqi/domain/models/cart.dart';
+import 'package:souqi/domain/models/currency.dart';
 import 'package:souqi/domain/models/customer.dart';
+import 'package:souqi/domain/models/invoice.dart';
+import 'package:souqi/domain/models/invoice_settings.dart';
+import 'package:souqi/domain/models/product.dart';
+import 'package:souqi/domain/models/voucher.dart';
+import 'package:souqi/features/archive/invoice_detail_screen.dart';
 import 'package:souqi/features/currencies/currency_form_screen.dart';
 import 'package:souqi/features/customers/account_form_screen.dart';
 import 'package:souqi/features/customers/customer_detail_screen.dart';
@@ -16,16 +29,28 @@ import 'package:souqi/features/customers/customer_picker_screen.dart';
 import 'package:souqi/features/customers/customers_screen.dart';
 import 'package:souqi/features/customers/due_screen.dart';
 import 'package:souqi/features/home/home_screen.dart';
+import 'package:souqi/features/invoice/invoice_providers.dart';
 import 'package:souqi/features/invoice/invoice_settings_screen.dart';
+import 'package:souqi/features/invoice/invoice_view.dart';
 import 'package:souqi/features/products/product_form_screen.dart';
+import 'package:souqi/features/products/products_screen.dart';
 import 'package:souqi/features/sale/quantity_sheet.dart';
 import 'package:souqi/features/sale/sale_invoice_screen.dart';
 import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
+import 'package:souqi/features/security/audit_log_screen.dart';
+import 'package:souqi/features/security/pin_dialogs.dart';
 import 'package:souqi/features/settings/renewal_settings.dart';
 import 'package:souqi/features/settings/settings_screen.dart';
 import 'package:souqi/features/setup/setup_screen.dart';
 import 'package:souqi/features/stats/stats_screen.dart';
+import 'package:souqi/features/vouchers/add_batch_screen.dart';
+import 'package:souqi/features/vouchers/card_stock_screen.dart';
+import 'package:souqi/features/vouchers/code_lookup_screen.dart';
+import 'package:souqi/features/vouchers/code_widgets.dart';
+import 'package:souqi/features/vouchers/expired_codes_screen.dart';
+import 'package:souqi/features/vouchers/product_stock_screen.dart';
+import 'package:souqi/features/vouchers/voucher_providers.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -476,6 +501,12 @@ void main() {
       await seedCustomers(tester);
       await setShopType(tester, 'CARDS');
       await pumpPhone(tester, const HomeScreen());
+      // With the keyboard up there are barely 200 px under the search box,
+      // all of it taken by the destination chips (one more of them since
+      // card stock); the due list is what shows once the keyboard is gone.
+      tester.view.resetViewInsets();
+      await settle(tester);
+      expect(tester.takeException(), isNull);
       expect(find.byKey(ValueKey('due-row-$accountId'), skipOffstage: false),
           findsOneWidget);
     });
@@ -809,12 +840,71 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('the auto-delete menu and its custom-days dialog fit',
+        (tester) async {
+      await pumpPhone(tester, const SettingsScreen(), keyboard: false);
+      final dropdown =
+          find.byKey(const ValueKey('setting-auto-delete-dropdown'));
+      await reach(tester, dropdown);
+      // Under the explanation and as wide as the tile, like the shop type.
+      expect(
+        tester.getTopLeft(dropdown).dy,
+        greaterThan(tester
+            .getTopLeft(find.text('Auto-delete old invoices'))
+            .dy),
+      );
+      expect(tester.getSize(dropdown).width, greaterThan(200));
+
+      await tester.tap(dropdown);
+      await settle(tester, 24);
+      expect(find.text('After 365 days'), findsWidgets);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Custom…').last);
+      await settle(tester, 24);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await keyboardUp(tester);
+      await keyboardDown(tester);
+    });
+
+    testWidgets('a custom auto-delete period fits the tile', (tester) async {
+      // A number the shop typed itself: the longest label the picker shows.
+      await db(tester, () async {
+        await database.db.insert('settings', {
+          'key': SettingsKeys.autoDeleteDays,
+          'value': '12345',
+          'updated_at': 0,
+        });
+        return true;
+      });
+      for (final locale in ['en', 'ar']) {
+        await pumpPhone(
+          tester,
+          const SettingsScreen(),
+          keyboard: false,
+          locale: locale,
+        );
+        await reach(
+          tester,
+          find.byKey(const ValueKey('setting-auto-delete-dropdown')),
+        );
+        expect(find.textContaining('12,345'), findsOneWidget, reason: locale);
+        expect(tester.takeException(), isNull, reason: locale);
+      }
+    });
+
     testWidgets('the reminder dialog fits, opened from the settings screen',
         (tester) async {
       await pumpPhone(tester, const SettingsScreen(), keyboard: false);
       final tile = find.byKey(const ValueKey('setting-reminder-text'));
       await reach(tester, tile);
-      expect(find.byKey(const ValueKey('setting-due-soon')), findsOneWidget);
+      // Just above the tile that was scrolled to: built, but it may sit
+      // above the fold now that the list goes on below (Security, About).
+      expect(
+        find.byKey(const ValueKey('setting-due-soon'), skipOffstage: false),
+        findsOneWidget,
+      );
       await tester.tap(tile);
       await settle(tester, 24);
       expect(find.byType(ReminderTextDialog), findsOneWidget);
@@ -888,5 +978,685 @@ void main() {
         expect(tester.takeException(), isNull, reason: key);
       }
     });
+  });
+
+  group('prepaid card codes', () {
+    const longCard = 'Internet prepaid recharge card 100 GB monthly unlimited';
+    const codes = [
+      '1111222233334444',
+      '5555666677778888',
+      '9999000011112222',
+    ];
+
+    late InMemoryKeyStore keyStore;
+    late VoucherRepository vouchers;
+    late int cardId;
+    late int batchId;
+
+    setUp(() {
+      keyStore = InMemoryKeyStore();
+      vouchers = VoucherRepository(database.db, CodeCipher(keyStore));
+    });
+
+    /// A card product with a long name, a threshold it is under, a fresh
+    /// batch with a cost and one batch that expired last month; a second
+    /// card product with nothing loaded; a PIN.
+    Future<void> seedCards(WidgetTester tester) => db(tester, () async {
+          final now = DateTime.now().millisecondsSinceEpoch;
+          Future<int> card(String name, {int favorite = 0}) =>
+              database.db.insert('products', {
+                'name': name,
+                'name_norm': name.toLowerCase(),
+                'kind': 'SERVICE',
+                'price_minor': 3500000,
+                'currency_code': 'SYP',
+                'is_favorite': favorite,
+                'sold_from_code_stock': 1,
+                'low_stock_threshold': 50,
+                'created_at': now,
+                'updated_at': now,
+              });
+          cardId = await card(longCard, favorite: 1);
+          await card('$longCard (2)');
+          final report = await vouchers.addBatch(
+            productId: cardId,
+            parsed: parseCodeList(
+              [
+                for (final (index, code) in codes.indexed)
+                  'SERIAL-0000-000$index,$code',
+              ].join('\n'),
+              columns: CodeColumns.serialThenCode,
+            ),
+            costPerCardMinor: 3250000,
+            costCurrencyCode: 'SYP',
+            expiryAt: expiryFromDate(
+              DateTime.now().add(const Duration(days: 400)),
+            ),
+          );
+          batchId = report.batchId!;
+          await vouchers.addBatch(
+            productId: cardId,
+            parsed: parseCodeList(
+              '7777000011112222\n7777000011113333',
+              columns: CodeColumns.codeOnly,
+            ),
+            expiryAt: expiryFromDate(
+              DateTime.now().subtract(const Duration(days: 30)),
+            ),
+          );
+          await PinRepository(SettingsRepository(database.db)).set('2580');
+          return true;
+        });
+
+    /// One saved sale of two cards to a customer with a long name.
+    Future<Invoice> sellCards(WidgetTester tester) => db(tester, () {
+          final syp = Currency(
+            code: 'SYP',
+            nameAr: 'SYP',
+            nameEn: 'SYP',
+            decimalPlaces: 0,
+            rate: RateFraction.one,
+            rateUpdatedAt: DateTime.utc(2026),
+          );
+          return InvoiceRepository(
+            database.db,
+            codeCipher: CodeCipher(keyStore),
+          ).save(Invoice.fromCart(
+            cart: const Cart().add(CartLine(
+              productId: cardId,
+              name: longCard,
+              kind: ProductKind.service,
+              unitPriceMinor: 3500000,
+              priceCurrencyCode: 'SYP',
+              qtyThousandths: 2000,
+              codeStock: true,
+            )),
+            ctx: CurrencyContext.of([syp], baseCode: 'SYP'),
+            createdAt: DateTime.now().toUtc(),
+            customerName: 'Abdulrahman Mohammad Al-Khatib Al-Dimashqi',
+          ));
+        });
+
+    /// Pumps [screen] on the 360×640 phone at a large system font.
+    Future<void> pumpPhone(
+      WidgetTester tester,
+      Widget screen, {
+      String locale = 'en',
+    }) async {
+      tester.view.devicePixelRatio = 2;
+      tester.view.physicalSize = phone * tester.view.devicePixelRatio;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        ProviderScope(
+          key: UniqueKey(),
+          overrides: [
+            databaseProvider.overrideWithValue(database),
+            appLocaleProvider
+                .overrideWith(() => AppLocaleNotifier(Locale(locale))),
+            secretKeyStoreProvider.overrideWithValue(keyStore),
+            nativeBridgeProvider.overrideWithValue(FakeNativeBridge()),
+          ],
+          child: MaterialApp(
+            locale: Locale(locale),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: screen,
+          ),
+        ),
+      );
+      await settle(tester, 24);
+      expect(tester.takeException(), isNull);
+    }
+
+    Future<void> keyboardUp(WidgetTester tester) async {
+      tester.view.viewInsets = FakeViewPadding(
+        bottom: keyboardInset * tester.view.devicePixelRatio,
+      );
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    }
+
+    Future<void> keyboardDown(WidgetTester tester) async {
+      tester.view.viewInsets = FakeViewPadding.zero;
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    }
+
+    /// Drags the first list to its end, checking for an overflow on the way.
+    Future<void> scrollThrough(WidgetTester tester) async {
+      final list = find.byType(Scrollable).first;
+      for (var i = 0; i < 30; i++) {
+        final position = tester.state<ScrollableState>(list).position;
+        if (position.pixels >= position.maxScrollExtent) break;
+        await tester.drag(list, const Offset(0, -200));
+        await settle(tester, 4);
+        expect(tester.takeException(), isNull, reason: 'after $i drags');
+      }
+    }
+
+    /// A bare screen with one button that opens [show].
+    Widget host(Future<void> Function(BuildContext context) show) => Scaffold(
+          body: Center(
+            child: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => show(context),
+                child: const Text('open it'),
+              ),
+            ),
+          ),
+        );
+
+    Future<void> openHost(WidgetTester tester) async {
+      await tester.tap(find.text('open it'));
+      await settle(tester, 28);
+      expect(tester.takeException(), isNull);
+    }
+
+    for (final locale in ['en', 'ar']) {
+      testWidgets('the card stock screen fits, warnings and all ($locale)',
+          (tester) async {
+        await seedCards(tester);
+        await pumpPhone(tester, const CardStockScreen(), locale: locale);
+        expect(find.byKey(const ValueKey('stock-warnings')), findsOneWidget);
+        await scrollThrough(tester);
+      });
+
+      testWidgets("one product's stock fits, with its batches ($locale)",
+          (tester) async {
+        await seedCards(tester);
+        await sellCards(tester);
+        await pumpPhone(
+          tester,
+          ProductStockScreen(productId: cardId),
+          locale: locale,
+        );
+        expect(find.byKey(ValueKey('batch-$batchId')), findsOneWidget);
+        await scrollThrough(tester);
+      });
+
+      testWidgets('the load-codes page fits with the keyboard up ($locale)',
+          (tester) async {
+        await seedCards(tester);
+        final product = await db(tester, () async {
+          final row = (await database.db
+                  .query('products', where: 'id = ?', whereArgs: [cardId]))
+              .single;
+          return Product.fromMap(row);
+        });
+        await pumpPhone(tester, AddBatchScreen(product: product),
+            locale: locale);
+        await tester.enterText(
+          find.byKey(const ValueKey('paste-field')),
+          [
+            for (var i = 0; i < 8; i++)
+              'SERIAL-NUMBER-000$i,4444555566667${i.toString().padLeft(3, '0')}',
+            '',
+            'SERIAL-NUMBER-0000,4444555566667000',
+            codes.first,
+          ].join('\n'),
+        );
+        await tester.tap(find.byKey(const ValueKey('columns-serialThenCode')));
+        await settle(tester, 40);
+        expect(tester.takeException(), isNull);
+        // Built, though on this phone it starts below the fold.
+        expect(
+          find.byKey(const ValueKey('import-preview'), skipOffstage: false),
+          findsOneWidget,
+        );
+        await keyboardUp(tester);
+        await scrollThrough(tester);
+        await keyboardDown(tester);
+
+        // The other two ways in.
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
+        await settle(tester, 4);
+        final segments = find.descendant(
+          of: find.byKey(const ValueKey('load-method')),
+          matching: find.byType(Text),
+        );
+        for (var i = 1; i < segments.evaluate().length; i++) {
+          await tester.tap(segments.at(i));
+          await settle(tester);
+          expect(tester.takeException(), isNull, reason: 'method $i');
+        }
+      });
+
+      testWidgets('the batch codes and expired lists fit ($locale)',
+          (tester) async {
+        await seedCards(tester);
+        await sellCards(tester);
+        await pumpPhone(
+          tester,
+          BatchCodesScreen(batchId: batchId, productName: longCard),
+          locale: locale,
+        );
+        expect(find.byKey(const ValueKey('batch-codes')), findsOneWidget);
+        await scrollThrough(tester);
+
+        await pumpPhone(tester, const ExpiredCodesScreen(), locale: locale);
+        expect(find.byKey(const ValueKey('expired-list')), findsOneWidget);
+        await scrollThrough(tester);
+      });
+
+      testWidgets('the code search fits, result and keyboard ($locale)',
+          (tester) async {
+        await seedCards(tester);
+        await sellCards(tester);
+        await pumpPhone(tester, const CodeLookupScreen(), locale: locale);
+        await keyboardUp(tester);
+        await tester.enterText(
+            find.byKey(const ValueKey('lookup-field')), codes.first);
+        await tester.tap(find.byKey(const ValueKey('lookup-search')));
+        await settle(tester, 24);
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const ValueKey('lookup-results')), findsOneWidget);
+        await keyboardDown(tester);
+        await scrollThrough(tester);
+
+        await tester.enterText(
+            find.byKey(const ValueKey('lookup-field')), '0000');
+        await tester.tap(find.byKey(const ValueKey('lookup-search')));
+        await settle(tester, 24);
+        await keyboardUp(tester);
+        expect(find.byKey(const ValueKey('lookup-not-found')), findsOneWidget);
+      });
+
+      testWidgets('the audit log fits ($locale)', (tester) async {
+        await seedCards(tester);
+        final invoice = await sellCards(tester);
+        await db(tester, () async {
+          final sold = await vouchers.codesOfInvoice(invoice.id!);
+          await vouchers.reveal(sold.first.id);
+          await vouchers.voidCode(
+            sold.first.id,
+            reason: 'The customer brought the card back, it was scratched',
+          );
+          await vouchers.returnToStock(sold.last.id, reason: 'Sold by mistake');
+          await vouchers.lookup(codes.first);
+          await vouchers.logReprint(
+            invoiceNo: 1234567,
+            codeCount: 2,
+            output: 'print',
+            productName: longCard,
+          );
+          return true;
+        });
+        await pumpPhone(tester, const AuditLogScreen(), locale: locale);
+        expect(find.byKey(const ValueKey('audit-list')), findsOneWidget);
+        await scrollThrough(tester);
+      });
+
+      testWidgets('the PIN dialogs fit with the keyboard up ($locale)',
+          (tester) async {
+        await pumpPhone(
+          tester,
+          host((context) => requirePin(
+                context,
+                reason: AppLocalizations.of(context).pinReasonReprint,
+              )),
+          locale: locale,
+        );
+        // No PIN yet: the "choose a PIN" dialog, the taller of the two.
+        await openHost(tester);
+        expect(find.byType(SetPinDialog), findsOneWidget);
+        await keyboardUp(tester);
+        await tester.enterText(
+            find.byKey(const ValueKey('pin-new-field')), '12');
+        await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+        await settle(tester);
+        expect(tester.takeException(), isNull, reason: 'with its error text');
+        await tester.enterText(
+            find.byKey(const ValueKey('pin-new-field')), '2580');
+        await tester.enterText(
+            find.byKey(const ValueKey('pin-again-field')), '2580');
+        await tester.tap(find.byKey(const ValueKey('pin-set-save')));
+        for (var i = 0;
+            i < 200 && find.byType(SetPinDialog).evaluate().isNotEmpty;
+            i++) {
+          await settle(tester, 2);
+        }
+        await keyboardDown(tester);
+
+        // Now it is set: the entry dialog, with a wrong attempt's message.
+        await openHost(tester);
+        expect(find.byType(PinEntryDialog), findsOneWidget);
+        await keyboardUp(tester);
+        await tester.enterText(
+            find.byKey(const ValueKey('pin-entry-field')), '0000');
+        await tester.tap(find.byKey(const ValueKey('pin-entry-ok')));
+        for (var i = 0;
+            i < 200 &&
+                tester
+                        .widget<TextField>(find.descendant(
+                          of: find.byKey(const ValueKey('pin-entry-field')),
+                          matching: find.byType(TextField),
+                        ))
+                        .decoration
+                        ?.errorText ==
+                    null;
+            i++) {
+          await settle(tester, 2);
+        }
+        expect(tester.takeException(), isNull);
+        await keyboardDown(tester);
+      });
+
+      testWidgets('the reason, revealed-code and export dialogs fit ($locale)',
+          (tester) async {
+        await seedCards(tester);
+        await pumpPhone(
+          tester,
+          host((context) {
+            final l10n = AppLocalizations.of(context);
+            return showDialog<String>(
+              context: context,
+              builder: (_) => ReasonDialog(
+                title: l10n.returnCodeTitle,
+                message: l10n.returnCodeMessage,
+                confirmLabel: l10n.codeReturn,
+              ),
+            );
+          }),
+          locale: locale,
+        );
+        await openHost(tester);
+        await keyboardUp(tester);
+        await tester.tap(find.byKey(const ValueKey('reason-confirm')));
+        await settle(tester);
+        expect(tester.takeException(), isNull, reason: 'with its error text');
+        await keyboardDown(tester);
+
+        // A 20-character code: five groups, wrapping onto a second line.
+        await pumpPhone(
+          tester,
+          host((context) => showDialog<void>(
+                context: context,
+                builder: (_) => const RevealedCodeDialog(
+                  productName: longCard,
+                  code: 'ABCD1234EFGH5678WXYZ',
+                  serial: 'SERIAL-0000-0001-0002-0003',
+                ),
+              )),
+          locale: locale,
+        );
+        await openHost(tester);
+        expect(find.byKey(const ValueKey('revealed-code')), findsOneWidget);
+
+        await pumpPhone(
+          tester,
+          ProductStockScreen(productId: cardId),
+          locale: locale,
+        );
+        await tester.tap(find.byKey(const ValueKey('product-stock-menu')));
+        await settle(tester, 28);
+        await tester.tap(find.byKey(const ValueKey('product-stock-export')));
+        await settle(tester, 28);
+        expect(find.byKey(const ValueKey('export-dialog')), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('the invoice screens fit with their card codes ($locale)',
+          (tester) async {
+        await seedCards(tester);
+        final invoice = await sellCards(tester);
+        await pumpPhone(
+          tester,
+          InvoiceDetailScreen(invoiceId: invoice.id!),
+          locale: locale,
+        );
+        expect(
+          find.byKey(const ValueKey('invoice-codes'), skipOffstage: false),
+          findsOneWidget,
+        );
+        await scrollThrough(tester);
+
+        await pumpPhone(
+          tester,
+          SaleInvoiceScreen(invoice: invoice),
+          locale: locale,
+        );
+        await scrollThrough(tester);
+      });
+    }
+
+    testWidgets('a card in the sale: quantity sheet, cart and totals fit',
+        (tester) async {
+      await seedCards(tester);
+      // A four-digit line total: the cart row's amount and its delete
+      // button share a ListTile's trailing slot, which the square test font
+      // fills at seven digits (that row is not what this test is about).
+      await db(tester, () async {
+        await database.db.update('products', {'price_minor': 1500});
+        return true;
+      });
+      await pumpPhone(tester, const SaleScreen());
+      // The stock pill sits inside the favorite's own button.
+      expect(find.byKey(ValueKey('favorite-stock-$cardId')), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, longCard));
+      await settle(tester, 28);
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const ValueKey('qty-stock')), findsOneWidget);
+      // More than there are: the warning line replaces the stock line.
+      final five = find.byKey(const ValueKey('qty-preset-5000'));
+      await tester.ensureVisible(five);
+      await settle(tester, 4);
+      await tester.tap(five);
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+      final three = find.byKey(const ValueKey('qty-preset-3000'));
+      await tester.ensureVisible(three);
+      await settle(tester, 4);
+      await tester.tap(three);
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await settle(tester, 28);
+      expect(tester.takeException(), isNull);
+
+      // Two of the three are sold elsewhere: the cart now asks for more
+      // than the stock holds and the totals panel says so.
+      await db(tester, () async {
+        await database.db.rawUpdate(
+          "UPDATE voucher_codes SET status = 'SOLD' WHERE id IN "
+          '(SELECT id FROM voucher_codes WHERE batch_id = ? LIMIT 2)',
+          [batchId],
+        );
+        return true;
+      });
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SaleScreen)),
+      );
+      container.invalidate(voucherAvailabilityProvider);
+      await settle(tester, 24);
+      expect(find.byKey(const ValueKey('code-stock-short')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the sale search shows the stock of a card', (tester) async {
+      await seedCards(tester);
+      await pumpPhone(tester, const SaleScreen());
+      await tester.enterText(
+          find.byKey(const ValueKey('sale-search-field')), 'internet');
+      await keyboardUp(tester);
+      await settle(tester, 24);
+      expect(find.textContaining('In stock: 3'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the products list and the product form fit', (tester) async {
+      await seedCards(tester);
+      await pumpPhone(tester, const ProductsScreen());
+      expect(find.byKey(ValueKey('product-stock-$cardId')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      final product = await db(tester, () async {
+        final row = (await database.db
+                .query('products', where: 'id = ?', whereArgs: [cardId]))
+            .single;
+        return Product.fromMap(row);
+      });
+      await pumpPhone(tester, ProductFormScreen(product: product));
+      await keyboardUp(tester);
+      await scrollThrough(tester);
+      expect(
+        find.byKey(const ValueKey('product-low-stock'), skipOffstage: false),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the home screen fits with the card stock tile and badge',
+        (tester) async {
+      await seedCards(tester);
+      for (final type in ['GROCERY', 'CARDS']) {
+        await db(tester, () async {
+          await database.db.insert(
+            'settings',
+            {'key': SettingsKeys.shopType, 'value': type, 'updated_at': 0},
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          return true;
+        });
+        await pumpPhone(tester, const HomeScreen());
+        expect(find.byKey(const ValueKey('home-badge-cards')), findsOneWidget,
+            reason: type);
+        await scrollThrough(tester);
+      }
+    });
+
+    testWidgets('the statistics screen fits with cards sold', (tester) async {
+      await seedCards(tester);
+      await sellCards(tester);
+      await pumpPhone(tester, const StatsScreen());
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('stats-cards')),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await settle(tester, 4);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the invoice settings fit with the card options',
+        (tester) async {
+      await pumpPhone(tester, const InvoiceSettingsScreen());
+      // The form's own list: the preview above it scrolls too, and so does
+      // every text field.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('toggle-code-slips')),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await settle(tester, 4);
+      expect(
+        find.byKey(const ValueKey('toggle-code-qr'), skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    /// The invoice itself, laid out at a paper's width in dots.
+    Future<void> pumpPaper(
+      WidgetTester tester, {
+      required int dots,
+      required String language,
+      required List<InvoiceCode> invoiceCodes,
+      bool qr = true,
+      bool slip = false,
+    }) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = Size(dots.toDouble(), 4000);
+      addTearDown(tester.view.reset);
+      final settings = InvoiceSettings(
+        language: language,
+        shopName: 'Al-Baraka Telecom',
+        printCodeQr: qr,
+      );
+      final invoice = sypInvoice(lines: 1);
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SingleChildScrollView(
+            child: SizedBox(
+              width: dots.toDouble(),
+              child: slip
+                  ? CodeSlipView(
+                      invoice: invoice,
+                      code: invoiceCodes.first,
+                      settings: settings,
+                      isCopy: true,
+                    )
+                  : InvoiceView(
+                      invoice: invoice,
+                      settings: settings,
+                      currencies: testCurrencies,
+                      isCopy: true,
+                      codes: invoiceCodes,
+                    ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull, reason: '$dots dots, $language');
+    }
+
+    final printed = [
+      InvoiceCode(
+        id: 1,
+        productName: longCard,
+        code: '1111222233334444',
+        masked: '•••• •••• 4444',
+        serial: 'SERIAL-0000-0001-0002',
+        expiryAt: DateTime(2027),
+      ),
+      // 20 characters, letters included: five groups.
+      const InvoiceCode(
+        id: 2,
+        productName: 'W',
+        code: 'WWWW1234MMMM5678WXYZ',
+        masked: '•••• •••• WXYZ',
+      ),
+      // What the screen gets, and what an unreadable code prints as.
+      const InvoiceCode(
+        id: 3,
+        productName: longCard,
+        code: null,
+        masked: '•••• ••••',
+        unreadable: true,
+      ),
+    ];
+
+    for (final language in ['en', 'ar']) {
+      for (final dots in [576, 384, 280]) {
+        testWidgets('the printed codes fit $dots dots ($language)',
+            (tester) async {
+          await pumpPaper(
+            tester,
+            dots: dots,
+            language: language,
+            invoiceCodes: printed,
+          );
+          expect(find.byType(InvoiceCodeBlock), findsNWidgets(3));
+          await pumpPaper(
+            tester,
+            dots: dots,
+            language: language,
+            invoiceCodes: printed,
+            slip: true,
+          );
+          expect(find.byType(InvoiceCodeBlock), findsOneWidget);
+        });
+      }
+    }
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/product_repository.dart';
@@ -8,6 +9,7 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../vouchers/voucher_providers.dart';
 import 'product_form_screen.dart';
 import 'products_providers.dart';
 
@@ -162,6 +164,15 @@ class _ProductTile extends ConsumerWidget {
       if (product.code != null) '#${product.code}',
     ].join(' · ');
 
+    // A product sold from code stock shows what is left of it.
+    final isCard = voucherStockEnabled &&
+        product.kind == ProductKind.service &&
+        product.soldFromCodeStock;
+    final stock = isCard ? ref.watch(voucherAvailabilityProvider).value : null;
+    final have = stock?[product.id] ?? 0;
+    final threshold = product.lowStockThreshold;
+    final lowStock = have == 0 || (threshold != null && have <= threshold);
+
     return ListTile(
       enabled: product.isActive,
       leading: Icon(product.kind == ProductKind.goods
@@ -179,7 +190,29 @@ class _ProductTile extends ConsumerWidget {
           ],
         ],
       ),
-      subtitle: Text(details),
+      subtitle: stock == null
+          ? Text(details)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(details),
+                Text(
+                  have == 0
+                      ? l10n.stockOut
+                      : l10n.stockCount(
+                          formatMinor(have, decimals: 0, locale: locale),
+                        ),
+                  key: ValueKey('product-stock-${product.id}'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: lowStock
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
       onTap: () => ProductsScreen._openForm(context, product),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

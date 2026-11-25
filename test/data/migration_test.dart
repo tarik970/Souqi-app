@@ -1,7 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:souqi/data/db/app_database.dart';
+import 'package:souqi/core/security/code_cipher.dart';
 import 'package:souqi/data/db/migrations/migration_v1.dart';
+import 'package:souqi/data/db/migrations/migration_v2.dart';
+import 'package:souqi/data/db/migrations/migration_v3.dart';
+import 'package:souqi/data/repositories/archive_repository.dart';
+import 'package:souqi/data/repositories/audit_repository.dart';
 import 'package:souqi/data/repositories/product_repository.dart';
+import 'package:souqi/data/repositories/voucher_repository.dart';
+import 'package:souqi/domain/models/voucher.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'db_test_utils.dart';
@@ -22,8 +29,8 @@ void main() {
   group('schema', () {
     test('user_version is the latest migration', () async {
       final rows = await db.rawQuery('PRAGMA user_version');
-      expect(rows.first.values.first, 3);
-      expect(AppDatabase.schemaVersion, 3);
+      expect(rows.first.values.first, 4);
+      expect(AppDatabase.schemaVersion, 4);
     });
 
     test('foreign keys are enforced', () async {
@@ -216,7 +223,7 @@ void main() {
     });
   });
 
-  group('v1 → v3', () {
+  group('v1 → latest', () {
     test('recomputes name_norm, backfills the snapshot search columns',
         () async {
       final dir = await databaseFactoryFfi.getDatabasesPath();
@@ -286,7 +293,8 @@ void main() {
       final upgraded =
           await AppDatabase.open(factory: databaseFactoryFfi, path: path);
       final db = upgraded.db;
-      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 3);
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first,
+          AppDatabase.schemaVersion);
 
       Future<Map<String, Object?>> product(int id) async =>
           (await db.query('products', where: 'id = ?', whereArgs: [id])).single;
@@ -316,6 +324,257 @@ void main() {
       // And the old product is now found the new way.
       final found = await ProductRepository(db).list(query: 'سكر');
       expect(found.single.id, sugarId);
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+  });
+
+  group('v3 → v4 (prepaid card codes)', () {
+    test('a populated version-3 database upgrades without losing a row',
+        () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v3_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+
+      // A database exactly as version 3 of the app (phase 4b) left it.
+      final old = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 3,
+          onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+          onCreate: (db, _) async {
+            await const MigrationV1().apply(db);
+            await const MigrationV2().apply(db);
+            await const MigrationV3().apply(db);
+          },
+        ),
+      );
+      final sugarId = await insertProduct(old, name: 'Sugar', code: '101');
+      final cardId = await insertProduct(
+        old,
+        name: 'Card 5000',
+        kind: 'SERVICE',
+        soldFromCodeStock: 1,
+      );
+      await old.update('products', {'low_stock_threshold': 5},
+          where: 'id = ?', whereArgs: [cardId]);
+      final customerId = await insertCustomer(old, name: 'Ahmad');
+      await old.insert('customer_accounts', {
+        'customer_id': customerId,
+        'account_number': '0011-2233',
+        'account_number_norm': '00112233',
+        'created_at': 1,
+      });
+      await old.insert('settings',
+          {'key': 'shop_name', 'value': 'Al-Baraka', 'updated_at': 1});
+      await old.update('counters', {'value': 2},
+          where: 'name = ?', whereArgs: ['invoice_no']);
+
+      final firstInvoice = await insertInvoice(old,
+          invoiceNo: 1, customerName: 'Ahmad', accountNumber: '0011-2233');
+      await insertInvoiceItem(old, invoiceId: firstInvoice, productId: sugarId);
+      final secondInvoice = await insertInvoice(old, invoiceNo: 2);
+      final cardItem = await insertInvoiceItem(old,
+          invoiceId: secondInvoice, productId: cardId, name: 'Card 5000');
+
+      // Voucher rows: version 3 never wrote any through the app, but the
+      // tables were there since version 1 — the migration must carry
+      // whatever they hold.
+      final batchId = await old.insert('voucher_batches', {
+        'product_id': cardId,
+        'created_at': 1000,
+        'code_count': 2,
+        'cost_per_card_minor': 4500,
+        'cost_currency_code': 'SYP',
+        'note': 'first batch',
+      });
+      final cipher = CodeCipher(InMemoryKeyStore());
+      Future<int> oldCode(String code, Map<String, Object?> extra) async =>
+          old.insert('voucher_codes', {
+            'product_id': cardId,
+            'batch_id': batchId,
+            'code_cipher': await cipher.encrypt(code),
+            'code_hash': await cipher.hash(code),
+            'created_at': 1000,
+            ...extra,
+          });
+      final soldCode = await oldCode('1111222233334444', {
+        'serial': 'SN1',
+        'status': 'SOLD',
+        'status_changed_at': 2000,
+        'sold_at': 2000,
+        'invoice_id': secondInvoice,
+        'invoice_item_id': cardItem,
+        'sold_invoice_no': 2,
+        'sold_customer_name': 'Ahmad',
+      });
+      final freeCode = await oldCode('5555666677778888', {'expiry_at': 9000});
+      await old.insert('audit_log', {
+        'created_at': 3000,
+        'action': 'CODE_REVEAL',
+        'entity_type': 'code',
+        'entity_id': soldCode,
+        'details': '{"tail":"4444"}',
+      });
+
+      Future<Map<String, int>> counts(DatabaseExecutor db) async => {
+            for (final table in [
+              'products',
+              'customers',
+              'customer_accounts',
+              'invoices',
+              'invoice_items',
+              'voucher_batches',
+              'voucher_codes',
+              'audit_log',
+              'settings',
+              'currencies',
+              'units',
+            ])
+              table: (await db.rawQuery('SELECT COUNT(*) FROM $table'))
+                  .first
+                  .values
+                  .first! as int,
+          };
+      final before = await counts(old);
+      final codesBefore = await old.query('voucher_codes', orderBy: 'id');
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      final db = upgraded.db;
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 4);
+
+      // Not a row lost, in any table.
+      expect(await counts(db), before);
+
+      // Every old column of every code is exactly what it was.
+      final codesAfter = await db.query('voucher_codes', orderBy: 'id');
+      for (var i = 0; i < codesBefore.length; i++) {
+        for (final column in codesBefore[i].keys) {
+          expect(codesAfter[i][column], codesBefore[i][column],
+              reason: 'voucher_codes.$column of row $i');
+        }
+      }
+      // The new columns are there and empty.
+      for (final row in codesAfter) {
+        expect(row.containsKey('status_note'), isTrue);
+        expect(row['status_note'], isNull);
+        expect(row['sold_price_base_minor'], isNull);
+        expect(row['sold_cost_base_minor'], isNull);
+      }
+      final batch = (await db.query('voucher_batches')).single;
+      expect(batch['note'], 'first batch');
+      expect(batch['cost_per_card_minor'], 4500);
+      expect(batch.containsKey('expiry_at'), isTrue);
+      expect(batch['expiry_at'], isNull);
+      final log = (await db.query('audit_log')).single;
+      expect(log['action'], 'CODE_REVEAL');
+      expect(log['details'], '{"tail":"4444"}');
+      expect(log.containsKey('product_id'), isTrue);
+      expect(log['product_name'], isNull);
+
+      // The rest of the shop is untouched.
+      expect((await db.query('settings',
+              where: 'key = ?', whereArgs: ['shop_name']))
+          .single['value'], 'Al-Baraka');
+      expect((await db.query('counters')).single['value'], 2);
+      final card = (await db.query('products',
+              where: 'id = ?', whereArgs: [cardId]))
+          .single;
+      expect(card['sold_from_code_stock'], 1);
+      expect(card['low_stock_threshold'], 5);
+
+      final indexes = {
+        for (final row in await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type = 'index'"))
+          row['name'],
+      };
+      expect(
+        indexes.containsAll([
+          'idx_codes_item',
+          'idx_codes_hash_lookup',
+          'idx_codes_sold',
+          'idx_codes_batch',
+          'idx_codes_status',
+        ]),
+        isTrue,
+        reason: 'indexes: $indexes',
+      );
+
+      // And the new code works on the old rows.
+      final vouchers = VoucherRepository(db, cipher);
+      final stock = (await vouchers.stockOverview(
+              now: DateTime.fromMillisecondsSinceEpoch(5000)))
+          .single;
+      expect(stock.product.id, cardId);
+      expect((stock.available, stock.sold), (1, 1));
+      final found = (await vouchers.lookup('1111 2222 3333 4444')).single;
+      expect(found.status, VoucherStatus.sold);
+      expect(found.soldInvoiceNo, 2);
+      expect(found.soldCustomerName, 'Ahmad');
+      expect(await vouchers.reveal(freeCode), '5555666677778888');
+      expect((await AuditRepository(db).list()).first.productName, 'Card 5000');
+
+      // Deleting the old invoice keeps the sold-code record.
+      await ArchiveRepository(db).deleteInvoice(secondInvoice);
+      final sold = (await db.query('voucher_codes',
+              where: 'id = ?', whereArgs: [soldCode]))
+          .single;
+      expect(sold['status'], 'SOLD');
+      expect(sold['invoice_id'], isNull);
+      expect(sold['invoice_item_id'], isNull);
+      expect(sold['sold_invoice_no'], 2);
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('a fresh install and an upgraded one have the same schema',
+        () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v3_schema_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 3,
+          onCreate: (db, _) async {
+            await const MigrationV1().apply(db);
+            await const MigrationV2().apply(db);
+            await const MigrationV3().apply(db);
+          },
+        ),
+      );
+      await old.close();
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+
+      Future<Map<String, Set<String>>> columns(Database database) async {
+        final tables = await database.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name NOT LIKE 'sqlite_%' AND name != 'android_metadata'");
+        return {
+          for (final table in tables)
+            table['name'] as String: {
+              for (final column in await database
+                  .rawQuery('PRAGMA table_info(${table['name']})'))
+                column['name'] as String,
+            },
+        };
+      }
+
+      Future<Set<Object?>> indexes(Database database) async => {
+            for (final row in await database.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type = 'index' "
+                "AND name NOT LIKE 'sqlite_%'"))
+              row['name'],
+          };
+
+      // `db` is the fresh in-memory database of setUp.
+      expect(await columns(upgraded.db), await columns(db));
+      expect(await indexes(upgraded.db), await indexes(db));
 
       await upgraded.close();
       await databaseFactoryFfi.deleteDatabase(path);

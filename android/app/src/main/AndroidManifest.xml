@@ -23,10 +23,19 @@
     <uses-feature android:name="android.hardware.bluetooth"
         android:required="false" />
 
+    <!-- The camera (scanning the QR code / barcode on a prepaid card) is
+         declared by the mobile_scanner plugin and asked for at the first
+         scan; the app works without it. -->
+
+    <!-- The two backup attributes keep the Keystore-bound card-code key out
+         of Android's backups; see the comments in the two XML files. -->
     <application
         android:label="souqi"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:fullBackupContent="@xml/souqi_backup_rules"
+        android:dataExtractionRules="@xml/souqi_data_extraction_rules"
+        tools:targetApi="s">
         <activity
             android:name=".MainActivity"
             android:exported="true"
