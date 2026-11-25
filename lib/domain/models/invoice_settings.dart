@@ -46,7 +46,7 @@ class InvoiceSettings {
   const InvoiceSettings({
     this.paperWidthMm = 80,
     this.printerDpi = 203,
-    this.sideMarginMm = 3.5,
+    this.sideMarginMm = defaultSideMargin80Mm,
     this.printableDotsOverride,
     this.feedLines = 3,
     this.cutPaper = false,
@@ -368,7 +368,7 @@ class InvoiceSettings {
       printerDpi: (int.tryParse(get(SettingsKeys.printerDpi)) ?? 203)
           .clamp(100, 600),
       sideMarginMm: marginRaw == null || !marginRaw.isFinite || marginRaw < 0
-          ? 3.5
+          ? defaultSideMargin80Mm
           : marginRaw,
       printableDotsOverride:
           overrideRaw == null || overrideRaw <= 0 ? null : overrideRaw,

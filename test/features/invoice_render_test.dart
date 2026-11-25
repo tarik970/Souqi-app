@@ -69,8 +69,8 @@ void main() {
     final output = container.read(invoiceOutputProvider);
     final png = await real(tester, () => output.sharePng(crossCurrencyInvoice()));
 
-    // Default paper: 576 dots, shared at 2×.
-    expect(readPngSize(png)!.width, 2 * 576);
+    // Default paper: 512 dots, shared at 2×.
+    expect(readPngSize(png)!.width, 2 * 512);
 
     // And it is a real PNG the platform can decode, with the same size.
     final decoded = await real(tester, () async {
@@ -78,7 +78,7 @@ void main() {
       final frame = await codec.getNextFrame();
       return (frame.image.width, frame.image.height);
     });
-    expect(decoded.$1, 1152);
+    expect(decoded.$1, 1024);
     expect(decoded.$2, readPngSize(png)!.height);
     expect(decoded.$2, greaterThan(200));
   });
@@ -116,7 +116,7 @@ void main() {
     final output = container.read(invoiceOutputProvider);
     final image =
         await real(tester, () => output.renderForPrinter(crossCurrencyInvoice()));
-    expect(image.width, 576);
+    expect(image.width, 512);
     // White paper with ink on it: the corners are background, some row is not.
     expect(image.rgba.sublist(0, 4), [255, 255, 255, 255]);
     expect(
@@ -127,7 +127,7 @@ void main() {
     final job = await real(tester, () => output.printJob(crossCurrencyInvoice()));
     expect(job.sublist(0, 2), [0x1B, 0x40]); // ESC @
     expect(job.sublist(2, 6), [0x1D, 0x76, 0x30, 0x00]); // GS v 0
-    expect(job[6] | (job[7] << 8), 576 ~/ 8); // bytes per row
+    expect(job[6] | (job[7] << 8), 512 ~/ 8); // bytes per row
     // Default settings: feed 3 lines, no cut.
     expect(job.sublist(job.length - 3), [0x1B, 0x64, 3]);
   });

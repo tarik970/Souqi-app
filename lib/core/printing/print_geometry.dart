@@ -28,9 +28,9 @@ int snapDots(int dots) {
 ///
 /// then rounded DOWN to a multiple of 8.
 ///
-/// With the defaults this gives the two standard heads: 80 mm paper with a
-/// 3.5 mm margin at 203 dpi → 583 → 576 dots, and 58 mm paper with a 5 mm
-/// margin → 384 dots.
+/// With the default margins ([defaultSideMarginFor]) at 203 dpi: 80 mm
+/// paper with 7.5 mm → 519 → 512 dots, and 58 mm paper with 5 mm → 384
+/// dots.
 int computePrintableDots({
   required double paperWidthMm,
   required double sideMarginMm,
@@ -73,8 +73,24 @@ int standardHeadDots({
   return snapDots((headMm * (dotsPerMm < 1 ? 1 : dotsPerMm)).floor());
 }
 
-/// The side margin that matches each standard paper's print head.
+/// The default side margin of 80 mm paper: 7.5 mm, a printable width of
+/// 512 dots (64 mm) at 203 dpi.
+///
+/// NOT the whole 72 mm head (3.5 mm, 576 dots), which was the default at
+/// first: measured on a real printer (Xprinter XP-365B, 80 mm roll), 576
+/// dots came out cut off at the side and 512 printed complete. A print
+/// head is wider than what a given printer lands on the paper; a default
+/// has to fit without calibration, and a shop whose printer does print the
+/// full head can still widen it.
+const double defaultSideMargin80Mm = 7.5;
+
+/// The default side margin of 58 mm paper: its 48 mm head, 384 dots.
+const double defaultSideMargin58Mm = 5;
+
+/// The default side margin of each standard paper — what a new shop
+/// starts with, and what picking a paper preset sets. A margin the shop
+/// has saved is never replaced by it.
 double defaultSideMarginFor(double paperWidthMm) {
-  if (paperWidthMm == 58) return 5; // 48 mm head → 384 dots
-  return 3.5; // 80 mm paper, 72 mm head → 576 dots
+  if (paperWidthMm == 58) return defaultSideMargin58Mm; // → 384 dots
+  return defaultSideMargin80Mm; // → 512 dots
 }

@@ -695,18 +695,18 @@ void main() {
         final paper = receiptPaper(receipt(payment()));
 
         final printed = await real(tester, () => output.renderForPrinter(paper));
-        expect(printed.width, 576);
+        expect(printed.width, 512);
         expect(printed.height, greaterThan(200));
         expect(hasInk(printed), isTrue);
 
         final png = await real(tester, () => output.sharePng(paper));
-        expect(readPngSize(png)!.width, 2 * 576);
+        expect(readPngSize(png)!.width, 2 * 512);
 
         final pdf = await real(tester, () => output.sharePdf(paper));
         expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
 
         final job = await real(tester, () => output.printJob(paper));
-        expect(job.length, greaterThan(printed.height * 576 ~/ 8));
+        expect(job.length, greaterThan(printed.height * 512 ~/ 8));
 
         // A copy is a taller paper: the COPY box is on it.
         final copy =
@@ -723,8 +723,8 @@ void main() {
 
         final small = await real(tester, () => output.renderForPrinter(short));
         final big = await real(tester, () => output.renderForPrinter(long));
-        expect(small.width, 576);
-        expect(big.width, 576);
+        expect(small.width, 512);
+        expect(big.width, 512);
         // Far taller than one GPU slice (1,024 rows): the capture stitched
         // several, and every one of them has ink.
         expect(big.height, greaterThan(4000));
@@ -742,7 +742,7 @@ void main() {
         }
 
         final png = await real(tester, () => output.sharePng(short));
-        expect(readPngSize(png)!.width, 2 * 576);
+        expect(readPngSize(png)!.width, 2 * 512);
         final pdf = await real(tester, () => output.sharePdf(long));
         expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
       });

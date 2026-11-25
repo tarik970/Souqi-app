@@ -170,10 +170,13 @@ abstract final class SettingsKeys {
     shopLogoBase64: '',
     paperWidthMm: '80',
     printerDpi: '203',
-    // 80 mm paper has a 72 mm print head: with the brief's formula
-    // round((80 - 2 × 3.5) × 203 / 25.4) = 583 → 576 dots. A 4 mm margin
-    // would land on 575 → 568 because 203 dpi is slightly under 8 dots/mm.
-    sideMarginMm: '3.5',
+    // 80 mm paper prints 512 dots by default: with the brief's formula
+    // round((80 - 2 × 7.5) × 203 / 25.4) = 519 → 512 dots. The whole 72 mm
+    // head (3.5 mm → 576 dots) was cut off on a real printer; see
+    // defaultSideMargin80Mm in print_geometry.dart, which this must match.
+    // An 8 mm margin would land on 511 → 504, because 203 dpi is slightly
+    // under 8 dots/mm.
+    sideMarginMm: '7.5',
     printableDotsOverride: '',
     feedLines: '3',
     cutPaper: '0',

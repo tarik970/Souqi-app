@@ -162,9 +162,9 @@ void main() {
       final s = InvoiceSettings.fromMap(const {});
       expect(s.paperWidthMm, 80);
       expect(s.printerDpi, 203);
-      expect(s.sideMarginMm, 3.5);
+      expect(s.sideMarginMm, 7.5);
       expect(s.printableDotsOverride, isNull);
-      expect(s.printableDots, 576);
+      expect(s.printableDots, 512);
       expect(s.language, 'ar');
       expect(s.outputMode, OutputMode.print);
       expect(s.currencyDisplay, CurrencyDisplay.symbol);
@@ -231,7 +231,7 @@ void main() {
       });
       expect(s.paperWidthMm, 80);
       expect(s.printerDpi, 100);
-      expect(s.sideMarginMm, 3.5);
+      expect(s.sideMarginMm, 7.5);
       expect(s.extraCurrencies, isEmpty);
       expect(s.logoPng, isNull);
       expect(s.outputMode, OutputMode.print);

@@ -172,7 +172,7 @@ void main() {
         (tester) async {
       await pumpScreen(tester, const InvoiceSettingsScreen());
       expect(tester.takeException(), isNull);
-      expect(find.text('Printable width: 576 dots (72.1 mm)'), findsOneWidget);
+      expect(find.text('Printable width: 512 dots (64.1 mm)'), findsOneWidget);
       expect(find.byType(InvoiceView), findsOneWidget);
 
       await tester.tap(find.text('58 mm'));
@@ -184,8 +184,8 @@ void main() {
 
       await tester.tap(find.text('80 mm'));
       await settle(tester);
-      expect(find.text('Printable width: 576 dots (72.1 mm)'), findsOneWidget);
-      expect(await stored(tester, SettingsKeys.sideMarginMm), '3.5');
+      expect(find.text('Printable width: 512 dots (64.1 mm)'), findsOneWidget);
+      expect(await stored(tester, SettingsKeys.sideMarginMm), '7.5');
     });
 
     testWidgets('the advanced override replaces the computed width',
@@ -219,7 +219,7 @@ void main() {
       // Empty: back to the computed width.
       await tester.enterText(field, '');
       await settle(tester);
-      expect(info('Printable width: 576 dots'), findsOneWidget);
+      expect(info('Printable width: 512 dots'), findsOneWidget);
       expect(await stored(tester, SettingsKeys.printableDotsOverride), '');
     });
 
@@ -396,7 +396,7 @@ void main() {
       expect(share.mimeType, 'image/png');
       expect(share.path, endsWith('invoice-41.png'));
       final size = readPngSize(File(share.path).readAsBytesSync());
-      expect(size!.width, 2 * 576);
+      expect(size!.width, 2 * 512);
       expect(tester.takeException(), isNull);
     });
 
@@ -421,7 +421,7 @@ void main() {
 
       expect(bridge.printed, hasLength(1));
       final bytes = bridge.printed.single.bytes;
-      expect(bytes.sublist(0, 8), [0x1B, 0x40, 0x1D, 0x76, 0x30, 0x00, 72, 0]);
+      expect(bytes.sublist(0, 8), [0x1B, 0x40, 0x1D, 0x76, 0x30, 0x00, 64, 0]);
       // Feed 2 lines, then cut.
       expect(bytes.sublist(bytes.length - 7),
           [0x1B, 0x64, 2, 0x1D, 0x56, 0x42, 0x00]);
