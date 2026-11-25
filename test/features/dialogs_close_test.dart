@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/core/platform/native_bridge.dart';
 import 'package:souqi/core/security/code_cipher.dart';
 import 'package:souqi/core/vouchers/code_import.dart';
 import 'package:souqi/data/db/app_database.dart';
 import 'package:souqi/data/repositories/customer_repository.dart';
+import 'package:souqi/data/repositories/debt_repository.dart';
 import 'package:souqi/data/repositories/pin_repository.dart';
 import 'package:souqi/data/repositories/settings_repository.dart';
 import 'package:souqi/data/repositories/voucher_repository.dart';
@@ -23,16 +25,27 @@ import 'package:souqi/features/customers/customer_form_screen.dart';
 import 'package:souqi/features/customers/customer_picker_screen.dart';
 import 'package:souqi/features/customers/customers_screen.dart';
 import 'package:souqi/features/customers/due_screen.dart';
+import 'package:souqi/features/debts/account_tab.dart';
+import 'package:souqi/features/debts/debt_actions.dart';
+import 'package:souqi/features/debts/debt_settings.dart';
+import 'package:souqi/features/debts/debtors_screen.dart';
+import 'package:souqi/features/debts/entry_form_screen.dart';
+import 'package:souqi/features/debts/opening_balances_screen.dart';
+import 'package:souqi/features/debts/payment_form_screen.dart';
+import 'package:souqi/features/debts/receipt_screen.dart';
 import 'package:souqi/features/home/home_screen.dart';
 import 'package:souqi/features/invoice/invoice_actions.dart';
 import 'package:souqi/features/invoice/invoice_providers.dart';
 import 'package:souqi/features/invoice/invoice_settings_screen.dart';
 import 'package:souqi/features/products/product_form_screen.dart';
 import 'package:souqi/features/products/products_screen.dart';
+import 'package:souqi/features/sale/cash_received.dart';
 import 'package:souqi/features/sale/discount_sheet.dart';
+import 'package:souqi/features/sale/payment_sheet.dart';
 import 'package:souqi/features/sale/quantity_sheet.dart';
 import 'package:souqi/features/sale/quick_item_sheet.dart';
 import 'package:souqi/features/sale/rates_sheet.dart';
+import 'package:souqi/features/sale/sale_invoice_screen.dart';
 import 'package:souqi/features/sale/sale_providers.dart';
 import 'package:souqi/features/sale/sale_screen.dart';
 import 'package:souqi/features/security/pin_dialogs.dart';
@@ -280,6 +293,39 @@ void main() {
     );
   }
 
+  /// Ahmad (customer 1) owes 6,000: a debt of 10,000 three days ago
+  /// (entry 1) and a payment of 4,000 yesterday (entry 2, receipt 1).
+  Future<void> ahmadOwes(AppDatabase database) async {
+    await ahmad(database);
+    final debts = DebtRepository(database.db);
+    await debts.addManualDebt(
+      customerId: 1,
+      amountBaseMinor: 10000,
+      at: DateTime.now().subtract(const Duration(days: 3)),
+    );
+    await debts.recordPayment(
+      customerId: 1,
+      amountMinor: 4000,
+      currencyCode: 'SYP',
+      currencyDecimals: 0,
+      baseCode: 'SYP',
+      baseDecimals: 0,
+      at: DateTime.now().subtract(const Duration(days: 1)),
+    );
+  }
+
+  /// Ahmad owes 4,000 and may owe 5,000 at most.
+  Future<void> ahmadOverLimit(AppDatabase database) async {
+    await ahmad(database);
+    await database.db.update(
+      'customers',
+      {'credit_limit_base_minor': 5000},
+      where: 'id = 1',
+    );
+    await DebtRepository(database.db)
+        .addManualDebt(customerId: 1, amountBaseMinor: 4000);
+  }
+
   /// A bare screen with one button that opens [show] — for the dialogs that
   /// are reached from many places.
   Widget host(Future<void> Function(BuildContext context) show) => Scaffold(
@@ -340,6 +386,337 @@ void main() {
   );
 
   final targets = <Closable>[
+    // ---- The debt ledger (phase 4d) ---------------------------------------
+    Closable(
+      'payment sheet, from "Credit / Partial" on the sale screen',
+      home: const SaleScreen(),
+      seed: sugar,
+      open: (tester) async {
+        await addSugarToCart(tester);
+        await tester.tap(find.byKey(const ValueKey('sale-credit')));
+        await animated(tester);
+      },
+      shown: find.byType(PaymentSheet),
+      // Nothing was saved, and the cart is as it was.
+      after: (tester) async {
+        expect(find.byType(SaleScreen), findsOneWidget);
+        expect(find.byType(SaleInvoiceScreen), findsNothing);
+        final rows = await tester.runAsync(() => database.db.query('invoices'));
+        expect(rows, isEmpty);
+      },
+    ),
+    Closable(
+      'payment sheet with the amount field focused (partial)',
+      home: const SaleScreen(),
+      seed: sugar,
+      open: (tester) async {
+        await addSugarToCart(tester);
+        await tester.tap(find.byKey(const ValueKey('sale-credit')));
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('pay-mode-partial')));
+        await settle(tester, 4);
+      },
+      shown: find.byType(PaymentSheet),
+      keyboard: true,
+      after: (tester) async =>
+          expect(find.byType(SaleScreen), findsOneWidget),
+    ),
+    Closable(
+      'customer picker, from the payment sheet',
+      home: const SaleScreen(),
+      seed: sugar,
+      open: (tester) async {
+        await addSugarToCart(tester);
+        await tester.tap(find.byKey(const ValueKey('sale-credit')));
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('pay-mode-credit')));
+        await settle(tester, 4);
+        await tester.tap(find.byKey(const ValueKey('pay-choose-customer')));
+        await animated(tester);
+      },
+      shown: find.byType(CustomerPickerScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+      // Only the picker closed; the sheet under it is still choosing.
+      after: (tester) async =>
+          expect(find.byType(PaymentSheet), findsOneWidget),
+    ),
+    Closable(
+      'credit-limit confirmation, on top of the payment sheet',
+      home: host((context) => showModalBottomSheet<PaymentChoice>(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            showDragHandle: true,
+            builder: (_) => PaymentSheet(
+              totals: computeCartTotals(
+                const Cart().add(const CartLine(
+                  name: 'Rice',
+                  unitPriceMinor: 8000,
+                  priceCurrencyCode: 'SYP',
+                  qtyThousandths: 1000,
+                )),
+                CurrencyContext.of([syp, usd], baseCode: 'SYP'),
+              ),
+              customer: const SaleCustomer(customerId: 1, name: 'Ahmad'),
+            ),
+          )),
+      seed: ahmadOverLimit,
+      open: (tester) async {
+        await openHost(tester);
+        await tester.tap(find.byKey(const ValueKey('pay-mode-credit')));
+        await settle(tester);
+        await tester.tap(find.byKey(const ValueKey('pay-save')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('credit-limit-confirm')),
+      button: cancel,
+      // Only the confirmation closed: the sheet is still there, unsaved.
+      after: (tester) async =>
+          expect(find.byType(PaymentSheet), findsOneWidget),
+    ),
+    Closable(
+      'cash-received dialog, from the totals panel',
+      home: const SaleScreen(),
+      seed: (database) async {
+        await sugar(database);
+        await SettingsRepository(database.db)
+            .setBool(SettingsKeys.showCashReceived, true);
+      },
+      open: (tester) async {
+        final button = find.byKey(const ValueKey('cash-received-button'));
+        // The line is only there once the cart has something in it.
+        if (button.evaluate().isEmpty) await addSugarToCart(tester);
+        await tester.tap(button);
+        await animated(tester);
+      },
+      shown: find.byType(CashReceivedDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'ledger entry sheet',
+      home: const CustomerDetailScreen(
+        customerId: 1,
+        initialTab: CustomerTab.account,
+      ),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byType(LedgerTile).first);
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('entry-sheet')),
+    ),
+    Closable(
+      'reverse-entry dialog',
+      home: host((context) => showDialog<String>(
+            context: context,
+            builder: (_) =>
+                const ReverseEntryDialog(description: 'Receipt 1 · 4,000'),
+          )),
+      open: openHost,
+      shown: find.byType(ReverseEntryDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'reverse-entry dialog, from the ledger entry sheet',
+      home: const CustomerDetailScreen(
+        customerId: 1,
+        initialTab: CustomerTab.account,
+      ),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byType(LedgerTile).first);
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('entry-reverse')));
+        await animated(tester);
+      },
+      shown: find.byType(ReverseEntryDialog),
+      button: cancel,
+      keyboard: true,
+      // Cancelled: the ledger still has exactly the two entries of the seed.
+      after: (tester) async {
+        final rows = await tester
+            .runAsync(() => database.db.query('debt_transactions'));
+        expect(rows, hasLength(2));
+      },
+    ),
+    Closable(
+      'record-payment form',
+      home: const CustomerDetailScreen(
+        customerId: 1,
+        initialTab: CustomerTab.account,
+      ),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('account-pay')));
+        await animated(tester);
+      },
+      shown: find.byType(RecordPaymentScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+    ),
+    Closable(
+      'manual-debt form',
+      home: const CustomerDetailScreen(
+        customerId: 1,
+        initialTab: CustomerTab.account,
+      ),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('account-add-debt')));
+        await animated(tester);
+      },
+      shown: find.byType(LedgerEntryFormScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+    ),
+    for (final (name, item) in const [
+      ('opening-balance form', 'account-opening'),
+      ('adjustment form', 'account-adjust'),
+    ])
+      Closable(
+        name,
+        home: const CustomerDetailScreen(
+          customerId: 1,
+          initialTab: CustomerTab.account,
+        ),
+        seed: ahmadOwes,
+        open: (tester) async {
+          await tester.tap(find.byKey(const ValueKey('account-more')));
+          await animated(tester);
+          await tester.tap(find.byKey(ValueKey(item)));
+          await animated(tester);
+        },
+        shown: find.byType(LedgerEntryFormScreen),
+        button: find.byType(BackButton),
+        keyboard: true,
+        isPage: true,
+      ),
+    Closable(
+      'account statement page',
+      home: const CustomerDetailScreen(
+        customerId: 1,
+        initialTab: CustomerTab.account,
+      ),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('account-statement')));
+        await animated(tester);
+      },
+      shown: find.byType(StatementScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'payment receipt page, from the ledger',
+      home: const CustomerDetailScreen(
+        customerId: 1,
+        initialTab: CustomerTab.account,
+      ),
+      seed: ahmadOwes,
+      open: (tester) async {
+        // The newest entry of the seed is the payment.
+        await tester.tap(find.byType(LedgerTile).first);
+        await animated(tester);
+        await tester.tap(find.byKey(const ValueKey('entry-open-receipt')));
+        await animated(tester);
+      },
+      shown: find.byType(ReceiptScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'more-actions sheet of a receipt',
+      home: const ReceiptScreen(entryId: 2),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('paper-more')));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('paper-more-savePdf')),
+    ),
+    Closable(
+      'debtors list, from the home card',
+      home: const HomeScreen(),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('home-debts')));
+        await animated(tester);
+      },
+      shown: find.byType(DebtorsScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+    ),
+    Closable(
+      'opening-balances page, from the debtors list',
+      home: const DebtorsScreen(),
+      open: (tester) async {
+        await tester
+            .tap(find.byKey(const ValueKey('debtors-opening-balances')));
+        await animated(tester);
+      },
+      shown: find.byType(OpeningBalancesScreen),
+      button: find.byType(BackButton),
+      keyboard: true,
+      isPage: true,
+    ),
+    Closable(
+      'debt reminder text dialog',
+      home: host((context) => showDialog<String>(
+            context: context,
+            builder: (_) => const DebtReminderDialog(
+              initial: 'Hello {name}',
+              defaultText: 'Hello {name}, {balance}',
+            ),
+          )),
+      open: openHost,
+      shown: find.byType(DebtReminderDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'deactivate a customer who owes money',
+      home: const CustomerDetailScreen(customerId: 1),
+      seed: ahmadOwes,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('customer-menu')));
+        await animated(tester);
+        await tester.tap(find.text('Deactivate'));
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('deactivate-with-balance')),
+      button: cancel,
+      // Cancelled: still active.
+      after: (tester) async {
+        final rows = await tester.runAsync(() => database.db.query('customers'));
+        expect(rows!.first['is_active'], 1);
+      },
+    ),
+    Closable(
+      'PIN prompt in front of the debtors list',
+      home: const HomeScreen(),
+      seed: (database) async {
+        await ahmadOwes(database);
+        await withPin(database);
+        await SettingsRepository(database.db)
+            .setBool(SettingsKeys.debtRequirePin, true);
+      },
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('home-debts')));
+        await animated(tester);
+      },
+      shown: find.byType(PinEntryDialog),
+      button: cancel,
+      keyboard: true,
+      // Closed without the PIN: the list did not open.
+      after: (tester) async =>
+          expect(find.byType(DebtorsScreen), findsNothing),
+    ),
     // The one that crashed on the phone.
     Closable(
       'update-rate dialog, from the sale screen',

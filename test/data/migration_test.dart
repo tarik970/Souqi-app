@@ -4,6 +4,9 @@ import 'package:souqi/core/security/code_cipher.dart';
 import 'package:souqi/data/db/migrations/migration_v1.dart';
 import 'package:souqi/data/db/migrations/migration_v2.dart';
 import 'package:souqi/data/db/migrations/migration_v3.dart';
+import 'package:souqi/data/db/migrations/migration_v4.dart';
+import 'package:souqi/core/money/exchange.dart';
+import 'package:souqi/data/repositories/debt_repository.dart';
 import 'package:souqi/data/repositories/archive_repository.dart';
 import 'package:souqi/data/repositories/audit_repository.dart';
 import 'package:souqi/data/repositories/product_repository.dart';
@@ -29,8 +32,8 @@ void main() {
   group('schema', () {
     test('user_version is the latest migration', () async {
       final rows = await db.rawQuery('PRAGMA user_version');
-      expect(rows.first.values.first, 4);
-      expect(AppDatabase.schemaVersion, 4);
+      expect(rows.first.values.first, 5);
+      expect(AppDatabase.schemaVersion, 5);
     });
 
     test('foreign keys are enforced', () async {
@@ -140,7 +143,9 @@ void main() {
       await db.insert('debt_transactions', {
         'customer_id': customerId,
         'created_at': DateTime.now().millisecondsSinceEpoch,
+        'recorded_at': DateTime.now().millisecondsSinceEpoch,
         'type': 'DEBT',
+        'direction': 1,
         'amount_base_minor': 5000,
       });
       expect(
@@ -444,7 +449,8 @@ void main() {
       final upgraded =
           await AppDatabase.open(factory: databaseFactoryFfi, path: path);
       final db = upgraded.db;
-      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 4);
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first,
+          AppDatabase.schemaVersion);
 
       // Not a row lost, in any table.
       expect(await counts(db), before);
@@ -578,6 +584,299 @@ void main() {
 
       await upgraded.close();
       await databaseFactoryFfi.deleteDatabase(path);
+    });
+  });
+
+  group('v4 → v5 (debt ledger)', () {
+    /// A database exactly as version 4 of the app (phase 4c) left it.
+    Future<Database> openV4(String path) => databaseFactoryFfi.openDatabase(
+          path,
+          options: OpenDatabaseOptions(
+            version: 4,
+            onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+            onCreate: (db, _) async {
+              await const MigrationV1().apply(db);
+              await const MigrationV2().apply(db);
+              await const MigrationV3().apply(db);
+              await const MigrationV4().apply(db);
+            },
+          ),
+        );
+
+    test('a populated version-4 database upgrades without losing a row',
+        () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v4_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV4(path);
+
+      final sugarId = await insertProduct(old, name: 'Sugar', code: '101');
+      final ahmad = await insertCustomer(old, name: 'Ahmad');
+      final sara = await insertCustomer(old, name: 'Sara');
+      await old.insert('customer_accounts', {
+        'customer_id': ahmad,
+        'account_number': '0011-2233',
+        'account_number_norm': '00112233',
+        'created_at': 1,
+      });
+      await old.insert('settings',
+          {'key': 'shop_name', 'value': 'Al-Baraka', 'updated_at': 1});
+      await old.update('counters', {'value': 2},
+          where: 'name = ?', whereArgs: ['invoice_no']);
+      final firstInvoice = await insertInvoice(old,
+          invoiceNo: 1, customerName: 'Ahmad', accountNumber: '0011-2233');
+      await insertInvoiceItem(old, invoiceId: firstInvoice, productId: sugarId);
+      final secondInvoice = await insertInvoice(old, invoiceNo: 2);
+      await insertInvoiceItem(old, invoiceId: secondInvoice, productId: sugarId);
+      await old.insert('audit_log', {
+        'created_at': 3000,
+        'action': 'PIN_SET',
+      });
+
+      // Ledger rows in the old shape. The app never wrote any before this
+      // version, but the table was there since version 1 and the migration
+      // carries whatever it holds — every type the old CHECK allowed.
+      const day = Duration.millisecondsPerDay;
+      final debtId = await old.insert('debt_transactions', {
+        'customer_id': ahmad,
+        'invoice_id': secondInvoice,
+        'created_at': 10 * day,
+        'type': 'DEBT',
+        'amount_base_minor': 9000,
+        'note': 'on the slate',
+      });
+      final paymentId = await old.insert('debt_transactions', {
+        'customer_id': ahmad,
+        'created_at': 12 * day,
+        'type': 'PAYMENT',
+        'amount_base_minor': 2600,
+        'orig_amount_minor': 20,
+        'orig_currency_code': 'USD',
+        'orig_rate_num': 13000,
+        'orig_rate_den': 1,
+      });
+      final adjustmentId = await old.insert('debt_transactions', {
+        'customer_id': sara,
+        'created_at': 13 * day,
+        'type': 'ADJUSTMENT',
+        'amount_base_minor': 400,
+      });
+
+      Future<Map<String, int>> counts(DatabaseExecutor db) async => {
+            for (final table in [
+              'products',
+              'customers',
+              'customer_accounts',
+              'invoices',
+              'invoice_items',
+              'voucher_batches',
+              'voucher_codes',
+              'audit_log',
+              'settings',
+              'currencies',
+              'units',
+              'debt_transactions',
+            ])
+              table: (await db.rawQuery('SELECT COUNT(*) FROM $table'))
+                  .first
+                  .values
+                  .first! as int,
+          };
+      final before = await counts(old);
+      final invoicesBefore = await old.query('invoices', orderBy: 'id');
+      final customersBefore = await old.query('customers', orderBy: 'id');
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      final db = upgraded.db;
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 5);
+
+      // Not a row lost, in any table; the scratch copy is gone.
+      expect(await counts(db), before);
+      expect(
+        await db.rawQuery("SELECT name FROM sqlite_master "
+            "WHERE name = 'debt_transactions_v1'"),
+        isEmpty,
+      );
+      expect(await db.rawQuery('PRAGMA foreign_key_check'), isEmpty);
+
+      // Every old column of every invoice and customer is what it was, and
+      // the new ones are there and empty: an old invoice prints as before.
+      final invoicesAfter = await db.query('invoices', orderBy: 'id');
+      for (var i = 0; i < invoicesBefore.length; i++) {
+        for (final column in invoicesBefore[i].keys) {
+          expect(invoicesAfter[i][column], invoicesBefore[i][column],
+              reason: 'invoices.$column of row $i');
+        }
+        for (final column in [
+          'paid_minor',
+          'credit_used_minor',
+          'prev_balance_base_minor',
+          'new_balance_base_minor',
+        ]) {
+          expect(invoicesAfter[i].containsKey(column), isTrue);
+          expect(invoicesAfter[i][column], isNull);
+        }
+      }
+      final customersAfter = await db.query('customers', orderBy: 'id');
+      for (var i = 0; i < customersBefore.length; i++) {
+        for (final column in customersBefore[i].keys) {
+          expect(customersAfter[i][column], customersBefore[i][column],
+              reason: 'customers.$column of row $i');
+        }
+        expect(customersAfter[i].containsKey('credit_limit_base_minor'), isTrue);
+        expect(customersAfter[i]['credit_limit_base_minor'], isNull);
+        expect(customersAfter[i]['default_due_days'], isNull);
+      }
+
+      // The old ledger rows, ids kept, in the new shape.
+      final debt = (await db.query('debt_transactions',
+              where: 'id = ?', whereArgs: [debtId]))
+          .single;
+      expect(debt['type'], 'DEBT');
+      expect(debt['direction'], 1);
+      expect(debt['amount_base_minor'], 9000);
+      expect(debt['note'], 'on the slate');
+      expect(debt['invoice_id'], secondInvoice);
+      expect(debt['invoice_no'], 2, reason: 'snapshotted from the invoice');
+      expect(debt['created_at'], 10 * day);
+      expect(debt['recorded_at'], 10 * day);
+      expect(debt['due_at'], 40 * day);
+      expect(debt['receipt_no'], isNull);
+      expect(debt['reverses_id'], isNull);
+      final payment = (await db.query('debt_transactions',
+              where: 'id = ?', whereArgs: [paymentId]))
+          .single;
+      expect(payment['direction'], -1);
+      expect(payment['due_at'], isNull);
+      expect(payment['orig_amount_minor'], 20);
+      expect(payment['orig_currency_code'], 'USD');
+      expect(payment['orig_rate_num'], 13000);
+      expect(payment['invoice_no'], isNull);
+      final adjustment = (await db.query('debt_transactions',
+              where: 'id = ?', whereArgs: [adjustmentId]))
+          .single;
+      expect(adjustment['type'], 'ADJUSTMENT');
+      expect(adjustment['direction'], 1);
+
+      final names = {
+        for (final row in await db.rawQuery("SELECT name FROM sqlite_master "
+            "WHERE type IN ('index', 'trigger')"))
+          row['name'],
+      };
+      expect(
+        names.containsAll([
+          'idx_debt_customer',
+          'idx_debt_fifo',
+          'idx_debt_invoice',
+          'idx_debt_created',
+          'idx_debt_reverses',
+          'idx_debt_receipt',
+          'trg_debt_no_update',
+          'trg_debt_no_delete',
+        ]),
+        isTrue,
+        reason: 'indexes and triggers: $names',
+      );
+
+      // The rest of the shop is untouched.
+      expect((await db.query('settings',
+              where: 'key = ?', whereArgs: ['shop_name']))
+          .single['value'], 'Al-Baraka');
+      expect(
+        (await db.query('counters',
+                where: 'name = ?', whereArgs: ['invoice_no']))
+            .single['value'],
+        2,
+      );
+
+      // And the new code works on the old rows.
+      final debts = DebtRepository(db);
+      expect(await debts.balanceOf(ahmad), 6400);
+      expect(await debts.balanceOf(sara), 400);
+      final lines = await debts.ledger(ahmad);
+      expect(lines.map((l) => l.balanceAfterBaseMinor), [6400, 9000]);
+      expect(lines.first.entry.origRate, const RateFraction(13000, 1));
+      final snapshot = await debts.debtors(
+          now: DateTime.fromMillisecondsSinceEpoch(50 * day, isUtc: true));
+      expect(snapshot.totalOutstandingBaseMinor, 6800);
+      expect(snapshot.overdueCount, 2);
+      // New entries continue after the old ids, and receipts start at 1.
+      final receipt = await debts.recordPayment(
+        customerId: ahmad,
+        amountMinor: 400,
+        currencyCode: 'SYP',
+        currencyDecimals: 0,
+        baseCode: 'SYP',
+        baseDecimals: 0,
+      );
+      expect(receipt.id, greaterThan(adjustmentId));
+      expect(receipt.receiptNo, 1);
+      final reversal = await debts.reverse(debtId, reason: 'entered twice');
+      expect(reversal.reversedInvoiceNo, 2);
+      expect(await debts.balanceOf(ahmad), -3000);
+
+      // Deleting the old invoice keeps the old debt, number and all.
+      await ArchiveRepository(db).deleteInvoice(secondInvoice);
+      final kept = (await db.query('debt_transactions',
+              where: 'id = ?', whereArgs: [debtId]))
+          .single;
+      expect(kept['invoice_id'], isNull);
+      expect(kept['invoice_no'], 2);
+      expect(kept['amount_base_minor'], 9000);
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('a fresh install and an upgraded one have the same schema',
+        () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v4_schema_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      await (await openV4(path)).close();
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+
+      // The full CREATE text of everything: tables with their CHECKs,
+      // indexes with their WHERE, triggers with their bodies.
+      Future<Map<Object?, Object?>> schema(Database database) async => {
+            for (final row in await database.rawQuery(
+                "SELECT name, sql FROM sqlite_master "
+                "WHERE name NOT LIKE 'sqlite_%' AND name != 'android_metadata'"))
+              row['name']: row['sql'],
+          };
+
+      // `db` is the fresh in-memory database of setUp.
+      final fresh = await schema(db);
+      final migrated = await schema(upgraded.db);
+      expect(migrated.keys.toSet(), fresh.keys.toSet());
+      for (final name in const [
+        'debt_transactions',
+        'idx_debt_customer',
+        'idx_debt_fifo',
+        'idx_debt_invoice',
+        'idx_debt_created',
+        'idx_debt_reverses',
+        'idx_debt_receipt',
+        'trg_debt_no_update',
+        'trg_debt_no_delete',
+      ]) {
+        expect(migrated[name], fresh[name], reason: name);
+        expect(fresh[name], isNotNull, reason: name);
+      }
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('ledger ids are AUTOINCREMENT: an id is never handed out twice',
+        () async {
+      final sql = (await db.rawQuery("SELECT sql FROM sqlite_master "
+              "WHERE name = 'debt_transactions'"))
+          .single['sql'] as String;
+      expect(sql, contains('AUTOINCREMENT'));
     });
   });
 

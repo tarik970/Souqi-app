@@ -114,7 +114,36 @@ class CustomerRepository {
       'phone_norm': phoneNorm.isEmpty ? null : phoneNorm,
       'notes': _blankToNull(customer.notes),
       'is_active': customer.isActive ? 1 : 0,
+      'credit_limit_base_minor': customer.creditLimitBaseMinor,
+      'default_due_days': customer.defaultDueDays,
     };
+  }
+
+  /// The customer a typed name (and phone) most likely IS — the duplicate
+  /// guard for customers created on the fly (the opening-balances screen):
+  /// the same normalized name ("أحمد" is "احمد"), and no phone that says
+  /// otherwise. Two customers who share a name but have different phones are
+  /// two people. Deactivated customers match too: typing their name again
+  /// means the same person, not a second record.
+  Future<Customer?> findByNameAndPhone(String name, {String? phone}) async {
+    final nameNorm = normalizeName(name);
+    if (nameNorm.isEmpty) return null;
+    final typedPhone = normalizePhone(phone ?? '');
+    final rows = await _db.query(
+      'customers',
+      where: 'name_norm = ?',
+      whereArgs: [nameNorm],
+      orderBy: 'is_active DESC, id ASC',
+    );
+    for (final row in rows) {
+      final existingPhone = (row['phone_norm'] as String?) ?? '';
+      if (typedPhone.isEmpty ||
+          existingPhone.isEmpty ||
+          existingPhone == typedPhone) {
+        return Customer.fromMap(row);
+      }
+    }
+    return null;
   }
 
   Future<int> insert(Customer customer) => _db.insert('customers', {

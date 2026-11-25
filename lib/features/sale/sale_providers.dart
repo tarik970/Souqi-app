@@ -42,6 +42,33 @@ final sellableCurrenciesProvider = Provider<List<Currency>>((ref) {
   ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 });
 
+/// The cash the customer handed over for the sale in progress, typed into
+/// the optional "cash received" field of the totals panel — only ever used
+/// to show the change to give back; it is not stored with the invoice.
+class CashReceived {
+  const CashReceived({required this.amountMinor, required this.currencyCode});
+
+  /// In minor units of [currencyCode] — the invoice currency it was typed
+  /// in. Changing the invoice currency makes it meaningless, and the panel
+  /// then shows the field empty again.
+  final int amountMinor;
+  final String currencyCode;
+}
+
+class CashReceivedNotifier extends Notifier<CashReceived?> {
+  @override
+  CashReceived? build() => null;
+
+  void set(CashReceived? value) => state = value;
+
+  void clear() => state = null;
+}
+
+final cashReceivedProvider =
+    NotifierProvider<CashReceivedNotifier, CashReceived?>(
+  CashReceivedNotifier.new,
+);
+
 class CartNotifier extends Notifier<Cart> {
   @override
   Cart build() => const Cart();
@@ -55,7 +82,11 @@ class CartNotifier extends Notifier<Cart> {
 
   void remove(int lineId) => state = state.remove(lineId);
 
-  void clear() => state = state.clear();
+  void clear() {
+    state = state.clear();
+    // The money on the counter belonged to that cart.
+    ref.read(cashReceivedProvider.notifier).clear();
+  }
 
   void setDiscount(Discount? discount) =>
       state = state.withDiscount(discountEnabled ? discount : null);
@@ -65,7 +96,10 @@ class CartNotifier extends Notifier<Cart> {
 
   /// Starts a brand-new sale: no lines, no discount, invoice currency back to
   /// the base currency.
-  void reset() => state = const Cart();
+  void reset() {
+    state = const Cart();
+    ref.read(cashReceivedProvider.notifier).clear();
+  }
 }
 
 final cartProvider = NotifierProvider<CartNotifier, Cart>(CartNotifier.new);
@@ -185,6 +219,7 @@ class SaleSettings {
     this.saveNewItems = true,
     this.updatePrices = true,
     this.autoFavorites = true,
+    this.cashReceivedField = false,
   });
 
   /// An item typed during a sale becomes a product when the invoice is saved.
@@ -196,15 +231,21 @@ class SaleSettings {
   /// The favorites bar is topped up with the best sellers of the last 30 days.
   final bool autoFavorites;
 
+  /// The totals panel shows a small "cash received" field that works out the
+  /// change to give back. Off by default.
+  final bool cashReceivedField;
+
   SaleSettings copyWith({
     bool? saveNewItems,
     bool? updatePrices,
     bool? autoFavorites,
+    bool? cashReceivedField,
   }) =>
       SaleSettings(
         saveNewItems: saveNewItems ?? this.saveNewItems,
         updatePrices: updatePrices ?? this.updatePrices,
         autoFavorites: autoFavorites ?? this.autoFavorites,
+        cashReceivedField: cashReceivedField ?? this.cashReceivedField,
       );
 }
 
@@ -218,6 +259,7 @@ class SaleSettingsNotifier extends AsyncNotifier<SaleSettings> {
       updatePrices:
           await settings.getBool(SettingsKeys.updateProductPriceFromSales),
       autoFavorites: await settings.getBool(SettingsKeys.autoFavorites),
+      cashReceivedField: await settings.getBool(SettingsKeys.showCashReceived),
     );
   }
 
@@ -230,6 +272,7 @@ class SaleSettingsNotifier extends AsyncNotifier<SaleSettings> {
       SettingsKeys.saveNewItemsAsProducts: next.saveNewItems ? '1' : '0',
       SettingsKeys.updateProductPriceFromSales: next.updatePrices ? '1' : '0',
       SettingsKeys.autoFavorites: next.autoFavorites ? '1' : '0',
+      SettingsKeys.showCashReceived: next.cashReceivedField ? '1' : '0',
     });
   }
 }

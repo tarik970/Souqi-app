@@ -1,10 +1,14 @@
 import 'package:sqflite/sqflite.dart';
 
-/// Persistent, never-reused sequential counters (invoice numbers).
+/// Persistent, never-reused sequential counters (invoice numbers, payment
+/// receipt numbers).
 class CounterRepository {
   const CounterRepository();
 
   static const invoiceNo = 'invoice_no';
+
+  /// Payment receipts ("سند قبض") of the debt ledger.
+  static const receiptNo = 'receipt_no';
 
   /// Increments [name] and returns the new value.
   ///

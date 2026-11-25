@@ -178,6 +178,10 @@ class Invoice {
     this.accountProvider,
     this.note,
     this.items = const [],
+    this.paidMinor,
+    this.creditUsedMinor,
+    this.prevBalanceBaseMinor,
+    this.newBalanceBaseMinor,
   });
 
   final int? id;
@@ -213,6 +217,37 @@ class Invoice {
   final String? note;
 
   final List<InvoiceItem> items;
+
+  // --- Payment (debt ledger) ---------------------------------------------
+  // Written by InvoiceRepository.save when the sale went through the
+  // payment sheet. All null on an invoice saved without it (the debt
+  // feature off, or any invoice from before schema version 5), which then
+  // prints exactly as it always did.
+
+  /// Money received at the sale, in the invoice currency.
+  final int? paidMinor;
+
+  /// How much of the unpaid rest was covered by the customer's credit
+  /// balance, in the invoice currency.
+  final int? creditUsedMinor;
+
+  /// The customer's balance before and after this sale, in the BASE
+  /// currency. Snapshots of what the invoice printed; null without a
+  /// customer.
+  final int? prevBalanceBaseMinor;
+  final int? newBalanceBaseMinor;
+
+  /// What the sale charged to the customer's account: the total less the
+  /// money received. 0 for a sale paid in full (and for an old invoice).
+  int get chargedMinor => paidMinor == null ? 0 : totalMinor - paidMinor!;
+
+  /// What is still owed for THIS invoice after the money received and the
+  /// credit balance used.
+  int get remainingMinor => chargedMinor - (creditUsedMinor ?? 0);
+
+  /// The sale was not simply paid in full: the invoice has a payment story
+  /// to print (paid / from credit / remaining).
+  bool get hasDebtLines => chargedMinor > 0;
 
   /// Saving this invoice renews the attached account: it is linked to one
   /// and sells at least one SERVICE/CARD item. A customer's account attached
@@ -311,7 +346,15 @@ class Invoice {
     );
   }
 
-  Invoice copyWith({int? id, int? invoiceNo, List<InvoiceItem>? items}) =>
+  Invoice copyWith({
+    int? id,
+    int? invoiceNo,
+    List<InvoiceItem>? items,
+    int? paidMinor,
+    int? creditUsedMinor,
+    int? prevBalanceBaseMinor,
+    int? newBalanceBaseMinor,
+  }) =>
       Invoice(
         id: id ?? this.id,
         invoiceNo: invoiceNo ?? this.invoiceNo,
@@ -334,6 +377,10 @@ class Invoice {
         accountProvider: accountProvider,
         note: note,
         items: items ?? this.items,
+        paidMinor: paidMinor ?? this.paidMinor,
+        creditUsedMinor: creditUsedMinor ?? this.creditUsedMinor,
+        prevBalanceBaseMinor: prevBalanceBaseMinor ?? this.prevBalanceBaseMinor,
+        newBalanceBaseMinor: newBalanceBaseMinor ?? this.newBalanceBaseMinor,
       );
 
   /// Row for the `invoices` table. [invoiceNo] is passed separately because
@@ -376,6 +423,10 @@ class Invoice {
       'account_number_norm':
           accountNumber == null ? null : normalizeCode(accountNumber!),
       'note': note,
+      'paid_minor': paidMinor,
+      'credit_used_minor': creditUsedMinor,
+      'prev_balance_base_minor': prevBalanceBaseMinor,
+      'new_balance_base_minor': newBalanceBaseMinor,
     };
   }
 
@@ -423,6 +474,10 @@ class Invoice {
       accountProvider: map['account_provider'] as String?,
       note: map['note'] as String?,
       items: items,
+      paidMinor: map['paid_minor'] as int?,
+      creditUsedMinor: map['credit_used_minor'] as int?,
+      prevBalanceBaseMinor: map['prev_balance_base_minor'] as int?,
+      newBalanceBaseMinor: map['new_balance_base_minor'] as int?,
     );
   }
 }

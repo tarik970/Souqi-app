@@ -2180,4 +2180,664 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get auditRecoveryCodeCreate => 'Recovery code created';
+
+  @override
+  String get debtsTitle => 'Debts';
+
+  @override
+  String get debtorsTitle => 'Debtors';
+
+  @override
+  String get accountTab => 'Account';
+
+  @override
+  String get customerDetailsTab => 'Details';
+
+  @override
+  String get balanceLabel => 'Balance';
+
+  @override
+  String balanceOwes(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String balanceCredit(String amount) {
+    return 'Credit $amount';
+  }
+
+  @override
+  String get balanceSettled => 'No balance';
+
+  @override
+  String get creditLimitLabel => 'Credit limit';
+
+  @override
+  String get lastPaymentLabel => 'Last payment';
+
+  @override
+  String get neverPaid => 'No payment yet';
+
+  @override
+  String get overdueBadge => 'Overdue';
+
+  @override
+  String overdueAmount(String amount) {
+    return 'Overdue: $amount';
+  }
+
+  @override
+  String oldestDebtAge(String days) {
+    return 'Oldest debt: $days days';
+  }
+
+  @override
+  String get oldestDebtToday => 'Oldest debt: today';
+
+  @override
+  String get overLimitBadge => 'Over limit';
+
+  @override
+  String get recordPayment => 'Record payment';
+
+  @override
+  String get addDebt => 'Add debt';
+
+  @override
+  String get openingBalance => 'Opening balance';
+
+  @override
+  String get adjustment => 'Adjustment';
+
+  @override
+  String get accountStatement => 'Account statement';
+
+  @override
+  String get sendDebtReminder => 'Remind on WhatsApp';
+
+  @override
+  String get debtReminderNoPhone => 'This customer has no phone number';
+
+  @override
+  String entryInvoice(String no) {
+    return 'Invoice $no';
+  }
+
+  @override
+  String entryReceipt(String no) {
+    return 'Receipt $no';
+  }
+
+  @override
+  String get entryPayment => 'Payment';
+
+  @override
+  String get entryManualDebt => 'Debt';
+
+  @override
+  String entryReversalOf(String what) {
+    return 'Reversal: $what';
+  }
+
+  @override
+  String get entryReversed => 'Reversed';
+
+  @override
+  String get ledgerEmpty => 'No entries yet';
+
+  @override
+  String get ledgerNoMatch => 'No entries match the filter';
+
+  @override
+  String get ledgerDebit => 'Debit';
+
+  @override
+  String get ledgerCredit => 'Credit';
+
+  @override
+  String get dateLabel => 'Date';
+
+  @override
+  String get descriptionLabel => 'Description';
+
+  @override
+  String get typeFilterDebts => 'Debts';
+
+  @override
+  String get typeFilterPayments => 'Payments';
+
+  @override
+  String get typeFilterOther => 'Other';
+
+  @override
+  String invoiceDeletedNote(String no) {
+    return 'Invoice $no was deleted from the archive. The debt stays in the account.';
+  }
+
+  @override
+  String get openInvoice => 'Open invoice';
+
+  @override
+  String get viewReceipt => 'Receipt';
+
+  @override
+  String get reverseEntry => 'Reverse entry';
+
+  @override
+  String get reverseTitle => 'Reverse this entry?';
+
+  @override
+  String get reverseMessage =>
+      'The entry stays in the ledger, struck through, and a reversal entry cancels it. This cannot be undone.';
+
+  @override
+  String get reasonRequired => 'Enter the reason';
+
+  @override
+  String get pinReasonReverse => 'Enter the PIN to reverse a ledger entry.';
+
+  @override
+  String get pinReasonAdjustment => 'Enter the PIN to adjust a balance.';
+
+  @override
+  String get pinReasonCreditLimit =>
+      'Enter the PIN to sell over the credit limit.';
+
+  @override
+  String get pinReasonDebtAccess => 'Enter the PIN to open the debts.';
+
+  @override
+  String get entryReversedSnack => 'Entry reversed';
+
+  @override
+  String dueOnLabel(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get paymentMethodLabel => 'Payment method';
+
+  @override
+  String get methodCash => 'Cash';
+
+  @override
+  String get methodTransfer => 'Transfer';
+
+  @override
+  String get methodOther => 'Other';
+
+  @override
+  String get amountLabel => 'Amount';
+
+  @override
+  String get amountInvalid => 'Enter an amount greater than zero';
+
+  @override
+  String get payFullBalance => 'Pay full balance';
+
+  @override
+  String get paymentCurrencyLabel => 'Currency';
+
+  @override
+  String paymentRateLabel(String base, String code) {
+    return 'Rate: $base per 1 $code';
+  }
+
+  @override
+  String paymentCountsAs(String amount) {
+    return 'Counts as $amount';
+  }
+
+  @override
+  String paymentOverBalance(String amount) {
+    return 'More than the balance: the customer will have a credit of $amount.';
+  }
+
+  @override
+  String get noteOptional => 'Note (optional)';
+
+  @override
+  String get receiptTitle => 'Payment receipt';
+
+  @override
+  String receiptNoLabel(String no) {
+    return 'Receipt no. $no';
+  }
+
+  @override
+  String get receiptReceivedFrom => 'Received from';
+
+  @override
+  String get receiptAmountLabel => 'Amount paid';
+
+  @override
+  String get receiptPaidAs => 'Received as';
+
+  @override
+  String get receiptMethodLabel => 'Method';
+
+  @override
+  String get receiptNoteLabel => 'Note';
+
+  @override
+  String get receiptReversedMark => 'CANCELLED';
+
+  @override
+  String get previousBalanceLabel => 'Previous balance';
+
+  @override
+  String get newBalanceLabel => 'New balance';
+
+  @override
+  String get paperOwes => 'owes';
+
+  @override
+  String get paperCredit => 'credit';
+
+  @override
+  String get statementOpening => 'Balance brought forward';
+
+  @override
+  String get statementClosing => 'Closing balance';
+
+  @override
+  String get statementTotalDebits => 'Total debits';
+
+  @override
+  String get statementTotalCredits => 'Total credits';
+
+  @override
+  String get statementNoEntries => 'No entries in this period';
+
+  @override
+  String get statementWholeAccount => 'Whole account';
+
+  @override
+  String get statementLast30 => 'Last 30 days';
+
+  @override
+  String statementUntil(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String get debtorsTotalOutstanding => 'Total outstanding';
+
+  @override
+  String debtorsOwingCount(String count) {
+    return '$count customers owe';
+  }
+
+  @override
+  String debtorsCreditTotal(String amount) {
+    return 'We owe customers: $amount';
+  }
+
+  @override
+  String get agingTitle => 'Debts by age';
+
+  @override
+  String get aging0to30 => '0–30 days';
+
+  @override
+  String get aging31to60 => '31–60 days';
+
+  @override
+  String get aging61to90 => '61–90 days';
+
+  @override
+  String get agingOver90 => 'Over 90 days';
+
+  @override
+  String get sortLabel => 'Sort';
+
+  @override
+  String get sortByAmount => 'Largest amount';
+
+  @override
+  String get sortByOldest => 'Oldest debt';
+
+  @override
+  String get sortByLastPayment => 'Longest since a payment';
+
+  @override
+  String get filterOverdue => 'Overdue';
+
+  @override
+  String get filterOverLimit => 'Over limit';
+
+  @override
+  String get filterCreditBalances => 'Credit balances';
+
+  @override
+  String get debtorsEmpty => 'Nobody owes anything';
+
+  @override
+  String get debtorsNoMatch => 'No matching customers';
+
+  @override
+  String lastPaymentOn(String date) {
+    return 'Last payment $date';
+  }
+
+  @override
+  String get paymentSheetTitle => 'Payment';
+
+  @override
+  String get payFull => 'Paid in full';
+
+  @override
+  String get payPartial => 'Partial';
+
+  @override
+  String get payCredit => 'On credit';
+
+  @override
+  String get amountPaidLabel => 'Amount paid';
+
+  @override
+  String remainingAsDebt(String amount) {
+    return 'Goes on the account: $amount';
+  }
+
+  @override
+  String get cashReceivedLabel => 'Cash received (optional)';
+
+  @override
+  String changeDue(String amount) {
+    return 'Change to give back: $amount';
+  }
+
+  @override
+  String get cashShort => 'Less than the amount to pay';
+
+  @override
+  String get customerRequiredForDebt => 'Choose a customer to sell on credit';
+
+  @override
+  String get chooseCustomer => 'Choose customer';
+
+  @override
+  String get changeCustomer => 'Change';
+
+  @override
+  String useCreditBalance(String amount) {
+    return 'Use credit balance ($amount)';
+  }
+
+  @override
+  String toPayNow(String amount) {
+    return 'To pay now: $amount';
+  }
+
+  @override
+  String get dueDateLabel => 'Due date';
+
+  @override
+  String get creditLimitWarningTitle => 'Over the credit limit';
+
+  @override
+  String creditLimitWarning(
+    String balance,
+    String sale,
+    String newBalance,
+    String limit,
+  ) {
+    return 'Balance $balance + this sale $sale = $newBalance. The limit is $limit.';
+  }
+
+  @override
+  String get overrideAndSave => 'Override and save';
+
+  @override
+  String get creditLimitConfirmTitle => 'Sell over the limit?';
+
+  @override
+  String get creditLimitBlocked =>
+      'This sale would take the customer over their credit limit.';
+
+  @override
+  String get partialInvalid => 'Enter an amount smaller than the amount to pay';
+
+  @override
+  String salePaidLine(String paid, String remaining) {
+    return 'Paid $paid · on account $remaining';
+  }
+
+  @override
+  String get invoicePaidLabel => 'Paid';
+
+  @override
+  String get invoiceFromCreditLabel => 'From credit balance';
+
+  @override
+  String get invoiceRemainingLabel => 'Remaining (debt)';
+
+  @override
+  String get debtLinesSection => 'Debt lines';
+
+  @override
+  String get debtLinesHint =>
+      'Paid and remaining are printed only on a sale that was not paid in full; the balances only when the invoice has a customer.';
+
+  @override
+  String get showPaidAmount => 'Amount paid';
+
+  @override
+  String get showRemainingAmount => 'Remaining (debt) amount';
+
+  @override
+  String get showPreviousBalance => 'Customer\'s previous balance';
+
+  @override
+  String get showNewBalance => 'Customer\'s new balance';
+
+  @override
+  String get debtSettingsSection => 'Debts';
+
+  @override
+  String get defaultDueDaysLabel => 'Days to pay';
+
+  @override
+  String get defaultDueDaysHint =>
+      'A new debt counts as overdue after this many days, unless the customer has their own.';
+
+  @override
+  String get debtRequirePinTitle => 'PIN to open debts';
+
+  @override
+  String get debtRequirePinSubtitle =>
+      'Ask for the PIN before the debtors list and a customer\'s account. Selling on credit never asks.';
+
+  @override
+  String get debtReminderTitle => 'Debt reminder message';
+
+  @override
+  String get debtReminderHint =>
+      'The text WhatsApp opens with when you remind a customer of their balance';
+
+  @override
+  String debtReminderDefaultText(
+    String name,
+    String shop,
+    String balance,
+    String lastPayment,
+  ) {
+    return 'Hello $name, a reminder from $shop: your balance is $balance. Last payment: $lastPayment. Thank you.';
+  }
+
+  @override
+  String get customerCreditLimitLabel => 'Credit limit (optional)';
+
+  @override
+  String get customerDueDaysLabel => 'Days to pay (optional)';
+
+  @override
+  String customerDueDaysHint(String days) {
+    return 'Empty = the shop\'s default ($days)';
+  }
+
+  @override
+  String deactivateWithBalanceMessage(String name, String balance) {
+    return '\"$name\" has an open balance: $balance. Deactivating hides them from the search; the balance stays in the debtors list.';
+  }
+
+  @override
+  String deleteCarriesDebt(String count) {
+    return '$count of these invoices carry debts. The debts are not deleted: they stay in the customers\' accounts.';
+  }
+
+  @override
+  String get deleteInvoiceCarriesDebt =>
+      'This invoice carries a debt. The debt is not deleted: it stays in the customer\'s account.';
+
+  @override
+  String get statsOutstandingNow => 'Outstanding now';
+
+  @override
+  String get statsNewDebt => 'New debt';
+
+  @override
+  String get statsCollected => 'Collected';
+
+  @override
+  String get statsCollectionRate => 'Collection rate';
+
+  @override
+  String get statsTopDebtors => 'Top debtors';
+
+  @override
+  String homeDebtsOverdue(String count) {
+    return '$count overdue';
+  }
+
+  @override
+  String get homeDebtsNoOverdue => 'Nobody overdue';
+
+  @override
+  String get debtLockedMessage => 'Debts are protected by the PIN.';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get openingBalancesTitle => 'Opening balances';
+
+  @override
+  String get openingBalancesIntro =>
+      'Moving from a paper notebook: enter what each customer owes, one after another.';
+
+  @override
+  String openingExistingBalance(String balance) {
+    return 'Existing customer · $balance';
+  }
+
+  @override
+  String get openingOwesToggle => 'Owes the shop';
+
+  @override
+  String get openingCreditToggle => 'Shop owes them';
+
+  @override
+  String get openingDateLabel => 'Date (optional)';
+
+  @override
+  String get openingAddedNew => 'New customer';
+
+  @override
+  String get openingAddedExisting => 'Existing customer';
+
+  @override
+  String openingSessionTotal(String count) {
+    return '$count entered';
+  }
+
+  @override
+  String get openingNameRequired => 'Enter the customer\'s name';
+
+  @override
+  String openingPickedCustomer(String name) {
+    return 'Adding to $name';
+  }
+
+  @override
+  String get manualDebtNoteHint => 'What is it for? (optional)';
+
+  @override
+  String get adjustmentIncrease => 'Increase the debt';
+
+  @override
+  String get adjustmentDecrease => 'Decrease the debt';
+
+  @override
+  String get entrySaved => 'Saved';
+
+  @override
+  String get auditDebtReversal => 'Ledger entry reversed';
+
+  @override
+  String get auditDebtAdjustment => 'Balance adjusted';
+
+  @override
+  String get auditCreditLimitOverride => 'Credit limit overridden';
+
+  @override
+  String get seedDebtsTitle => 'Seed debt ledger (debug)';
+
+  @override
+  String get seedDebtsSubtitle =>
+      '5,000 customers and 200,000 ledger entries, to try the debtors list at full size';
+
+  @override
+  String seedingDebts(String done, String total) {
+    return 'Writing ledger entries: $done / $total';
+  }
+
+  @override
+  String get pinAutoLockTitle => 'Lock again after';
+
+  @override
+  String get pinAutoLockHint =>
+      'What the PIN opens — the debts, the audit log, card codes — locks again after this long without a touch, and at once when you leave the app.';
+
+  @override
+  String minutesCount(int minutes) {
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutesString minutes',
+      one: '1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get saleCreditButton => 'Credit / Partial';
+
+  @override
+  String get settingCashReceived => 'Cash received field';
+
+  @override
+  String get settingCashReceivedHint =>
+      'Show a small \"cash received\" field under the total that works out the change to give back';
+
+  @override
+  String get cashReceivedTitle => 'Cash received';
+
+  @override
+  String cashReceivedValue(String amount) {
+    return 'Received $amount';
+  }
+
+  @override
+  String changeShort(String amount) {
+    return 'Change $amount';
+  }
+
+  @override
+  String get cashReceivedClear => 'Clear';
 }

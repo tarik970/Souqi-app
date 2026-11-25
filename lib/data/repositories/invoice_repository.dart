@@ -1,10 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/security/code_cipher.dart';
+import '../../domain/models/debt.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import 'counter_repository.dart';
 import 'customer_repository.dart';
+import 'debt_repository.dart';
 import 'product_repository.dart';
 import 'voucher_repository.dart';
 
@@ -39,14 +41,44 @@ class InvoiceRepository {
   /// seller changed becomes the product's saved price. Because it is one
   /// transaction, a sale that is never saved leaves the catalog untouched,
   /// and a save that fails leaves no half-created products behind.
-  Future<Invoice> save(Invoice draft) async {
+  ///
+  /// [payment] is how the sale was paid (the payment sheet of the debt
+  /// ledger). The part of the total that was not paid goes onto the
+  /// customer's account as a DEBT entry in this same transaction, and the
+  /// invoice row keeps what it will print: paid, from credit, the balance
+  /// before and after. A sale that may not go on credit — no customer, or a
+  /// credit limit nobody overrode — throws here and nothing at all is saved.
+  /// Null = the debt ledger is off: the sale is simply paid and the ledger
+  /// is not touched.
+  Future<Invoice> save(Invoice draft, {SalePayment? payment}) async {
     if (draft.items.isEmpty) {
       throw ArgumentError.value(draft, 'draft', 'an invoice needs items');
     }
     return _db.transaction((txn) async {
       final products = ProductRepository(txn);
+      // Before anything is written: the checks that can refuse the sale.
+      final ledger = payment == null
+          ? null
+          : await DebtRepository.planSale(txn, draft: draft, payment: payment);
+      if (payment != null) {
+        draft = draft.copyWith(
+          paidMinor: payment.paidMinor,
+          creditUsedMinor: payment.creditUsedMinor,
+          prevBalanceBaseMinor: ledger?.prevBalanceBaseMinor,
+          newBalanceBaseMinor: ledger?.newBalanceBaseMinor,
+        );
+      }
       final invoiceNo = await _counters.next(txn, CounterRepository.invoiceNo);
       final id = await txn.insert('invoices', draft.toRow(invoiceNo: invoiceNo));
+      if (ledger != null) {
+        await DebtRepository.postSale(
+          txn,
+          plan: ledger,
+          draft: draft,
+          invoiceId: id,
+          invoiceNo: invoiceNo,
+        );
+      }
       // A renewal moves the account's dates in this same transaction: the
       // invoice and the new due date land together, or neither does.
       if (draft.renewsAccount) {

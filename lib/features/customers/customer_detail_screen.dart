@@ -10,6 +10,10 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/customer.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/invoice_detail_screen.dart';
+import '../debts/account_tab.dart';
+import '../debts/debt_providers.dart';
+import '../debts/debt_text.dart';
+import '../debts/debt_widgets.dart';
 import 'account_form_screen.dart';
 import 'contact_actions.dart';
 import 'customer_form_screen.dart';
@@ -17,12 +21,24 @@ import 'customer_widgets.dart';
 import 'customers_providers.dart';
 import 'renewal.dart';
 
+/// The tabs of a customer's page (only with the debt ledger on; without it
+/// the page is the details alone).
+enum CustomerTab { details, account }
+
 /// One customer: who they are, how to reach them, their cards / accounts and
-/// everything they bought.
+/// everything they bought — and, with the debt ledger on, an "Account" tab
+/// with their balance and their ledger.
 class CustomerDetailScreen extends ConsumerStatefulWidget {
-  const CustomerDetailScreen({super.key, required this.customerId});
+  const CustomerDetailScreen({
+    super.key,
+    required this.customerId,
+    this.initialTab = CustomerTab.details,
+  });
 
   final int customerId;
+
+  /// The tab the page opens on (the debtors list opens the Account tab).
+  final CustomerTab initialTab;
 
   @override
   ConsumerState<CustomerDetailScreen> createState() =>
@@ -56,13 +72,31 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     final container = ProviderScope.containerOf(context, listen: false);
     final repository = ref.read(customerRepositoryProvider);
     if (!active) {
+      // A customer with an open balance is not deactivated without the
+      // balance being shown first: hiding someone who owes money (or is
+      // owed some) must be a decision, not an accident.
+      final balance = ref.read(debtFeatureProvider)
+          ? await ref.read(debtRepositoryProvider).balanceOf(customer.id!)
+          : 0;
+      if (!mounted) return;
+      final money = ref.read(baseMoneyProvider);
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           key: const ValueKey('deactivate-customer-dialog'),
           scrollable: true,
           title: Text(l10n.deactivateCustomerTitle),
-          content: Text(l10n.deactivateCustomerMessage(customer.name)),
+          content: Text(
+            balance == 0
+                ? l10n.deactivateCustomerMessage(customer.name)
+                : l10n.deactivateWithBalanceMessage(
+                    customer.name,
+                    balanceInWords(l10n, balance, money.call),
+                  ),
+            key: ValueKey(balance == 0
+                ? 'deactivate-plain'
+                : 'deactivate-with-balance'),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -86,10 +120,26 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     final l10n = AppLocalizations.of(context);
     final customer = ref.watch(customerProvider(_id));
     final data = customer.value;
+    final tabs = ref.watch(debtFeatureProvider);
 
-    return Scaffold(
+    final page = Scaffold(
       appBar: AppBar(
         title: Text(data?.name ?? l10n.navCustomers),
+        bottom: tabs
+            ? TabBar(
+                key: const ValueKey('customer-tabs'),
+                tabs: [
+                  Tab(
+                    key: const ValueKey('customer-tab-details'),
+                    text: l10n.customerDetailsTab,
+                  ),
+                  Tab(
+                    key: const ValueKey('customer-tab-account'),
+                    text: l10n.accountTab,
+                  ),
+                ],
+              )
+            : null,
         actions: [
           if (data != null) ...[
             IconButton(
@@ -131,9 +181,24 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                       Text(l10n.customerNotFound, textAlign: TextAlign.center),
                 ),
               )
-            : _body(context, value),
+            : tabs
+                ? TabBarView(
+                    children: [
+                      _body(context, value),
+                      // Behind the PIN when the setting asks for it.
+                      DebtLockGate(child: AccountTab(customer: value)),
+                    ],
+                  )
+                : _body(context, value),
       ),
     );
+    return tabs
+        ? DefaultTabController(
+            length: CustomerTab.values.length,
+            initialIndex: widget.initialTab.index,
+            child: page,
+          )
+        : page;
   }
 
   Widget _body(BuildContext context, Customer customer) {

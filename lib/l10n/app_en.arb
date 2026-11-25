@@ -1165,5 +1165,376 @@
   "recoveryMissingMessage": "If the PIN is forgotten there will be no way back in.",
   "recoveryCreateNow": "Create a recovery code now",
   "recoveryCreateArmed": "Enter the PIN. The recovery code is shown next.",
-  "auditRecoveryCodeCreate": "Recovery code created"
+  "auditRecoveryCodeCreate": "Recovery code created",
+  "debtsTitle": "Debts",
+  "debtorsTitle": "Debtors",
+  "accountTab": "Account",
+  "customerDetailsTab": "Details",
+  "balanceLabel": "Balance",
+  "balanceOwes": "Owes {amount}",
+  "@balanceOwes": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "balanceCredit": "Credit {amount}",
+  "@balanceCredit": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "balanceSettled": "No balance",
+  "creditLimitLabel": "Credit limit",
+  "lastPaymentLabel": "Last payment",
+  "neverPaid": "No payment yet",
+  "overdueBadge": "Overdue",
+  "overdueAmount": "Overdue: {amount}",
+  "@overdueAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "oldestDebtAge": "Oldest debt: {days} days",
+  "@oldestDebtAge": {
+    "placeholders": {
+      "days": {"type": "String"}
+    }
+  },
+  "oldestDebtToday": "Oldest debt: today",
+  "overLimitBadge": "Over limit",
+  "recordPayment": "Record payment",
+  "addDebt": "Add debt",
+  "openingBalance": "Opening balance",
+  "adjustment": "Adjustment",
+  "accountStatement": "Account statement",
+  "sendDebtReminder": "Remind on WhatsApp",
+  "debtReminderNoPhone": "This customer has no phone number",
+  "entryInvoice": "Invoice {no}",
+  "@entryInvoice": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "entryReceipt": "Receipt {no}",
+  "@entryReceipt": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "entryPayment": "Payment",
+  "entryManualDebt": "Debt",
+  "entryReversalOf": "Reversal: {what}",
+  "@entryReversalOf": {
+    "placeholders": {
+      "what": {"type": "String"}
+    }
+  },
+  "entryReversed": "Reversed",
+  "ledgerEmpty": "No entries yet",
+  "ledgerNoMatch": "No entries match the filter",
+  "ledgerDebit": "Debit",
+  "ledgerCredit": "Credit",
+  "dateLabel": "Date",
+  "descriptionLabel": "Description",
+  "typeFilterDebts": "Debts",
+  "typeFilterPayments": "Payments",
+  "typeFilterOther": "Other",
+  "invoiceDeletedNote": "Invoice {no} was deleted from the archive. The debt stays in the account.",
+  "@invoiceDeletedNote": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "openInvoice": "Open invoice",
+  "viewReceipt": "Receipt",
+  "reverseEntry": "Reverse entry",
+  "reverseTitle": "Reverse this entry?",
+  "reverseMessage": "The entry stays in the ledger, struck through, and a reversal entry cancels it. This cannot be undone.",
+  "reasonRequired": "Enter the reason",
+  "pinReasonReverse": "Enter the PIN to reverse a ledger entry.",
+  "pinReasonAdjustment": "Enter the PIN to adjust a balance.",
+  "pinReasonCreditLimit": "Enter the PIN to sell over the credit limit.",
+  "pinReasonDebtAccess": "Enter the PIN to open the debts.",
+  "entryReversedSnack": "Entry reversed",
+  "dueOnLabel": "Due {date}",
+  "@dueOnLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "paymentMethodLabel": "Payment method",
+  "methodCash": "Cash",
+  "methodTransfer": "Transfer",
+  "methodOther": "Other",
+  "amountLabel": "Amount",
+  "amountInvalid": "Enter an amount greater than zero",
+  "payFullBalance": "Pay full balance",
+  "paymentCurrencyLabel": "Currency",
+  "paymentRateLabel": "Rate: {base} per 1 {code}",
+  "@paymentRateLabel": {
+    "placeholders": {
+      "base": {"type": "String"},
+      "code": {"type": "String"}
+    }
+  },
+  "paymentCountsAs": "Counts as {amount}",
+  "@paymentCountsAs": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "paymentOverBalance": "More than the balance: the customer will have a credit of {amount}.",
+  "@paymentOverBalance": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "noteOptional": "Note (optional)",
+  "receiptTitle": "Payment receipt",
+  "receiptNoLabel": "Receipt no. {no}",
+  "@receiptNoLabel": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "receiptReceivedFrom": "Received from",
+  "receiptAmountLabel": "Amount paid",
+  "receiptPaidAs": "Received as",
+  "receiptMethodLabel": "Method",
+  "receiptNoteLabel": "Note",
+  "receiptReversedMark": "CANCELLED",
+  "previousBalanceLabel": "Previous balance",
+  "newBalanceLabel": "New balance",
+  "paperOwes": "owes",
+  "paperCredit": "credit",
+  "statementOpening": "Balance brought forward",
+  "statementClosing": "Closing balance",
+  "statementTotalDebits": "Total debits",
+  "statementTotalCredits": "Total credits",
+  "statementNoEntries": "No entries in this period",
+  "statementWholeAccount": "Whole account",
+  "statementLast30": "Last 30 days",
+  "statementUntil": "Until {date}",
+  "@statementUntil": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "debtorsTotalOutstanding": "Total outstanding",
+  "debtorsOwingCount": "{count} customers owe",
+  "@debtorsOwingCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "debtorsCreditTotal": "We owe customers: {amount}",
+  "@debtorsCreditTotal": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "agingTitle": "Debts by age",
+  "aging0to30": "0–30 days",
+  "aging31to60": "31–60 days",
+  "aging61to90": "61–90 days",
+  "agingOver90": "Over 90 days",
+  "sortLabel": "Sort",
+  "sortByAmount": "Largest amount",
+  "sortByOldest": "Oldest debt",
+  "sortByLastPayment": "Longest since a payment",
+  "filterOverdue": "Overdue",
+  "filterOverLimit": "Over limit",
+  "filterCreditBalances": "Credit balances",
+  "debtorsEmpty": "Nobody owes anything",
+  "debtorsNoMatch": "No matching customers",
+  "lastPaymentOn": "Last payment {date}",
+  "@lastPaymentOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "paymentSheetTitle": "Payment",
+  "payFull": "Paid in full",
+  "payPartial": "Partial",
+  "payCredit": "On credit",
+  "amountPaidLabel": "Amount paid",
+  "remainingAsDebt": "Goes on the account: {amount}",
+  "@remainingAsDebt": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "cashReceivedLabel": "Cash received (optional)",
+  "changeDue": "Change to give back: {amount}",
+  "@changeDue": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "cashShort": "Less than the amount to pay",
+  "customerRequiredForDebt": "Choose a customer to sell on credit",
+  "chooseCustomer": "Choose customer",
+  "changeCustomer": "Change",
+  "useCreditBalance": "Use credit balance ({amount})",
+  "@useCreditBalance": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "toPayNow": "To pay now: {amount}",
+  "@toPayNow": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "dueDateLabel": "Due date",
+  "creditLimitWarningTitle": "Over the credit limit",
+  "creditLimitWarning": "Balance {balance} + this sale {sale} = {newBalance}. The limit is {limit}.",
+  "@creditLimitWarning": {
+    "placeholders": {
+      "balance": {"type": "String"},
+      "sale": {"type": "String"},
+      "newBalance": {"type": "String"},
+      "limit": {"type": "String"}
+    }
+  },
+  "overrideAndSave": "Override and save",
+  "creditLimitConfirmTitle": "Sell over the limit?",
+  "creditLimitBlocked": "This sale would take the customer over their credit limit.",
+  "partialInvalid": "Enter an amount smaller than the amount to pay",
+  "salePaidLine": "Paid {paid} · on account {remaining}",
+  "@salePaidLine": {
+    "placeholders": {
+      "paid": {"type": "String"},
+      "remaining": {"type": "String"}
+    }
+  },
+  "invoicePaidLabel": "Paid",
+  "invoiceFromCreditLabel": "From credit balance",
+  "invoiceRemainingLabel": "Remaining (debt)",
+  "debtLinesSection": "Debt lines",
+  "debtLinesHint": "Paid and remaining are printed only on a sale that was not paid in full; the balances only when the invoice has a customer.",
+  "showPaidAmount": "Amount paid",
+  "showRemainingAmount": "Remaining (debt) amount",
+  "showPreviousBalance": "Customer's previous balance",
+  "showNewBalance": "Customer's new balance",
+  "debtSettingsSection": "Debts",
+  "defaultDueDaysLabel": "Days to pay",
+  "defaultDueDaysHint": "A new debt counts as overdue after this many days, unless the customer has their own.",
+  "debtRequirePinTitle": "PIN to open debts",
+  "debtRequirePinSubtitle": "Ask for the PIN before the debtors list and a customer's account. Selling on credit never asks.",
+  "debtReminderTitle": "Debt reminder message",
+  "debtReminderHint": "The text WhatsApp opens with when you remind a customer of their balance",
+  "debtReminderDefaultText": "Hello {name}, a reminder from {shop}: your balance is {balance}. Last payment: {lastPayment}. Thank you.",
+  "@debtReminderDefaultText": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "shop": {"type": "String"},
+      "balance": {"type": "String"},
+      "lastPayment": {"type": "String"}
+    }
+  },
+  "customerCreditLimitLabel": "Credit limit (optional)",
+  "customerDueDaysLabel": "Days to pay (optional)",
+  "customerDueDaysHint": "Empty = the shop's default ({days})",
+  "@customerDueDaysHint": {
+    "placeholders": {
+      "days": {"type": "String"}
+    }
+  },
+  "deactivateWithBalanceMessage": "\"{name}\" has an open balance: {balance}. Deactivating hides them from the search; the balance stays in the debtors list.",
+  "@deactivateWithBalanceMessage": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "balance": {"type": "String"}
+    }
+  },
+  "deleteCarriesDebt": "{count} of these invoices carry debts. The debts are not deleted: they stay in the customers' accounts.",
+  "@deleteCarriesDebt": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "deleteInvoiceCarriesDebt": "This invoice carries a debt. The debt is not deleted: it stays in the customer's account.",
+  "statsOutstandingNow": "Outstanding now",
+  "statsNewDebt": "New debt",
+  "statsCollected": "Collected",
+  "statsCollectionRate": "Collection rate",
+  "statsTopDebtors": "Top debtors",
+  "homeDebtsOverdue": "{count} overdue",
+  "@homeDebtsOverdue": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "homeDebtsNoOverdue": "Nobody overdue",
+  "debtLockedMessage": "Debts are protected by the PIN.",
+  "unlock": "Unlock",
+  "openingBalancesTitle": "Opening balances",
+  "openingBalancesIntro": "Moving from a paper notebook: enter what each customer owes, one after another.",
+  "openingExistingBalance": "Existing customer · {balance}",
+  "@openingExistingBalance": {
+    "placeholders": {
+      "balance": {"type": "String"}
+    }
+  },
+  "openingOwesToggle": "Owes the shop",
+  "openingCreditToggle": "Shop owes them",
+  "openingDateLabel": "Date (optional)",
+  "openingAddedNew": "New customer",
+  "openingAddedExisting": "Existing customer",
+  "openingSessionTotal": "{count} entered",
+  "@openingSessionTotal": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "openingNameRequired": "Enter the customer's name",
+  "openingPickedCustomer": "Adding to {name}",
+  "@openingPickedCustomer": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "manualDebtNoteHint": "What is it for? (optional)",
+  "adjustmentIncrease": "Increase the debt",
+  "adjustmentDecrease": "Decrease the debt",
+  "entrySaved": "Saved",
+  "auditDebtReversal": "Ledger entry reversed",
+  "auditDebtAdjustment": "Balance adjusted",
+  "auditCreditLimitOverride": "Credit limit overridden",
+  "seedDebtsTitle": "Seed debt ledger (debug)",
+  "seedDebtsSubtitle": "5,000 customers and 200,000 ledger entries, to try the debtors list at full size",
+  "seedingDebts": "Writing ledger entries: {done} / {total}",
+  "@seedingDebts": {
+    "placeholders": {
+      "done": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "pinAutoLockTitle": "Lock again after",
+  "pinAutoLockHint": "What the PIN opens — the debts, the audit log, card codes — locks again after this long without a touch, and at once when you leave the app.",
+  "minutesCount": "{minutes, plural, =1{1 minute} other{{minutes} minutes}}",
+  "@minutesCount": {
+    "placeholders": {
+      "minutes": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "saleCreditButton": "Credit / Partial",
+  "settingCashReceived": "Cash received field",
+  "settingCashReceivedHint": "Show a small \"cash received\" field under the total that works out the change to give back",
+  "cashReceivedTitle": "Cash received",
+  "cashReceivedValue": "Received {amount}",
+  "@cashReceivedValue": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "changeShort": "Change {amount}",
+  "@changeShort": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "cashReceivedClear": "Clear"
 }

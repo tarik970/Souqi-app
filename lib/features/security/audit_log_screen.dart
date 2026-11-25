@@ -10,6 +10,7 @@ import '../../data/repositories/archive_repository.dart';
 import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'audit_providers.dart';
+import 'pin_session.dart';
 
 /// The log of sensitive actions: when, what, on which product. Opened from
 /// the settings after the PIN (the caller asks for it — this screen only
@@ -65,7 +66,8 @@ class AuditLogScreen extends ConsumerWidget {
     final locale = ref.watch(appLocaleProvider).languageCode;
     final dates = DateFormat.yMd(locale);
 
-    return Scaffold(
+    return PinGuardedRoute(
+      child: Scaffold(
       appBar: AppBar(title: Text(l10n.auditLogTitle)),
       body: Column(
         children: [
@@ -141,6 +143,7 @@ class AuditLogScreen extends ConsumerWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -163,6 +166,9 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.recoveryCodeCreate => l10n.auditRecoveryCodeCreate,
       AuditAction.pinRecover => l10n.auditPinRecover,
       AuditAction.pinResetSigned => l10n.auditPinResetSigned,
+      AuditAction.debtReversal => l10n.auditDebtReversal,
+      AuditAction.debtAdjustment => l10n.auditDebtAdjustment,
+      AuditAction.creditLimitOverride => l10n.auditCreditLimitOverride,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -183,6 +189,9 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
         Icons.lock_outline,
       AuditAction.recoveryCodeCreate => Icons.key_outlined,
       AuditAction.pinRecover || AuditAction.pinResetSigned => Icons.lock_reset,
+      AuditAction.debtReversal => Icons.undo,
+      AuditAction.debtAdjustment => Icons.tune,
+      AuditAction.creditLimitOverride => Icons.report_gmailerrorred_outlined,
       null => Icons.info_outline,
     };
 
@@ -202,8 +211,25 @@ class _AuditTile extends ConsumerWidget {
 
     // Small facts, each its own piece: a count, the card's last digits, the
     // invoice, the reason that was typed.
+    // Debt actions carry the customer and base-currency amounts.
+    final base = ref.watch(baseCurrencyProvider).value;
+    String amount(Object? value) => formatMinor(
+          (value as int).abs(),
+          decimals: base?.decimalPlaces ?? 0,
+          locale: locale,
+          symbol: base == null
+              ? ''
+              : (base.symbol.isEmpty ? base.code : base.symbol),
+        );
     final facts = <String>[
       if (entry.productName != null) entry.productName!,
+      if (details['customer'] is String) details['customer'] as String,
+      if (details['amount'] is int) amount(details['amount']),
+      if (details['receipt_no'] is int)
+        l10n.receiptNoLabel(number(details['receipt_no'])),
+      if (details['new_balance'] is int && details['limit'] is int)
+        '${l10n.newBalanceLabel}: ${amount(details['new_balance'])} · '
+            '${l10n.creditLimitLabel}: ${amount(details['limit'])}',
       if (details['count'] is int) l10n.cardsCount(number(details['count'])),
       if (details['found'] is int)
         l10n.auditDetailFound(number(details['found'])),

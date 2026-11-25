@@ -5,7 +5,10 @@
 /// from schema version 1, so enabling a flag later needs no migration.
 library;
 
-const bool debtEnabled = false;
+/// The customer debt ledger. UI code never reads this constant directly: it
+/// asks `debtFeatureProvider` (lib/core/providers.dart), the one switch that
+/// phase 5b will also tie to the license.
+const bool debtEnabled = true;
 const bool barcodeEnabled = true;
 const bool discountEnabled = true;
 const bool customersEnabled = true;

@@ -110,6 +110,21 @@ class SaleInvoiceScreen extends ConsumerWidget {
                       color: theme.colorScheme.primary,
                     ),
                   ),
+                  // What went onto the customer's account, when anything did.
+                  if (ref.watch(debtFeatureProvider) && invoice.hasDebtLines)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        l10n.salePaidLine(
+                          money(invoice.paidMinor ?? 0),
+                          money(invoice.chargedMinor),
+                        ),
+                        key: const ValueKey('saved-paid-line'),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(color: theme.colorScheme.error),
+                      ),
+                    ),
                   for (final extra in invoice.extraTotals)
                     Text(
                       '≈ ${formatMinor(

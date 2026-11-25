@@ -88,6 +88,20 @@ void main() {
     }
   }
 
+  /// Brings a Settings tile fully onto the screen. `scrollUntilVisible` alone
+  /// is not enough: it stops as soon as the tile is BUILT, and a tile in the
+  /// list's cache area just below the screen is built but cannot be tapped —
+  /// which is where a tile lands whenever a section above it grows a line.
+  Future<void> showSettingsTile(WidgetTester tester, Finder tile) async {
+    await tester.scrollUntilVisible(
+      tile,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(tile);
+    await settle(tester, 4);
+  }
+
   /// Waits on an effect that takes a variable amount of real time (hashing
   /// a PIN, rasterising an invoice) instead of on a fixed number of frames.
   Future<void> until(WidgetTester tester, bool Function() done) async {
@@ -1335,12 +1349,7 @@ void main() {
 
     Future<void> openSettings(WidgetTester tester) async {
       await pump(tester, const SettingsScreen());
-      await tester.scrollUntilVisible(
-        tile,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await settle(tester, 4);
+      await showSettingsTile(tester, tile);
     }
 
     testWidgets('choose a PIN: 4 to 6 digits, typed twice', (tester) async {
@@ -1464,11 +1473,7 @@ void main() {
 
       await pump(tester, const SettingsScreen());
       final tile = find.byKey(const ValueKey('setting-audit-log'));
-      await tester.scrollUntilVisible(
-        tile,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+      await showSettingsTile(tester, tile);
       await tester.tap(tile);
       await animated(tester);
       await enterPin(tester, pin);
@@ -1580,12 +1585,7 @@ void main() {
     /// Opens Settings and chooses a PIN there, up to the recovery dialog.
     Future<void> choosePinInSettings(WidgetTester tester) async {
       await pump(tester, const SettingsScreen());
-      await tester.scrollUntilVisible(
-        settingsTile,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await settle(tester, 4);
+      await showSettingsTile(tester, settingsTile);
       await tester.tap(settingsTile);
       await animated(tester);
       await tester.enterText(find.byKey(const ValueKey('pin-new-field')), pin);
@@ -1755,12 +1755,7 @@ void main() {
     testWidgets('changing the PIN gives a new recovery code', (tester) async {
       final first = await setPinWithCode(tester);
       await pump(tester, const SettingsScreen());
-      await tester.scrollUntilVisible(
-        settingsTile,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await settle(tester, 4);
+      await showSettingsTile(tester, settingsTile);
       await tester.tap(settingsTile);
       await animated(tester);
       await tester.tap(find.byKey(const ValueKey('pin-option-change')));
@@ -1933,12 +1928,7 @@ void main() {
 
       Future<void> openSettings(WidgetTester tester) async {
         await pump(tester, const SettingsScreen());
-        await tester.scrollUntilVisible(
-          settingsTile,
-          200,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await settle(tester, 4);
+        await showSettingsTile(tester, settingsTile);
       }
 
       testWidgets('settings banner: confirm the PIN, get the recovery code',

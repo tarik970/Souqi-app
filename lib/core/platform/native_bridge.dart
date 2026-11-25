@@ -74,6 +74,11 @@ class PickedTextFile {
   final String content;
 }
 
+/// How the bytes of a print job are fed to the printer, unless said
+/// otherwise: cheap printers drop data that arrives faster.
+const defaultPrintChunkSize = 1024;
+const defaultPrintChunkDelayMs = 12;
+
 const whatsAppPackage = 'com.whatsapp';
 const whatsAppBusinessPackage = 'com.whatsapp.w4b';
 
@@ -218,8 +223,8 @@ class MethodChannelNativeBridge implements NativeBridge {
   Future<void> printBytes(
     String address,
     Uint8List bytes, {
-    int chunkSize = 1024,
-    int chunkDelayMs = 12,
+    int chunkSize = defaultPrintChunkSize,
+    int chunkDelayMs = defaultPrintChunkDelayMs,
   }) =>
       _invoke<void>('btPrint', {
         'address': address,

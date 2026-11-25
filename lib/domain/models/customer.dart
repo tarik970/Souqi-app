@@ -23,6 +23,8 @@ class Customer {
     this.notes,
     this.isActive = true,
     this.createdAt,
+    this.creditLimitBaseMinor,
+    this.defaultDueDays,
   });
 
   final int? id;
@@ -37,6 +39,14 @@ class Customer {
   final bool isActive;
   final DateTime? createdAt;
 
+  /// The most this customer may owe, in base-currency minor units. Null = no
+  /// limit. A sale that would go over it warns and needs an override.
+  final int? creditLimitBaseMinor;
+
+  /// Days this customer is given to pay a new debt. Null = the shop's
+  /// default (a setting, 30 unless changed).
+  final int? defaultDueDays;
+
   bool get hasPhone => (phone ?? '').trim().isNotEmpty;
 
   Customer copyWith({
@@ -45,6 +55,8 @@ class Customer {
     String? Function()? phone,
     String? Function()? notes,
     bool? isActive,
+    int? Function()? creditLimitBaseMinor,
+    int? Function()? defaultDueDays,
   }) =>
       Customer(
         id: id ?? this.id,
@@ -53,6 +65,11 @@ class Customer {
         notes: notes != null ? notes() : this.notes,
         isActive: isActive ?? this.isActive,
         createdAt: createdAt,
+        creditLimitBaseMinor: creditLimitBaseMinor != null
+            ? creditLimitBaseMinor()
+            : this.creditLimitBaseMinor,
+        defaultDueDays:
+            defaultDueDays != null ? defaultDueDays() : this.defaultDueDays,
       );
 
   /// [prefix] is for joined queries that alias the columns ("c_name").
@@ -64,6 +81,8 @@ class Customer {
         notes: _blankToNull(map['${prefix}notes'] as String?),
         isActive: map['${prefix}is_active'] != 0,
         createdAt: _dateOrNull(map['${prefix}created_at']),
+        creditLimitBaseMinor: map['${prefix}credit_limit_base_minor'] as int?,
+        defaultDueDays: map['${prefix}default_due_days'] as int?,
       );
 }
 

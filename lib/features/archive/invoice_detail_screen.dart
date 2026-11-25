@@ -7,6 +7,7 @@ import '../../core/providers.dart';
 import '../../domain/models/invoice.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../customers/customers_providers.dart';
+import '../debts/debt_providers.dart';
 import '../invoice/invoice_actions.dart';
 import '../invoice/invoice_preview.dart';
 import '../invoice/invoice_providers.dart';
@@ -72,13 +73,35 @@ class InvoiceDetailScreen extends ConsumerWidget {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
+    // A debt is never deleted with its invoice: the dialog says so when
+    // this invoice carries one.
+    final carriesDebt = container.read(debtFeatureProvider) &&
+        await container
+            .read(archiveRepositoryProvider)
+            .invoiceCarriesDebt(invoice.id!);
+    if (!context.mounted) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         key: const ValueKey('delete-invoice-dialog'),
+        scrollable: true,
         title: Text(l10n.deleteInvoiceTitle),
-        content: Text(l10n.deleteInvoiceMessage(number)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.deleteInvoiceMessage(number)),
+            if (carriesDebt) ...[
+              const SizedBox(height: 12),
+              Text(
+                l10n.deleteInvoiceCarriesDebt,
+                key: const ValueKey('delete-invoice-debt-note'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -102,6 +125,8 @@ class InvoiceDetailScreen extends ConsumerWidget {
       // The customer's page lists this invoice too.
       ..invalidate(customerHistoryProvider)
       ..invalidate(customerTotalsProvider);
+    // The ledger entry stays; its link to the invoice is gone.
+    refreshDebtData(container);
     navigator.pop();
     messenger
       ..hideCurrentSnackBar()

@@ -11,6 +11,7 @@ import '../../core/utils/normalize.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../security/pin_session.dart';
 import 'invoice_output.dart';
 import 'invoice_preview.dart';
 import 'invoice_providers.dart';
@@ -154,6 +155,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
           settings: settings,
           currencies: currencies,
           baseCode: baseCode,
+          withDebtLines: container.read(debtFeatureProvider),
         ),
       );
       messenger
@@ -180,6 +182,10 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
   Future<void> _pickLogo() async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    // The photo picker is another app in front of this one, and it does not
+    // go through the native bridge: the PIN locks are told here.
+    final guard = ref.read(pinBackgroundGuardProvider)
+      ..externalActionStarting();
     try {
       final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (picked == null) return;
@@ -189,6 +195,8 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
       if (!mounted) return;
       _change((s) => s.copyWith(logoPng: () => png));
     } catch (_) {
+      // No picker on this phone: nothing was opened.
+      guard.externalActionFailed();
       messenger.showSnackBar(SnackBar(content: Text(l10n.logoError)));
     }
   }
@@ -239,6 +247,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
           currencies: currencies,
           baseCode: baseCode,
           now: _sampleTime,
+          withDebtLines: ref.watch(debtFeatureProvider),
         ),
         settings: s,
         currencies: {for (final c in currencies) c.code: c},
@@ -699,6 +708,23 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
             (s, v) => s.copyWith(codesOnSeparateSlips: v),
             key: const ValueKey('toggle-code-slips')),
         _Hint(l10n.codesSeparateSlipsHint),
+      ],
+      // What the invoice says about a sale on credit.
+      if (ref.watch(debtFeatureProvider)) ...[
+        _SectionTitle(l10n.debtLinesSection),
+        toggle(l10n.showPaidAmount, s.showPaidAmount,
+            (s, v) => s.copyWith(showPaidAmount: v),
+            key: const ValueKey('toggle-paid-amount')),
+        toggle(l10n.showRemainingAmount, s.showRemainingAmount,
+            (s, v) => s.copyWith(showRemainingAmount: v),
+            key: const ValueKey('toggle-remaining-amount')),
+        toggle(l10n.showPreviousBalance, s.showPreviousBalance,
+            (s, v) => s.copyWith(showPreviousBalance: v),
+            key: const ValueKey('toggle-previous-balance')),
+        toggle(l10n.showNewBalance, s.showNewBalance,
+            (s, v) => s.copyWith(showNewBalance: v),
+            key: const ValueKey('toggle-new-balance')),
+        _Hint(l10n.debtLinesHint),
       ],
     ];
   }

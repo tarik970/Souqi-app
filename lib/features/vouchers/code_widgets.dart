@@ -10,6 +10,7 @@ import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../security/audit_providers.dart';
 import '../security/pin_dialogs.dart';
+import '../security/pin_session.dart';
 import 'voucher_providers.dart';
 
 /// The status of a code in words. An AVAILABLE code past its expiry reads
@@ -305,7 +306,8 @@ class RevealedCodeDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return AlertDialog(
+    return PinGuardedRoute(
+      child: AlertDialog(
       key: const ValueKey('revealed-code-dialog'),
       scrollable: true,
       title: Text(l10n.codeRevealedTitle),
@@ -352,6 +354,7 @@ class RevealedCodeDialog extends StatelessWidget {
           child: Text(l10n.done),
         ),
       ],
+      ),
     );
   }
 }

@@ -12,6 +12,7 @@ import '../../core/utils/normalize.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/customer.dart';
+import '../../domain/models/debt.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/voucher.dart';
@@ -19,12 +20,15 @@ import '../../l10n/generated/app_localizations.dart';
 import '../archive/archive_providers.dart';
 import '../customers/customer_picker_screen.dart';
 import '../customers/customers_providers.dart';
+import '../debts/debt_providers.dart';
 import '../invoice/invoice_providers.dart';
 import '../products/products_providers.dart';
 import '../settings/storage_providers.dart';
 import '../stats/stats_providers.dart';
 import '../vouchers/voucher_providers.dart';
+import 'cash_received.dart';
 import 'discount_sheet.dart';
+import 'payment_sheet.dart';
 import 'quantity_sheet.dart';
 import 'quick_item_sheet.dart';
 import 'rates_sheet.dart';
@@ -265,7 +269,14 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     );
   }
 
-  Future<void> _save() async {
+  /// Saves the sale.
+  ///
+  /// SAVE IS ONE TAP: the main button saves the sale as PAID IN FULL at
+  /// once — no sheet, nothing to choose — exactly as fast as before the debt
+  /// ledger. [askPayment] is the secondary "Credit / Partial" button: it
+  /// opens the payment sheet first, and what is not paid goes onto the
+  /// customer's account.
+  Future<void> _save({bool askPayment = false}) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -277,7 +288,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final locale = _locale;
     String number(int value) =>
         formatMinor(value, decimals: 0, locale: locale);
-    final customer = customersEnabled ? ref.read(saleCustomerProvider) : null;
+    var customer = customersEnabled ? ref.read(saleCustomerProvider) : null;
     // The button is already disabled for this; the check is repeated here
     // because Save is also what a hardware keyboard's Enter can reach.
     final blocker = ref.read(accountBlockerProvider);
@@ -303,6 +314,31 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       return;
     }
 
+    // THE DEBT LEDGER. Save: everything was paid, and the invoice says so.
+    // "Credit / Partial": the sheet asks how much was paid, and the rest
+    // goes onto the customer's account — a customer who can be picked in
+    // the sheet. With the ledger off there is no payment at all.
+    SalePayment? payment;
+    if (ref.read(debtFeatureProvider) && !askPayment) {
+      payment = SalePayment(paidMinor: totals.totalMinor);
+    } else if (ref.read(debtFeatureProvider)) {
+      final choice = await showModalBottomSheet<PaymentChoice>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        showDragHandle: true,
+        builder: (_) => PaymentSheet(totals: totals, customer: customer),
+      );
+      if (choice == null || !mounted) return;
+      payment = choice.payment;
+      final picked = choice.customer;
+      if (picked != null && picked.customerId != customer?.customerId) {
+        // Picked in the sheet: the sale now belongs to them.
+        container.read(saleCustomerProvider.notifier).attach(picked);
+        customer = picked;
+      }
+    }
+
     setState(() => _saving = true);
     try {
       // One transaction: the invoice, the products created from typed items,
@@ -323,6 +359,9 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               accountNumber: hasAccount ? customer!.accountNumber : null,
               accountProvider: hasAccount ? customer!.accountProvider : null,
             ),
+            // …and what was not paid goes onto the customer's account, in
+            // that same transaction.
+            payment: payment,
           );
       container.read(cartProvider.notifier).reset();
       container.read(saleCustomerProvider.notifier).clear();
@@ -339,6 +378,8 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         ..invalidate(statsReportProvider);
       // A new due date, a longer purchase history.
       if (customer != null) refreshCustomerData(container);
+      // A new debt, a credit balance used.
+      if (payment != null && customer != null) refreshDebtData(container);
       // Card codes left the stock with this sale.
       if (voucherStockEnabled) refreshVoucherData(container);
       if (!mounted) return;
@@ -374,6 +415,19 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.codeStockUnreadable)),
       );
+    } on CreditLimitExceededException {
+      // The sheet warns and asks before it gets this far; this is the rule
+      // itself, for a balance that changed in between. Nothing was saved.
+      refreshDebtData(container);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.creditLimitBlocked)),
+      );
+    } on DebtCustomerRequiredException {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.customerRequiredForDebt)),
+      );
+    } on InvalidSalePaymentException {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.partialInvalid)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -504,6 +558,12 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               },
               onDiscount: _editDiscount,
               onSave: _save,
+              onCredit: ref.watch(debtFeatureProvider)
+                  ? () => _save(askPayment: true)
+                  : null,
+              showCashReceived:
+                  ref.watch(saleSettingsProvider).value?.cashReceivedField ??
+                      false,
               customer: customer,
               accountBlocker: accountBlocker,
               codeShortage: codeShortage,
@@ -1118,6 +1178,8 @@ class _TotalsPanel extends ConsumerWidget {
     required this.onUpdateRate,
     required this.onDiscount,
     required this.onSave,
+    required this.onCredit,
+    required this.showCashReceived,
     required this.customer,
     required this.accountBlocker,
     required this.codeShortage,
@@ -1137,6 +1199,13 @@ class _TotalsPanel extends ConsumerWidget {
   final VoidCallback onUpdateRate;
   final VoidCallback onDiscount;
   final VoidCallback onSave;
+
+  /// Opens the payment sheet (partial payment / on credit). Null while the
+  /// debt ledger is off: there is then no such button.
+  final VoidCallback? onCredit;
+
+  /// The "cash received" line (a setting, off by default).
+  final bool showCashReceived;
 
   /// The customer attached to this sale, if any.
   final SaleCustomer? customer;
@@ -1356,6 +1425,9 @@ class _TotalsPanel extends ConsumerWidget {
                         ?.copyWith(color: theme.colorScheme.outline),
                   ),
                 ),
+              // Optional: what the customer handed over, and the change.
+              if (showCashReceived && totals.isNotEmpty)
+                CashReceivedLine(totals: totals, locale: locale),
               if (needRate.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
@@ -1435,26 +1507,72 @@ class _TotalsPanel extends ConsumerWidget {
                   ),
                 )
               else
-                FilledButton.icon(
-                  key: const ValueKey('sale-save'),
-                  onPressed: cart.isEmpty ||
-                          saving ||
-                          needRate.isNotEmpty ||
-                          codeShortage != null
-                      ? null
-                      : onSave,
-                  icon: saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check),
-                  label: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Text(l10n.save,
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(color: Colors.white)),
+                // SAVE saves the sale as paid in full, at once: one tap, as
+                // it always was. The button beside it is for the sale that
+                // is not paid in full — it opens the payment sheet.
+                //
+                // Three parts to two when the ledger is on; the label of the
+                // second one scales down rather than wrap, so both buttons
+                // stay one line high on a small phone at a large font.
+                // IntrinsicHeight: both buttons as tall as the taller one.
+                IntrinsicHeight(
+                  child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: FilledButton.icon(
+                        key: const ValueKey('sale-save'),
+                        onPressed: cart.isEmpty ||
+                              saving ||
+                              needRate.isNotEmpty ||
+                              codeShortage != null
+                            ? null
+                            : onSave,
+                        icon: saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.check),
+                        label: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(l10n.save,
+                                maxLines: 1,
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(color: Colors.white)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (onCredit != null) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: OutlinedButton(
+                          key: const ValueKey('sale-credit'),
+                          style: OutlinedButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: cart.isEmpty ||
+                              saving ||
+                              needRate.isNotEmpty ||
+                              codeShortage != null
+                              ? null
+                              : onCredit,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(l10n.saleCreditButton, maxLines: 1),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                   ),
                 ),
             ],

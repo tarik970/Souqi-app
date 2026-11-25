@@ -2,16 +2,34 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/platform/external_action_bridge.dart';
 import '../../core/platform/native_bridge.dart';
 import '../../core/providers.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../security/pin_session.dart';
 
-/// The Android side (Bluetooth, WhatsApp intent, Downloads, share sheet).
-/// Overridden with a fake in tests.
-final nativeBridgeProvider = Provider<NativeBridge>(
+/// The Android side itself (Bluetooth, WhatsApp intent, Downloads, share
+/// sheet). Screens do NOT use this one: they use [nativeBridgeProvider].
+final platformBridgeProvider = Provider<NativeBridge>(
   (ref) => const MethodChannelNativeBridge(),
 );
+
+/// The Android side as the app uses it: [platformBridgeProvider], with the
+/// PIN locks told of every external action before it starts — which is what
+/// gives the seller two minutes to come back from the share sheet or
+/// WhatsApp without the PIN (see `PinBackgroundGuard`).
+///
+/// Tests replace either one with a fake: this one to leave the locks out,
+/// [platformBridgeProvider] to keep them in.
+final nativeBridgeProvider = Provider<NativeBridge>((ref) {
+  final guard = ref.watch(pinBackgroundGuardProvider);
+  return ExternalActionBridge(
+    ref.watch(platformBridgeProvider),
+    onStarting: guard.externalActionStarting,
+    onNotStarted: guard.externalActionFailed,
+  );
+});
 
 /// The invoice settings, loaded from the `settings` table.
 ///
@@ -86,7 +104,11 @@ class InvoiceRenderContext {
 
 final invoiceRenderContextProvider =
     FutureProvider<InvoiceRenderContext>((ref) async {
-  final settings = await ref.watch(invoiceSettingsProvider.future);
+  final stored = await ref.watch(invoiceSettingsProvider.future);
+  // With the debt ledger off, nothing of it reaches the paper — not even on
+  // an invoice that was saved while it was on.
+  final settings =
+      ref.watch(debtFeatureProvider) ? stored : stored.withoutDebtLines();
   final currencies = await ref.watch(currenciesProvider.future);
   final logo = await ref.watch(invoiceLogoProvider.future);
   return InvoiceRenderContext(

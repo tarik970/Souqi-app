@@ -8,6 +8,7 @@ import '../data/repositories/archive_repository.dart';
 import '../data/repositories/audit_repository.dart';
 import '../data/repositories/currency_repository.dart';
 import '../data/repositories/customer_repository.dart';
+import '../data/repositories/debt_repository.dart';
 import '../data/repositories/invoice_repository.dart';
 import '../data/repositories/pin_repository.dart';
 import '../data/repositories/product_repository.dart';
@@ -87,6 +88,19 @@ final archiveRepositoryProvider = Provider<ArchiveRepository>(
 
 final customerRepositoryProvider = Provider<CustomerRepository>(
   (ref) => CustomerRepository(ref.watch(databaseProvider).db),
+);
+
+final debtRepositoryProvider = Provider<DebtRepository>(
+  (ref) => DebtRepository(ref.watch(databaseProvider).db),
+);
+
+/// THE switch of the customer debt ledger. Every debt screen, button,
+/// invoice line and statistic asks this provider — never the compile-time
+/// flag — so there is one place to turn the feature off. Phase 5b makes it
+/// also depend on the license (the ledger becomes a licensable feature);
+/// tests override it to prove nothing of the feature shows when it is off.
+final debtFeatureProvider = Provider<bool>(
+  (ref) => debtEnabled && customersEnabled,
 );
 
 final statsRepositoryProvider = Provider<StatsRepository>(

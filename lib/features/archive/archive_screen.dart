@@ -7,6 +7,7 @@ import '../../core/providers.dart';
 import '../../data/repositories/archive_repository.dart';
 import '../../domain/models/currency.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../debts/debt_providers.dart';
 import '../settings/storage_providers.dart';
 import 'archive_providers.dart';
 import 'invoice_detail_screen.dart';
@@ -233,6 +234,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     final outcome = await container
         .read(housekeepingProvider.notifier)
         .deleteMatching(criteria);
+    // The debts of the deleted invoices stay; only their link to the
+    // invoice is gone, and the ledger on screen should say so.
+    refreshDebtData(container);
+    container.invalidate(deleteDebtCountProvider);
 
     // ONE message at the end, whatever happened.
     String message() {
@@ -274,12 +279,18 @@ class _DeleteConfirmDialog extends ConsumerWidget {
     // One SQL aggregate over the created_at index, asked for THESE criteria
     // — the very ones the delete is about to be given.
     final summary = ref.watch(deleteSummaryProvider(filter)).value;
+    final withDebt = ref.watch(deleteDebtCountProvider(filter)).value;
     final base = ref.watch(baseCurrencyProvider).value;
-    final counting = summary == null || base == null;
+    // Delete waits for both figures: nobody confirms a deletion without
+    // having been told how many of its invoices carry debts.
+    final counting = summary == null || base == null || withDebt == null;
     final empty = summary != null && summary.count == 0;
 
     return AlertDialog(
       key: const ValueKey('archive-delete-range-dialog'),
+      // Scrolls: on a small phone at a large font the three paragraphs are
+      // taller than the dialog.
+      scrollable: true,
       title: Text(l10n.archiveDeleteRangeTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -309,6 +320,18 @@ class _DeleteConfirmDialog extends ConsumerWidget {
                 symbol: base.symbol.isEmpty ? base.code : base.symbol,
               ),
             )),
+            // Debts are never deleted with their invoices: say how many of
+            // these carry one, and that it stays.
+            if (withDebt > 0) ...[
+              const SizedBox(height: 12),
+              Text(
+                l10n.deleteCarriesDebt(
+                  formatMinor(withDebt, decimals: 0, locale: locale),
+                ),
+                key: const ValueKey('archive-delete-debt-note'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
             // Deleting "everything" must never happen by accident.
             if (filter.from == null && filter.to == null) ...[
               const SizedBox(height: 12),

@@ -14,6 +14,8 @@ import '../customers/customers_screen.dart';
 import '../customers/due_screen.dart';
 import '../customers/quick_search.dart';
 import '../customers/renewal.dart';
+import '../debts/debt_providers.dart';
+import '../debts/debtors_screen.dart';
 import '../products/products_screen.dart';
 import '../sale/sale_screen.dart';
 import '../settings/settings_screen.dart';
@@ -73,7 +75,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ..invalidate(dueCountProvider)
       // Cards may have expired overnight.
       ..invalidate(voucherAvailabilityProvider)
-      ..invalidate(lowStockCountProvider);
+      ..invalidate(lowStockCountProvider)
+      // A debt may have become overdue overnight.
+      ..invalidate(debtorsProvider);
   }
 
   void _push(WidgetBuilder builder) =>
@@ -94,6 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final lowStock =
         voucherStockEnabled ? ref.watch(lowStockCountProvider).value ?? 0 : 0;
     final query = _query.trim();
+    final debtOn = ref.watch(debtFeatureProvider);
 
     final items = <_NavItem>[
       _NavItem(
@@ -152,16 +157,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
     ];
 
+    // The "Debts" card: on every home, above the destinations.
+    const debtsCard = Padding(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: HomeDebtsCard(),
+    );
     final Widget idle = cardsFirst
-        ? _CardsHome(items: items, onOpen: _push, onOpenCustomer: _openCustomer)
-        : GridView.count(
-            crossAxisCount: 2,
-            padding: const EdgeInsets.all(16),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+        ? _CardsHome(
+            items: items,
+            onOpen: _push,
+            onOpenCustomer: _openCustomer,
+            header: debtOn ? debtsCard : null,
+          )
+        : Column(
             children: [
-              for (final item in items)
-                _NavCard(item: item, onTap: () => _push(item.builder)),
+              if (debtOn) debtsCard,
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  padding: const EdgeInsets.all(16),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  children: [
+                    for (final item in items)
+                      _NavCard(item: item, onTap: () => _push(item.builder)),
+                  ],
+                ),
+              ),
             ],
           );
 
@@ -290,7 +312,11 @@ class _CardsHome extends ConsumerWidget {
     required this.items,
     required this.onOpen,
     required this.onOpenCustomer,
+    this.header,
   });
+
+  /// Shown above the destinations (the "Debts" card).
+  final Widget? header;
 
   final List<_NavItem> items;
   final ValueChanged<WidgetBuilder> onOpen;
@@ -308,6 +334,7 @@ class _CardsHome extends ConsumerWidget {
       key: const ValueKey('home-cards'),
       padding: const EdgeInsets.only(bottom: 24),
       children: [
+        ?header,
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Wrap(
@@ -367,6 +394,108 @@ class _CardsHome extends ConsumerWidget {
             ),
         ],
       ],
+    );
+  }
+}
+
+/// The "Debts" card of the home screen: the total outstanding and how many
+/// customers are overdue; a tap opens the debtors list.
+///
+/// With the "PIN to open debts" setting on and the PIN not yet entered, the
+/// card shows a lock instead of the figures — and does not read them.
+class HomeDebtsCard extends ConsumerWidget {
+  const HomeDebtsCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final pinRequired = ref.watch(debtRequirePinProvider).value;
+    final locked =
+        pinRequired == null || (pinRequired && !ref.watch(debtUnlockedProvider));
+    // Not watched while locked: nothing is read from the ledger behind the
+    // door.
+    final snapshot = locked ? null : ref.watch(debtorsProvider).value;
+    final money = ref.watch(baseMoneyProvider);
+    final overdue = snapshot?.overdueCount ?? 0;
+
+    return Card(
+      key: const ValueKey('home-debts'),
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => openDebtors(context),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Icon(
+                pinRequired == true && locked
+                    ? Icons.lock_outline
+                    : Icons.menu_book_outlined,
+                size: 36,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.debtsTitle,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.outline),
+                    ),
+                    if (pinRequired == true && locked)
+                      Text(
+                        l10n.debtLockedMessage,
+                        key: const ValueKey('home-debts-locked'),
+                      )
+                    else ...[
+                      // One line, scaled down: totals run into the millions
+                      // and the system font may be large.
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          snapshot == null
+                              ? '…'
+                              : money(snapshot.totalOutstandingBaseMinor),
+                          key: const ValueKey('home-debts-total'),
+                          maxLines: 1,
+                          style: theme.textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      if (snapshot != null)
+                        Text(
+                          overdue == 0
+                              ? l10n.homeDebtsNoOverdue
+                              : l10n.homeDebtsOverdue(
+                                  formatMinor(
+                                    overdue,
+                                    decimals: 0,
+                                    locale: locale,
+                                  ),
+                                ),
+                          key: const ValueKey('home-debts-overdue'),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: overdue == 0
+                                ? theme.colorScheme.outline
+                                : theme.colorScheme.error,
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

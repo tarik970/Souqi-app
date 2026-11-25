@@ -21,6 +21,11 @@ void main() {
   }) async {
     final db = await tester.runAsync(openTestDb);
     addTearDown(() => db!.close());
+    // A phone-shaped window (600×1200): in the default 800×600 one the
+    // second row of the home grid is below the fold.
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

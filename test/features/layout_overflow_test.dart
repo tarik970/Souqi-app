@@ -103,6 +103,16 @@ void main() {
     return result;
   }
 
+  /// The first scrollable that scrolls DOWN. On a page with tabs (the
+  /// customer page, since the debt ledger) the first scrollable in the tree
+  /// is the tab view itself, which scrolls sideways.
+  Finder verticalScrollable() => find
+      .byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      )
+      .first;
+
   setUp(() async => database = await openTestDb());
   tearDown(() async => database.close());
 
@@ -461,7 +471,7 @@ void main() {
       await tester.scrollUntilVisible(
         target,
         120,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: verticalScrollable(),
       );
       await settle(tester, 4);
     }
@@ -663,7 +673,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('customer-invoice-1')),
         200,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: verticalScrollable(),
       );
       await settle(tester, 4);
       expect(tester.takeException(), isNull);

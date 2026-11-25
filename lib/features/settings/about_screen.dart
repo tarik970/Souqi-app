@@ -8,11 +8,13 @@ import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/byte_size.dart';
 import '../../data/dev/customer_seeder.dart';
+import '../../data/dev/debt_seeder.dart';
 import '../../data/dev/invoice_seeder.dart';
 import '../../data/dev/voucher_seeder.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/archive_providers.dart';
 import '../customers/customers_providers.dart';
+import '../debts/debt_providers.dart';
 import '../products/products_providers.dart';
 import '../sale/sale_providers.dart';
 import '../security/pin_dialogs.dart';
@@ -86,6 +88,7 @@ class AboutScreen extends ConsumerWidget {
             const _SeedInvoicesTile(),
             if (customersEnabled) const _SeedCustomersTile(),
             if (voucherStockEnabled) const _SeedCardsTile(),
+            if (ref.watch(debtFeatureProvider)) const _SeedDebtsTile(),
           ],
         ],
       ),
@@ -356,6 +359,100 @@ class _SeedCardsTile extends ConsumerWidget {
       ..showSnackBar(SnackBar(
         content: Text(l10n.debugSeedCardsDone(
           formatMinor(added, decimals: 0, locale: locale),
+        )),
+      ));
+  }
+}
+
+/// Debug builds only: 5,000 customers and 200,000 ledger entries — the size
+/// the debtors list, the aging summary and the debt statistics have to stay
+/// fast at — for trying them on a real phone.
+class _SeedDebtsTile extends ConsumerWidget {
+  const _SeedDebtsTile();
+
+  static const int customers = 5000;
+  static const int entries = 200000;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const ValueKey('about-seed-debts'),
+      leading: const Icon(Icons.science_outlined),
+      title: Text(l10n.seedDebtsTitle),
+      subtitle: Text(l10n.seedDebtsSubtitle),
+      trailing: const Icon(Icons.add),
+      onTap: () => _seed(context, ref),
+    );
+  }
+
+  Future<void> _seed(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.read(appLocaleProvider).languageCode;
+    final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final database = container.read(databaseProvider);
+    final navigator = Navigator.of(context);
+
+    // Deliberately not disposed, for the same reason as in the seeders
+    // above: the dialog can outlive this method while it animates out.
+    final progress = ValueNotifier<int>(0);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          key: const ValueKey('about-seeding-debts-dialog'),
+          scrollable: true,
+          title: Text(l10n.seedDebtsTitle),
+          content: ValueListenableBuilder<int>(
+            valueListenable: progress,
+            builder: (context, done, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.seedingDebts(
+                  formatMinor(done, decimals: 0, locale: locale),
+                  formatMinor(entries, decimals: 0, locale: locale),
+                )),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(value: done / entries),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // The ledger is spread over the customers that exist: make sure there
+    // are enough of them first.
+    final existing = (await database.db.rawQuery(
+      'SELECT COUNT(*) AS n FROM customers WHERE is_active = 1',
+    ))
+            .first['n'] as int? ??
+        0;
+    if (existing < customers) {
+      await seedTestCustomers(
+        database.db,
+        customers: customers - existing,
+        accountsPerCustomer: 0,
+      );
+    }
+    final written = await seedTestDebts(
+      database.db,
+      entries: entries,
+      onProgress: (done) => progress.value = done,
+    );
+    refreshCustomerData(container);
+    refreshDebtData(container);
+    navigator.pop();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l10n.seedingDebts(
+          formatMinor(written, decimals: 0, locale: locale),
+          formatMinor(entries, decimals: 0, locale: locale),
         )),
       ));
   }

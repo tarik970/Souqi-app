@@ -6,6 +6,7 @@ import '../../core/utils/date_ranges.dart';
 import '../../data/repositories/archive_repository.dart';
 import '../../data/repositories/stats_repository.dart';
 import '../../domain/models/currency.dart';
+import '../../domain/models/debt.dart';
 
 /// The period the statistics screen is showing: a preset, or a custom range.
 class StatsPeriod {
@@ -127,6 +128,22 @@ class StatsReport {
         previous: previous.discountBaseMinor,
       );
 }
+
+/// The debt figures of the period on screen: outstanding now, new debt,
+/// collected, collection rate, top debtors, aging. Null while the debt
+/// ledger is off — a flag that is off shows nothing anywhere.
+///
+/// Its own provider, beside the sales report: the ledger changes without an
+/// invoice (a payment), and the sales report without the ledger.
+final debtStatsProvider = FutureProvider<DebtStats?>((ref) async {
+  if (!ref.watch(debtFeatureProvider)) return null;
+  final range = ref.watch(statsPeriodProvider).range;
+  return ref.watch(debtRepositoryProvider).stats(
+        from: range.from,
+        to: range.to,
+        now: DateTime.now(),
+      );
+});
 
 final statsReportProvider = FutureProvider<StatsReport>((ref) async {
   final period = ref.watch(statsPeriodProvider);

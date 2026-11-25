@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'core/money/money_format.dart';
 import 'core/providers.dart';
 import 'features/home/home_screen.dart';
+import 'features/security/pin_session.dart';
 import 'features/settings/storage_providers.dart';
 import 'features/setup/setup_screen.dart';
 import 'l10n/generated/app_localizations.dart';
@@ -57,9 +58,11 @@ class SouqiApp extends ConsumerWidget {
       ],
       theme: buildTheme(),
       // Above every screen: the one-off startup housekeeping and the
-      // "optimizing…" indicator it (or a delete) may raise.
-      builder: (context, child) =>
-          _Housekeeping(child: child ?? const SizedBox.shrink()),
+      // "optimizing…" indicator it (or a delete) may raise — and the watch
+      // that locks everything the PIN opened when the app is left.
+      builder: (context, child) => PinSessionObserver(
+        child: _Housekeeping(child: child ?? const SizedBox.shrink()),
+      ),
       home: setupDone ? const HomeScreen() : const SetupScreen(),
     );
   }

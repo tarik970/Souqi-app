@@ -41,6 +41,13 @@ abstract final class SettingsKeys {
   static const showAccountNumber = 'show_account_number';
   static const maskAccountNumber = 'mask_account_number';
   static const showPoweredBy = 'show_powered_by'; // one text line, no image
+
+  // Debt lines on the invoice (only for a sale that left a debt or used a
+  // credit balance; the two balances only with a customer attached).
+  static const showPaidAmount = 'show_paid_amount';
+  static const showRemainingAmount = 'show_remaining_amount';
+  static const showPreviousBalance = 'show_previous_balance';
+  static const showNewBalance = 'show_new_balance';
   static const currencyDisplay = 'currency_display'; // SYMBOL / CODE
   static const extraTotalCurrencies = 'extra_total_currencies'; // JSON list, max 2
 
@@ -58,6 +65,10 @@ abstract final class SettingsKeys {
 
   /// The favorites bar is topped up with the best sellers of the last 30 days.
   static const autoFavorites = 'auto_favorites';
+
+  /// Show the small "cash received" field under the total on the sale
+  /// screen (it works out the change to give back). Off by default.
+  static const showCashReceived = 'show_cash_received';
 
   /// Unit of the last new item typed into a sale: a unit id, '0' for
   /// "no unit", '' until the first one (then the preset "piece").
@@ -108,6 +119,23 @@ abstract final class SettingsKeys {
   /// language (Arabic or English).
   static const renewalReminderText = 'renewal_reminder_text';
 
+  /// Minutes without a touch after which everything the PIN opened locks
+  /// again: 1, 5 or 15. (It also locks at once when the app goes to the
+  /// background.)
+  static const pinAutoLockMinutes = 'pin_auto_lock_minutes';
+
+  // Debt ledger.
+  /// Days a new debt is given before it counts as overdue, for a customer
+  /// without due days of their own.
+  static const debtDefaultDueDays = 'debt_default_due_days';
+
+  /// Ask for the PIN before the debtors list and a customer's account open.
+  static const debtRequirePin = 'debt_require_pin';
+
+  /// The WhatsApp debt reminder. '' = the built-in text in the invoice
+  /// language (Arabic or English).
+  static const debtReminderText = 'debt_reminder_text';
+
   /// Defaults applied when a key is missing from the table.
   static const Map<String, String> defaults = {
     baseCurrencyCode: 'SYP',
@@ -141,6 +169,10 @@ abstract final class SettingsKeys {
     showAccountNumber: '1',
     maskAccountNumber: '0',
     showPoweredBy: '1',
+    showPaidAmount: '1',
+    showRemainingAmount: '1',
+    showPreviousBalance: '0',
+    showNewBalance: '0',
     currencyDisplay: 'SYMBOL',
     extraTotalCurrencies: '[]',
     outputMode: 'PRINT',
@@ -149,6 +181,7 @@ abstract final class SettingsKeys {
     saveNewItemsAsProducts: '1',
     updateProductPriceFromSales: '1',
     autoFavorites: '1',
+    showCashReceived: '0',
     lastNewItemUnitId: '',
     autoDeleteDays: '0',
     autoDeleteLastRunAt: '0',
@@ -165,5 +198,9 @@ abstract final class SettingsKeys {
     codesOnSeparateSlips: '0',
     dueSoonDays: '3',
     renewalReminderText: '',
+    pinAutoLockMinutes: '5',
+    debtDefaultDueDays: '30',
+    debtRequirePin: '0',
+    debtReminderText: '',
   };
 }

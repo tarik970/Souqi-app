@@ -308,7 +308,17 @@ enum AuditAction {
   pinRecover('PIN_RECOVER'),
 
   /// A forgotten PIN replaced with a developer-signed reset code (phase 5b).
-  pinResetSigned('PIN_RESET_SIGNED');
+  pinResetSigned('PIN_RESET_SIGNED'),
+
+  /// A ledger entry cancelled by a REVERSAL entry (PIN + reason).
+  debtReversal('DEBT_REVERSAL'),
+
+  /// A manual correction of a customer's balance (PIN + reason).
+  debtAdjustment('DEBT_ADJUSTMENT'),
+
+  /// A sale on credit saved although it takes the customer over their
+  /// credit limit.
+  creditLimitOverride('CREDIT_LIMIT_OVERRIDE');
 
   const AuditAction(this.db);
 

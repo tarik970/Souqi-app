@@ -423,7 +423,9 @@ void main() {
       await appDb.db.insert('debt_transactions', {
         'customer_id': customerId,
         'created_at': DateTime.now().millisecondsSinceEpoch,
+        'recorded_at': DateTime.now().millisecondsSinceEpoch,
         'type': 'DEBT',
+        'direction': 1,
         'amount_base_minor': 5000,
       });
       expect(await currencies.canChangeBase(), isFalse);

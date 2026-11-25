@@ -245,6 +245,41 @@ class ArchiveRepository {
         0;
   }
 
+  /// "This invoice still carries a debt": a DEBT entry of the ledger points
+  /// at it and was not cancelled. [alias] is the invoice. Served by
+  /// `idx_debt_invoice`.
+  static String _carriesDebt(String alias) =>
+      'EXISTS (SELECT 1 FROM debt_transactions dt '
+      "WHERE dt.invoice_id = $alias.id AND dt.type = 'DEBT' "
+      'AND NOT EXISTS (SELECT 1 FROM debt_transactions rv '
+      'WHERE rv.reverses_id = dt.id))';
+
+  /// How many of the invoices matching [filter] carry a debt — what the
+  /// delete confirmation tells the user before they go. Deleting them never
+  /// deletes or changes the debts: each ledger entry keeps its amount and
+  /// the invoice NUMBER, and only loses the link to the invoice row
+  /// (ON DELETE SET NULL).
+  Future<int> countCarryingDebt(ArchiveFilter filter) async {
+    final (where, args) = _where(filter);
+    where.add(_carriesDebt('i'));
+    return Sqflite.firstIntValue(
+          await _db.rawQuery(
+            'SELECT COUNT(*) FROM invoices i WHERE ${where.join(' AND ')}',
+            args,
+          ),
+        ) ??
+        0;
+  }
+
+  /// Whether invoice [id] carries a debt (see [countCarryingDebt]).
+  Future<bool> invoiceCarriesDebt(int id) async {
+    final rows = await _db.rawQuery(
+      'SELECT 1 FROM invoices i WHERE i.id = ? AND ${_carriesDebt('i')}',
+      [id],
+    );
+    return rows.isNotEmpty;
+  }
+
   /// Deletes up to [limit] of the invoices matching [filter], in one
   /// statement — and therefore one transaction. Returns how many went.
   ///

@@ -91,7 +91,7 @@ class InvoiceView extends StatelessWidget {
     );
     final bold = body.copyWith(fontWeight: FontWeight.w700);
     final small = body.copyWith(fontSize: base * 0.8);
-    final rule = _DashedRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
+    final rule = PaperRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
 
     final shopName = s.shopName.trim();
     final header = isolateSpacedNumbers(s.headerText.trim());
@@ -125,15 +125,15 @@ class InvoiceView extends StatelessWidget {
           ],
         ),
       if (customersEnabled && s.showCustomerName && customerName.isNotEmpty)
-        _Pair(label: l10n.invoiceCustomerLabel, gap: gap, value: Text(customerName)),
+        PaperPair(label: l10n.invoiceCustomerLabel, gap: gap, value: Text(customerName)),
       if (customersEnabled && s.showCustomerPhone && customerPhone.isNotEmpty)
-        _Pair(
+        PaperPair(
           label: l10n.invoicePhoneLabel,
           gap: gap,
           value: Text(customerPhone, textDirection: TextDirection.ltr),
         ),
       if (accountsEnabled && s.showAccountNumber && accountNumber.isNotEmpty)
-        _Pair(
+        PaperPair(
           label: l10n.invoiceAccountLabel,
           gap: gap,
           // The provider and the number are separate text runs: the number
@@ -174,7 +174,7 @@ class InvoiceView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isCopy) ...[
-                    _CopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
+                    PaperCopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
                     SizedBox(height: gap),
                   ],
                   if (logo != null)
@@ -218,7 +218,7 @@ class InvoiceView extends StatelessWidget {
                     ),
                   rule,
                   if (discountEnabled && invoice.discountMinor != 0) ...[
-                    _Pair(
+                    PaperPair(
                       label: l10n.subtotalLabel,
                       gap: gap,
                       colon: false,
@@ -228,7 +228,7 @@ class InvoiceView extends StatelessWidget {
                         withCurrency: false,
                       )),
                     ),
-                    _Pair(
+                    PaperPair(
                       label: invoice.discountType == DiscountType.percent &&
                               invoice.discountValue != null
                           ? '${l10n.discountLabel} '
@@ -243,7 +243,7 @@ class InvoiceView extends StatelessWidget {
                       )),
                     ),
                   ],
-                  _Pair(
+                  PaperPair(
                     label: l10n.totalLabel,
                     gap: gap,
                     colon: false,
@@ -254,7 +254,7 @@ class InvoiceView extends StatelessWidget {
                     ),
                   ),
                   for (final extra in invoice.extraTotals)
-                    _Atoms(
+                    PaperAtoms(
                       gap: gap * 0.6,
                       alignEnd: true,
                       children: [
@@ -263,7 +263,7 @@ class InvoiceView extends StatelessWidget {
                       ],
                     ),
                   for (final rate in rates)
-                    _Atoms(
+                    PaperAtoms(
                       gap: gap * 0.6,
                       alignEnd: true,
                       style: small,
@@ -277,6 +277,7 @@ class InvoiceView extends StatelessWidget {
                             '${money.label(invoice.baseCurrencyCode)}'),
                       ],
                     ),
+                  ..._debtLines(l10n, money, gap: gap, bold: bold),
                   if (voucherStockEnabled)
                     for (final code in codes) ...[
                       rule,
@@ -307,6 +308,85 @@ class InvoiceView extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+extension on InvoiceView {
+  /// What the sale did to the customer's account: paid, taken from their
+  /// credit balance, left as debt — and, when switched on, their balance
+  /// before and after. Nothing at all for a sale that was simply paid in
+  /// full by a customer with no balance, and nothing for an invoice saved
+  /// before the debt ledger existed.
+  List<Widget> _debtLines(
+    AppLocalizations l10n,
+    InvoiceMoney money, {
+    required double gap,
+    required TextStyle bold,
+  }) {
+    final s = settings;
+    final currency = invoice.currencyCode;
+    final paid = invoice.paidMinor;
+    final creditUsed = invoice.creditUsedMinor ?? 0;
+    final prev = invoice.prevBalanceBaseMinor;
+    final next = invoice.newBalanceBaseMinor;
+
+    // A balance in words: the amount is its own text run, so a neighbouring
+    // Arabic word can never reorder "5,000 SYP".
+    Widget balance(int baseMinor) => Wrap(
+          alignment: WrapAlignment.end,
+          spacing: gap * 0.6,
+          children: [
+            if (baseMinor != 0)
+              Text(baseMinor > 0 ? l10n.paperOwes : l10n.paperCredit),
+            Text(money.amount(baseMinor.abs(), invoice.baseCurrencyCode)),
+          ],
+        );
+
+    return [
+      if (invoice.hasDebtLines && paid != null) ...[
+        if (s.showPaidAmount)
+          PaperPair(
+            label: l10n.invoicePaidLabel,
+            gap: gap,
+            colon: false,
+            value: Text(money.amount(paid, currency)),
+          ),
+        if (s.showPaidAmount && creditUsed > 0)
+          PaperPair(
+            label: l10n.invoiceFromCreditLabel,
+            gap: gap,
+            colon: false,
+            value: Text(money.amount(creditUsed, currency)),
+          ),
+        if (s.showRemainingAmount)
+          PaperPair(
+            label: l10n.invoiceRemainingLabel,
+            gap: gap,
+            colon: false,
+            labelStyle: bold,
+            value: Text(
+              money.amount(invoice.remainingMinor, currency),
+              style: bold,
+            ),
+          ),
+      ],
+      if (customersEnabled && prev != null && next != null) ...[
+        if (s.showPreviousBalance && prev != 0)
+          PaperPair(
+            label: l10n.previousBalanceLabel,
+            gap: gap,
+            colon: false,
+            value: balance(prev),
+          ),
+        if (s.showNewBalance && (next != 0 || prev != 0))
+          PaperPair(
+            label: l10n.newBalanceLabel,
+            gap: gap,
+            colon: false,
+            value: balance(next),
+          ),
+      ],
+    ];
   }
 }
 
@@ -378,8 +458,9 @@ class _ItemBlock extends StatelessWidget {
 }
 
 /// "Label: ........ value", the value pushed to the end edge.
-class _Pair extends StatelessWidget {
-  const _Pair({
+class PaperPair extends StatelessWidget {
+  const PaperPair({
+    super.key,
     required this.label,
     required this.value,
     required this.gap,
@@ -393,27 +474,41 @@ class _Pair extends StatelessWidget {
   final bool colon;
   final TextStyle? labelStyle;
 
+  /// The most of the line a label may take. A label that fits keeps its
+  /// natural width, exactly as before; a long one on a narrow paper at a
+  /// large font ("Balance brought forward" on 58 mm) wraps instead of
+  /// pushing the value off the paper.
+  static const double maxLabelFraction = 0.62;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(colon ? '$label:' : label, style: labelStyle),
-        SizedBox(width: gap),
-        Expanded(
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: value,
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: constraints.maxWidth * maxLabelFraction,
+            ),
+            child: Text(colon ? '$label:' : label, style: labelStyle),
           ),
-        ),
-      ],
+          SizedBox(width: gap),
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: value,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /// A run of separate text parts on one (wrapping) line.
-class _Atoms extends StatelessWidget {
-  const _Atoms({
+class PaperAtoms extends StatelessWidget {
+  const PaperAtoms({
+    super.key,
     required this.children,
     required this.gap,
     this.alignEnd = false,
@@ -438,8 +533,8 @@ class _Atoms extends StatelessWidget {
 
 /// A dashed separator drawn on whole pixels with antialiasing off, so every
 /// dash is solid black after the 1-bit conversion.
-class _DashedRule extends StatelessWidget {
-  const _DashedRule({required this.thickness, required this.space});
+class PaperRule extends StatelessWidget {
+  const PaperRule({super.key, required this.thickness, required this.space});
 
   final double thickness;
   final double space;
@@ -479,8 +574,9 @@ class _DashPainter extends CustomPainter {
 /// the top of the paper. A box rather than a colour or a shade, because the
 /// only ink a thermal printer has is black and a grey wash comes out as
 /// noise after the 1-bit conversion.
-class _CopyMark extends StatelessWidget {
-  const _CopyMark({
+class PaperCopyMark extends StatelessWidget {
+  const PaperCopyMark({
+    super.key,
     required this.label,
     required this.style,
     required this.base,
@@ -759,7 +855,7 @@ class CodeSlipView extends StatelessWidget {
       decoration: TextDecoration.none,
     );
     final bold = body.copyWith(fontWeight: FontWeight.w700);
-    final rule = _DashedRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
+    final rule = PaperRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
     final shopName = s.shopName.trim();
 
     return MediaQuery(
@@ -777,7 +873,7 @@ class CodeSlipView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isCopy) ...[
-                    _CopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
+                    PaperCopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
                     SizedBox(height: gap),
                   ],
                   if (shopName.isNotEmpty) ...[
@@ -861,7 +957,7 @@ class RecoverySlipView extends StatelessWidget {
       decoration: TextDecoration.none,
     );
     final bold = body.copyWith(fontWeight: FontWeight.w700);
-    final rule = _DashedRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
+    final rule = PaperRule(thickness: base >= 28 ? 3 : 2, space: base * 0.4);
     final shopName = s.shopName.trim();
 
     return MediaQuery(

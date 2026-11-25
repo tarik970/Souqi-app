@@ -3746,6 +3746,1132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recovery code created'**
   String get auditRecoveryCodeCreate;
+
+  /// No description provided for @debtsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts'**
+  String get debtsTitle;
+
+  /// No description provided for @debtorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debtors'**
+  String get debtorsTitle;
+
+  /// No description provided for @accountTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountTab;
+
+  /// No description provided for @customerDetailsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get customerDetailsTab;
+
+  /// No description provided for @balanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get balanceLabel;
+
+  /// No description provided for @balanceOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String balanceOwes(String amount);
+
+  /// No description provided for @balanceCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit {amount}'**
+  String balanceCredit(String amount);
+
+  /// No description provided for @balanceSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'No balance'**
+  String get balanceSettled;
+
+  /// No description provided for @creditLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit limit'**
+  String get creditLimitLabel;
+
+  /// No description provided for @lastPaymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last payment'**
+  String get lastPaymentLabel;
+
+  /// No description provided for @neverPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment yet'**
+  String get neverPaid;
+
+  /// No description provided for @overdueBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get overdueBadge;
+
+  /// No description provided for @overdueAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue: {amount}'**
+  String overdueAmount(String amount);
+
+  /// No description provided for @oldestDebtAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest debt: {days} days'**
+  String oldestDebtAge(String days);
+
+  /// No description provided for @oldestDebtToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest debt: today'**
+  String get oldestDebtToday;
+
+  /// No description provided for @overLimitBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Over limit'**
+  String get overLimitBadge;
+
+  /// No description provided for @recordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get recordPayment;
+
+  /// No description provided for @addDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Add debt'**
+  String get addDebt;
+
+  /// No description provided for @openingBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get openingBalance;
+
+  /// No description provided for @adjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get adjustment;
+
+  /// No description provided for @accountStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Account statement'**
+  String get accountStatement;
+
+  /// No description provided for @sendDebtReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind on WhatsApp'**
+  String get sendDebtReminder;
+
+  /// No description provided for @debtReminderNoPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer has no phone number'**
+  String get debtReminderNoPhone;
+
+  /// No description provided for @entryInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice {no}'**
+  String entryInvoice(String no);
+
+  /// No description provided for @entryReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt {no}'**
+  String entryReceipt(String no);
+
+  /// No description provided for @entryPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get entryPayment;
+
+  /// No description provided for @entryManualDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get entryManualDebt;
+
+  /// No description provided for @entryReversalOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversal: {what}'**
+  String entryReversalOf(String what);
+
+  /// No description provided for @entryReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversed'**
+  String get entryReversed;
+
+  /// No description provided for @ledgerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries yet'**
+  String get ledgerEmpty;
+
+  /// No description provided for @ledgerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries match the filter'**
+  String get ledgerNoMatch;
+
+  /// No description provided for @ledgerDebit.
+  ///
+  /// In en, this message translates to:
+  /// **'Debit'**
+  String get ledgerDebit;
+
+  /// No description provided for @ledgerCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get ledgerCredit;
+
+  /// No description provided for @dateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get dateLabel;
+
+  /// No description provided for @descriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get descriptionLabel;
+
+  /// No description provided for @typeFilterDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts'**
+  String get typeFilterDebts;
+
+  /// No description provided for @typeFilterPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get typeFilterPayments;
+
+  /// No description provided for @typeFilterOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get typeFilterOther;
+
+  /// No description provided for @invoiceDeletedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice {no} was deleted from the archive. The debt stays in the account.'**
+  String invoiceDeletedNote(String no);
+
+  /// No description provided for @openInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Open invoice'**
+  String get openInvoice;
+
+  /// No description provided for @viewReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get viewReceipt;
+
+  /// No description provided for @reverseEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse entry'**
+  String get reverseEntry;
+
+  /// No description provided for @reverseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse this entry?'**
+  String get reverseTitle;
+
+  /// No description provided for @reverseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The entry stays in the ledger, struck through, and a reversal entry cancels it. This cannot be undone.'**
+  String get reverseMessage;
+
+  /// No description provided for @reasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the reason'**
+  String get reasonRequired;
+
+  /// No description provided for @pinReasonReverse.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to reverse a ledger entry.'**
+  String get pinReasonReverse;
+
+  /// No description provided for @pinReasonAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to adjust a balance.'**
+  String get pinReasonAdjustment;
+
+  /// No description provided for @pinReasonCreditLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to sell over the credit limit.'**
+  String get pinReasonCreditLimit;
+
+  /// No description provided for @pinReasonDebtAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to open the debts.'**
+  String get pinReasonDebtAccess;
+
+  /// No description provided for @entryReversedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry reversed'**
+  String get entryReversedSnack;
+
+  /// No description provided for @dueOnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String dueOnLabel(String date);
+
+  /// No description provided for @paymentMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get paymentMethodLabel;
+
+  /// No description provided for @methodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get methodCash;
+
+  /// No description provided for @methodTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get methodTransfer;
+
+  /// No description provided for @methodOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get methodOther;
+
+  /// No description provided for @amountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amountLabel;
+
+  /// No description provided for @amountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than zero'**
+  String get amountInvalid;
+
+  /// No description provided for @payFullBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay full balance'**
+  String get payFullBalance;
+
+  /// No description provided for @paymentCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get paymentCurrencyLabel;
+
+  /// No description provided for @paymentRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate: {base} per 1 {code}'**
+  String paymentRateLabel(String base, String code);
+
+  /// No description provided for @paymentCountsAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts as {amount}'**
+  String paymentCountsAs(String amount);
+
+  /// No description provided for @paymentOverBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'More than the balance: the customer will have a credit of {amount}.'**
+  String paymentOverBalance(String amount);
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptional;
+
+  /// No description provided for @receiptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment receipt'**
+  String get receiptTitle;
+
+  /// No description provided for @receiptNoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt no. {no}'**
+  String receiptNoLabel(String no);
+
+  /// No description provided for @receiptReceivedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Received from'**
+  String get receiptReceivedFrom;
+
+  /// No description provided for @receiptAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount paid'**
+  String get receiptAmountLabel;
+
+  /// No description provided for @receiptPaidAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Received as'**
+  String get receiptPaidAs;
+
+  /// No description provided for @receiptMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get receiptMethodLabel;
+
+  /// No description provided for @receiptNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get receiptNoteLabel;
+
+  /// No description provided for @receiptReversedMark.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCELLED'**
+  String get receiptReversedMark;
+
+  /// No description provided for @previousBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous balance'**
+  String get previousBalanceLabel;
+
+  /// No description provided for @newBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New balance'**
+  String get newBalanceLabel;
+
+  /// No description provided for @paperOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'owes'**
+  String get paperOwes;
+
+  /// No description provided for @paperCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'credit'**
+  String get paperCredit;
+
+  /// No description provided for @statementOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance brought forward'**
+  String get statementOpening;
+
+  /// No description provided for @statementClosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing balance'**
+  String get statementClosing;
+
+  /// No description provided for @statementTotalDebits.
+  ///
+  /// In en, this message translates to:
+  /// **'Total debits'**
+  String get statementTotalDebits;
+
+  /// No description provided for @statementTotalCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Total credits'**
+  String get statementTotalCredits;
+
+  /// No description provided for @statementNoEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries in this period'**
+  String get statementNoEntries;
+
+  /// No description provided for @statementWholeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole account'**
+  String get statementWholeAccount;
+
+  /// No description provided for @statementLast30.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get statementLast30;
+
+  /// No description provided for @statementUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String statementUntil(String date);
+
+  /// No description provided for @debtorsTotalOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Total outstanding'**
+  String get debtorsTotalOutstanding;
+
+  /// No description provided for @debtorsOwingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} customers owe'**
+  String debtorsOwingCount(String count);
+
+  /// No description provided for @debtorsCreditTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'We owe customers: {amount}'**
+  String debtorsCreditTotal(String amount);
+
+  /// No description provided for @agingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts by age'**
+  String get agingTitle;
+
+  /// No description provided for @aging0to30.
+  ///
+  /// In en, this message translates to:
+  /// **'0–30 days'**
+  String get aging0to30;
+
+  /// No description provided for @aging31to60.
+  ///
+  /// In en, this message translates to:
+  /// **'31–60 days'**
+  String get aging31to60;
+
+  /// No description provided for @aging61to90.
+  ///
+  /// In en, this message translates to:
+  /// **'61–90 days'**
+  String get aging61to90;
+
+  /// No description provided for @agingOver90.
+  ///
+  /// In en, this message translates to:
+  /// **'Over 90 days'**
+  String get agingOver90;
+
+  /// No description provided for @sortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortLabel;
+
+  /// No description provided for @sortByAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest amount'**
+  String get sortByAmount;
+
+  /// No description provided for @sortByOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest debt'**
+  String get sortByOldest;
+
+  /// No description provided for @sortByLastPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest since a payment'**
+  String get sortByLastPayment;
+
+  /// No description provided for @filterOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get filterOverdue;
+
+  /// No description provided for @filterOverLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Over limit'**
+  String get filterOverLimit;
+
+  /// No description provided for @filterCreditBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit balances'**
+  String get filterCreditBalances;
+
+  /// No description provided for @debtorsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody owes anything'**
+  String get debtorsEmpty;
+
+  /// No description provided for @debtorsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching customers'**
+  String get debtorsNoMatch;
+
+  /// No description provided for @lastPaymentOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Last payment {date}'**
+  String lastPaymentOn(String date);
+
+  /// No description provided for @paymentSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get paymentSheetTitle;
+
+  /// No description provided for @payFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid in full'**
+  String get payFull;
+
+  /// No description provided for @payPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial'**
+  String get payPartial;
+
+  /// No description provided for @payCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'On credit'**
+  String get payCredit;
+
+  /// No description provided for @amountPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount paid'**
+  String get amountPaidLabel;
+
+  /// No description provided for @remainingAsDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes on the account: {amount}'**
+  String remainingAsDebt(String amount);
+
+  /// No description provided for @cashReceivedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash received (optional)'**
+  String get cashReceivedLabel;
+
+  /// No description provided for @changeDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Change to give back: {amount}'**
+  String changeDue(String amount);
+
+  /// No description provided for @cashShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Less than the amount to pay'**
+  String get cashShort;
+
+  /// No description provided for @customerRequiredForDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a customer to sell on credit'**
+  String get customerRequiredForDebt;
+
+  /// No description provided for @chooseCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose customer'**
+  String get chooseCustomer;
+
+  /// No description provided for @changeCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get changeCustomer;
+
+  /// No description provided for @useCreditBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Use credit balance ({amount})'**
+  String useCreditBalance(String amount);
+
+  /// No description provided for @toPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay now: {amount}'**
+  String toPayNow(String amount);
+
+  /// No description provided for @dueDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get dueDateLabel;
+
+  /// No description provided for @creditLimitWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Over the credit limit'**
+  String get creditLimitWarningTitle;
+
+  /// No description provided for @creditLimitWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance {balance} + this sale {sale} = {newBalance}. The limit is {limit}.'**
+  String creditLimitWarning(
+    String balance,
+    String sale,
+    String newBalance,
+    String limit,
+  );
+
+  /// No description provided for @overrideAndSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Override and save'**
+  String get overrideAndSave;
+
+  /// No description provided for @creditLimitConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell over the limit?'**
+  String get creditLimitConfirmTitle;
+
+  /// No description provided for @creditLimitBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This sale would take the customer over their credit limit.'**
+  String get creditLimitBlocked;
+
+  /// No description provided for @partialInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount smaller than the amount to pay'**
+  String get partialInvalid;
+
+  /// No description provided for @salePaidLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {paid} · on account {remaining}'**
+  String salePaidLine(String paid, String remaining);
+
+  /// No description provided for @invoicePaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get invoicePaidLabel;
+
+  /// No description provided for @invoiceFromCreditLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From credit balance'**
+  String get invoiceFromCreditLabel;
+
+  /// No description provided for @invoiceRemainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining (debt)'**
+  String get invoiceRemainingLabel;
+
+  /// No description provided for @debtLinesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt lines'**
+  String get debtLinesSection;
+
+  /// No description provided for @debtLinesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid and remaining are printed only on a sale that was not paid in full; the balances only when the invoice has a customer.'**
+  String get debtLinesHint;
+
+  /// No description provided for @showPaidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount paid'**
+  String get showPaidAmount;
+
+  /// No description provided for @showRemainingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining (debt) amount'**
+  String get showRemainingAmount;
+
+  /// No description provided for @showPreviousBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer\'s previous balance'**
+  String get showPreviousBalance;
+
+  /// No description provided for @showNewBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer\'s new balance'**
+  String get showNewBalance;
+
+  /// No description provided for @debtSettingsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts'**
+  String get debtSettingsSection;
+
+  /// No description provided for @defaultDueDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to pay'**
+  String get defaultDueDaysLabel;
+
+  /// No description provided for @defaultDueDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A new debt counts as overdue after this many days, unless the customer has their own.'**
+  String get defaultDueDaysHint;
+
+  /// No description provided for @debtRequirePinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN to open debts'**
+  String get debtRequirePinTitle;
+
+  /// No description provided for @debtRequirePinSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for the PIN before the debtors list and a customer\'s account. Selling on credit never asks.'**
+  String get debtRequirePinSubtitle;
+
+  /// No description provided for @debtReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt reminder message'**
+  String get debtReminderTitle;
+
+  /// No description provided for @debtReminderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The text WhatsApp opens with when you remind a customer of their balance'**
+  String get debtReminderHint;
+
+  /// No description provided for @debtReminderDefaultText.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello {name}, a reminder from {shop}: your balance is {balance}. Last payment: {lastPayment}. Thank you.'**
+  String debtReminderDefaultText(
+    String name,
+    String shop,
+    String balance,
+    String lastPayment,
+  );
+
+  /// No description provided for @customerCreditLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit limit (optional)'**
+  String get customerCreditLimitLabel;
+
+  /// No description provided for @customerDueDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to pay (optional)'**
+  String get customerDueDaysLabel;
+
+  /// No description provided for @customerDueDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty = the shop\'s default ({days})'**
+  String customerDueDaysHint(String days);
+
+  /// No description provided for @deactivateWithBalanceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" has an open balance: {balance}. Deactivating hides them from the search; the balance stays in the debtors list.'**
+  String deactivateWithBalanceMessage(String name, String balance);
+
+  /// No description provided for @deleteCarriesDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of these invoices carry debts. The debts are not deleted: they stay in the customers\' accounts.'**
+  String deleteCarriesDebt(String count);
+
+  /// No description provided for @deleteInvoiceCarriesDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice carries a debt. The debt is not deleted: it stays in the customer\'s account.'**
+  String get deleteInvoiceCarriesDebt;
+
+  /// No description provided for @statsOutstandingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding now'**
+  String get statsOutstandingNow;
+
+  /// No description provided for @statsNewDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'New debt'**
+  String get statsNewDebt;
+
+  /// No description provided for @statsCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected'**
+  String get statsCollected;
+
+  /// No description provided for @statsCollectionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection rate'**
+  String get statsCollectionRate;
+
+  /// No description provided for @statsTopDebtors.
+  ///
+  /// In en, this message translates to:
+  /// **'Top debtors'**
+  String get statsTopDebtors;
+
+  /// No description provided for @homeDebtsOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} overdue'**
+  String homeDebtsOverdue(String count);
+
+  /// No description provided for @homeDebtsNoOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody overdue'**
+  String get homeDebtsNoOverdue;
+
+  /// No description provided for @debtLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts are protected by the PIN.'**
+  String get debtLockedMessage;
+
+  /// No description provided for @unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
+
+  /// No description provided for @openingBalancesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balances'**
+  String get openingBalancesTitle;
+
+  /// No description provided for @openingBalancesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving from a paper notebook: enter what each customer owes, one after another.'**
+  String get openingBalancesIntro;
+
+  /// No description provided for @openingExistingBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing customer · {balance}'**
+  String openingExistingBalance(String balance);
+
+  /// No description provided for @openingOwesToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes the shop'**
+  String get openingOwesToggle;
+
+  /// No description provided for @openingCreditToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop owes them'**
+  String get openingCreditToggle;
+
+  /// No description provided for @openingDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date (optional)'**
+  String get openingDateLabel;
+
+  /// No description provided for @openingAddedNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New customer'**
+  String get openingAddedNew;
+
+  /// No description provided for @openingAddedExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing customer'**
+  String get openingAddedExisting;
+
+  /// No description provided for @openingSessionTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} entered'**
+  String openingSessionTotal(String count);
+
+  /// No description provided for @openingNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the customer\'s name'**
+  String get openingNameRequired;
+
+  /// No description provided for @openingPickedCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding to {name}'**
+  String openingPickedCustomer(String name);
+
+  /// No description provided for @manualDebtNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What is it for? (optional)'**
+  String get manualDebtNoteHint;
+
+  /// No description provided for @adjustmentIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase the debt'**
+  String get adjustmentIncrease;
+
+  /// No description provided for @adjustmentDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease the debt'**
+  String get adjustmentDecrease;
+
+  /// No description provided for @entrySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get entrySaved;
+
+  /// No description provided for @auditDebtReversal.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger entry reversed'**
+  String get auditDebtReversal;
+
+  /// No description provided for @auditDebtAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance adjusted'**
+  String get auditDebtAdjustment;
+
+  /// No description provided for @auditCreditLimitOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit limit overridden'**
+  String get auditCreditLimitOverride;
+
+  /// No description provided for @seedDebtsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed debt ledger (debug)'**
+  String get seedDebtsTitle;
+
+  /// No description provided for @seedDebtsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'5,000 customers and 200,000 ledger entries, to try the debtors list at full size'**
+  String get seedDebtsSubtitle;
+
+  /// No description provided for @seedingDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing ledger entries: {done} / {total}'**
+  String seedingDebts(String done, String total);
+
+  /// No description provided for @pinAutoLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock again after'**
+  String get pinAutoLockTitle;
+
+  /// No description provided for @pinAutoLockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What the PIN opens — the debts, the audit log, card codes — locks again after this long without a touch, and at once when you leave the app.'**
+  String get pinAutoLockHint;
+
+  /// No description provided for @minutesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{1 minute} other{{minutes} minutes}}'**
+  String minutesCount(int minutes);
+
+  /// No description provided for @saleCreditButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit / Partial'**
+  String get saleCreditButton;
+
+  /// No description provided for @settingCashReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash received field'**
+  String get settingCashReceived;
+
+  /// No description provided for @settingCashReceivedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a small \"cash received\" field under the total that works out the change to give back'**
+  String get settingCashReceivedHint;
+
+  /// No description provided for @cashReceivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash received'**
+  String get cashReceivedTitle;
+
+  /// No description provided for @cashReceivedValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Received {amount}'**
+  String cashReceivedValue(String amount);
+
+  /// No description provided for @changeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Change {amount}'**
+  String changeShort(String amount);
+
+  /// No description provided for @cashReceivedClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get cashReceivedClear;
 }
 
 class _AppLocalizationsDelegate

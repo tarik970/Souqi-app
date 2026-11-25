@@ -6,8 +6,10 @@ import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../currencies/currencies_screen.dart';
+import '../debts/debt_settings.dart';
 import '../invoice/invoice_settings_screen.dart';
 import '../sale/sale_providers.dart';
+import '../security/pin_session.dart';
 import '../security/security_settings.dart';
 import '../setup/setup_screen.dart';
 import '../units/units_screen.dart';
@@ -135,6 +137,16 @@ class SettingsScreen extends ConsumerWidget {
                 .read(saleSettingsProvider.notifier)
                 .change((s) => s.copyWith(autoFavorites: on)),
           ),
+          SwitchListTile(
+            key: const ValueKey('setting-cash-received'),
+            secondary: const Icon(Icons.payments_outlined),
+            title: Text(l10n.settingCashReceived),
+            subtitle: Text(l10n.settingCashReceivedHint),
+            value: sale.cashReceivedField,
+            onChanged: (on) => ref
+                .read(saleSettingsProvider.notifier)
+                .change((s) => s.copyWith(cashReceivedField: on)),
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.receipt_long),
@@ -198,7 +210,24 @@ class SettingsScreen extends ConsumerWidget {
           const RecoveryMissingBanner(),
           const PinSettingsTile(),
           const AuditLogTile(),
+          const PinAutoLockTile(),
           const Divider(),
+          if (ref.watch(debtFeatureProvider)) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                l10n.debtSettingsSection,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ),
+            const DebtDueDaysTile(),
+            const DebtRequirePinTile(),
+            const DebtReminderTile(),
+            const OpeningBalancesTile(),
+            const Divider(),
+          ],
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.aboutTitle),

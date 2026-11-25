@@ -66,6 +66,10 @@ class InvoiceSettings {
     this.showAccountNumber = true,
     this.maskAccountNumber = false,
     this.showPoweredBy = true,
+    this.showPaidAmount = true,
+    this.showRemainingAmount = true,
+    this.showPreviousBalance = false,
+    this.showNewBalance = false,
     this.printCodeQr = false,
     this.codesOnSeparateSlips = false,
     this.currencyDisplay = CurrencyDisplay.symbol,
@@ -112,6 +116,24 @@ class InvoiceSettings {
   final bool showAccountNumber;
   final bool maskAccountNumber;
   final bool showPoweredBy;
+
+  // Debt lines (the debt ledger). Paid and remaining are printed only on a
+  // sale that was not simply paid in full; the two balances only when the
+  // invoice has a customer whose balance is not zero.
+  final bool showPaidAmount;
+  final bool showRemainingAmount;
+  final bool showPreviousBalance;
+  final bool showNewBalance;
+
+  /// These settings with every debt line switched off — what the invoice is
+  /// rendered with while the debt ledger feature is off, so that nothing of
+  /// it reaches the paper, not even on an invoice saved while it was on.
+  InvoiceSettings withoutDebtLines() => copyWith(
+        showPaidAmount: false,
+        showRemainingAmount: false,
+        showPreviousBalance: false,
+        showNewBalance: false,
+      );
 
   /// Print a QR code of each sold card code under its digits.
   final bool printCodeQr;
@@ -240,6 +262,10 @@ class InvoiceSettings {
       showAccountNumber: _bool(get(SettingsKeys.showAccountNumber)),
       maskAccountNumber: _bool(get(SettingsKeys.maskAccountNumber)),
       showPoweredBy: _bool(get(SettingsKeys.showPoweredBy)),
+      showPaidAmount: _bool(get(SettingsKeys.showPaidAmount)),
+      showRemainingAmount: _bool(get(SettingsKeys.showRemainingAmount)),
+      showPreviousBalance: _bool(get(SettingsKeys.showPreviousBalance)),
+      showNewBalance: _bool(get(SettingsKeys.showNewBalance)),
       printCodeQr: _bool(get(SettingsKeys.printCodeQr)),
       codesOnSeparateSlips: _bool(get(SettingsKeys.codesOnSeparateSlips)),
       currencyDisplay:
@@ -282,6 +308,10 @@ class InvoiceSettings {
         SettingsKeys.showAccountNumber: showAccountNumber ? '1' : '0',
         SettingsKeys.maskAccountNumber: maskAccountNumber ? '1' : '0',
         SettingsKeys.showPoweredBy: showPoweredBy ? '1' : '0',
+        SettingsKeys.showPaidAmount: showPaidAmount ? '1' : '0',
+        SettingsKeys.showRemainingAmount: showRemainingAmount ? '1' : '0',
+        SettingsKeys.showPreviousBalance: showPreviousBalance ? '1' : '0',
+        SettingsKeys.showNewBalance: showNewBalance ? '1' : '0',
         SettingsKeys.printCodeQr: printCodeQr ? '1' : '0',
         SettingsKeys.codesOnSeparateSlips: codesOnSeparateSlips ? '1' : '0',
         SettingsKeys.currencyDisplay: currencyDisplay.db,
@@ -317,6 +347,10 @@ class InvoiceSettings {
     bool? showAccountNumber,
     bool? maskAccountNumber,
     bool? showPoweredBy,
+    bool? showPaidAmount,
+    bool? showRemainingAmount,
+    bool? showPreviousBalance,
+    bool? showNewBalance,
     bool? printCodeQr,
     bool? codesOnSeparateSlips,
     CurrencyDisplay? currencyDisplay,
@@ -353,6 +387,10 @@ class InvoiceSettings {
       showAccountNumber: showAccountNumber ?? this.showAccountNumber,
       maskAccountNumber: maskAccountNumber ?? this.maskAccountNumber,
       showPoweredBy: showPoweredBy ?? this.showPoweredBy,
+      showPaidAmount: showPaidAmount ?? this.showPaidAmount,
+      showRemainingAmount: showRemainingAmount ?? this.showRemainingAmount,
+      showPreviousBalance: showPreviousBalance ?? this.showPreviousBalance,
+      showNewBalance: showNewBalance ?? this.showNewBalance,
       printCodeQr: printCodeQr ?? this.printCodeQr,
       codesOnSeparateSlips: codesOnSeparateSlips ?? this.codesOnSeparateSlips,
       currencyDisplay: currencyDisplay ?? this.currencyDisplay,

@@ -10,6 +10,7 @@ import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/invoice_detail_screen.dart';
 import '../security/audit_providers.dart';
+import '../security/pin_session.dart';
 import 'code_widgets.dart';
 
 /// "Was this card sold, and to whom?" — type or paste a FULL code; the
@@ -56,7 +57,8 @@ class _CodeLookupScreenState extends ConsumerState<CodeLookupScreen> {
     final l10n = AppLocalizations.of(context);
     final results = _results;
 
-    return Scaffold(
+    return PinGuardedRoute(
+      child: Scaffold(
       appBar: AppBar(title: Text(l10n.lookupTitle)),
       body: Column(
         children: [
@@ -118,6 +120,7 @@ class _CodeLookupScreenState extends ConsumerState<CodeLookupScreen> {
                       ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -2191,4 +2191,665 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get auditRecoveryCodeCreate => 'إنشاء رمز استرجاع';
+
+  @override
+  String get debtsTitle => 'الديون';
+
+  @override
+  String get debtorsTitle => 'المدينون';
+
+  @override
+  String get accountTab => 'الحساب';
+
+  @override
+  String get customerDetailsTab => 'البيانات';
+
+  @override
+  String get balanceLabel => 'الرصيد';
+
+  @override
+  String balanceOwes(String amount) {
+    return 'عليه $amount';
+  }
+
+  @override
+  String balanceCredit(String amount) {
+    return 'له $amount';
+  }
+
+  @override
+  String get balanceSettled => 'لا يوجد رصيد';
+
+  @override
+  String get creditLimitLabel => 'حد الدين';
+
+  @override
+  String get lastPaymentLabel => 'آخر دفعة';
+
+  @override
+  String get neverPaid => 'لم يدفع بعد';
+
+  @override
+  String get overdueBadge => 'متأخر';
+
+  @override
+  String overdueAmount(String amount) {
+    return 'متأخر: $amount';
+  }
+
+  @override
+  String oldestDebtAge(String days) {
+    return 'أقدم دين: منذ $days يوم';
+  }
+
+  @override
+  String get oldestDebtToday => 'أقدم دين: اليوم';
+
+  @override
+  String get overLimitBadge => 'تجاوز الحد';
+
+  @override
+  String get recordPayment => 'تسجيل دفعة';
+
+  @override
+  String get addDebt => 'إضافة دين';
+
+  @override
+  String get openingBalance => 'رصيد افتتاحي';
+
+  @override
+  String get adjustment => 'تسوية';
+
+  @override
+  String get accountStatement => 'كشف حساب';
+
+  @override
+  String get sendDebtReminder => 'تذكير عبر واتساب';
+
+  @override
+  String get debtReminderNoPhone => 'لا يوجد رقم هاتف لهذا الزبون';
+
+  @override
+  String entryInvoice(String no) {
+    return 'فاتورة $no';
+  }
+
+  @override
+  String entryReceipt(String no) {
+    return 'سند قبض $no';
+  }
+
+  @override
+  String get entryPayment => 'دفعة';
+
+  @override
+  String get entryManualDebt => 'دين';
+
+  @override
+  String entryReversalOf(String what) {
+    return 'عكس: $what';
+  }
+
+  @override
+  String get entryReversed => 'معكوسة';
+
+  @override
+  String get ledgerEmpty => 'لا توجد حركات بعد';
+
+  @override
+  String get ledgerNoMatch => 'لا توجد حركات مطابقة';
+
+  @override
+  String get ledgerDebit => 'مدين';
+
+  @override
+  String get ledgerCredit => 'دائن';
+
+  @override
+  String get dateLabel => 'التاريخ';
+
+  @override
+  String get descriptionLabel => 'البيان';
+
+  @override
+  String get typeFilterDebts => 'ديون';
+
+  @override
+  String get typeFilterPayments => 'دفعات';
+
+  @override
+  String get typeFilterOther => 'أخرى';
+
+  @override
+  String invoiceDeletedNote(String no) {
+    return 'الفاتورة $no حُذفت من الأرشيف. الدين باقٍ في الحساب.';
+  }
+
+  @override
+  String get openInvoice => 'فتح الفاتورة';
+
+  @override
+  String get viewReceipt => 'سند القبض';
+
+  @override
+  String get reverseEntry => 'عكس الحركة';
+
+  @override
+  String get reverseTitle => 'عكس هذه الحركة؟';
+
+  @override
+  String get reverseMessage =>
+      'تبقى الحركة في الدفتر مشطوبة، وتُضاف حركة عكسية تلغيها. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get reasonRequired => 'اكتب السبب';
+
+  @override
+  String get pinReasonReverse => 'أدخل الرمز لعكس حركة في الدفتر.';
+
+  @override
+  String get pinReasonAdjustment => 'أدخل الرمز لتسوية رصيد.';
+
+  @override
+  String get pinReasonCreditLimit => 'أدخل الرمز للبيع فوق حد الدين.';
+
+  @override
+  String get pinReasonDebtAccess => 'أدخل الرمز لفتح الديون.';
+
+  @override
+  String get entryReversedSnack => 'تم عكس الحركة';
+
+  @override
+  String dueOnLabel(String date) {
+    return 'يستحق $date';
+  }
+
+  @override
+  String get paymentMethodLabel => 'طريقة الدفع';
+
+  @override
+  String get methodCash => 'نقداً';
+
+  @override
+  String get methodTransfer => 'حوالة';
+
+  @override
+  String get methodOther => 'أخرى';
+
+  @override
+  String get amountLabel => 'المبلغ';
+
+  @override
+  String get amountInvalid => 'أدخل مبلغاً أكبر من صفر';
+
+  @override
+  String get payFullBalance => 'تسديد كامل الرصيد';
+
+  @override
+  String get paymentCurrencyLabel => 'العملة';
+
+  @override
+  String paymentRateLabel(String base, String code) {
+    return 'السعر: كم $base لكل 1 $code';
+  }
+
+  @override
+  String paymentCountsAs(String amount) {
+    return 'يُحتسب $amount';
+  }
+
+  @override
+  String paymentOverBalance(String amount) {
+    return 'أكثر من الرصيد: سيصبح للزبون رصيد دائن $amount.';
+  }
+
+  @override
+  String get noteOptional => 'ملاحظة (اختياري)';
+
+  @override
+  String get receiptTitle => 'سند قبض';
+
+  @override
+  String receiptNoLabel(String no) {
+    return 'سند قبض رقم $no';
+  }
+
+  @override
+  String get receiptReceivedFrom => 'استلمنا من';
+
+  @override
+  String get receiptAmountLabel => 'المبلغ المدفوع';
+
+  @override
+  String get receiptPaidAs => 'استُلم';
+
+  @override
+  String get receiptMethodLabel => 'الطريقة';
+
+  @override
+  String get receiptNoteLabel => 'ملاحظة';
+
+  @override
+  String get receiptReversedMark => 'ملغى';
+
+  @override
+  String get previousBalanceLabel => 'الرصيد السابق';
+
+  @override
+  String get newBalanceLabel => 'الرصيد الجديد';
+
+  @override
+  String get paperOwes => 'عليه';
+
+  @override
+  String get paperCredit => 'له';
+
+  @override
+  String get statementOpening => 'رصيد سابق';
+
+  @override
+  String get statementClosing => 'الرصيد الختامي';
+
+  @override
+  String get statementTotalDebits => 'مجموع المدين';
+
+  @override
+  String get statementTotalCredits => 'مجموع الدائن';
+
+  @override
+  String get statementNoEntries => 'لا توجد حركات في هذه الفترة';
+
+  @override
+  String get statementWholeAccount => 'كامل الحساب';
+
+  @override
+  String get statementLast30 => 'آخر 30 يوماً';
+
+  @override
+  String statementUntil(String date) {
+    return 'حتى $date';
+  }
+
+  @override
+  String get debtorsTotalOutstanding => 'إجمالي الديون';
+
+  @override
+  String debtorsOwingCount(String count) {
+    return '$count زبون مدين';
+  }
+
+  @override
+  String debtorsCreditTotal(String amount) {
+    return 'أرصدة دائنة للزبائن: $amount';
+  }
+
+  @override
+  String get agingTitle => 'أعمار الديون';
+
+  @override
+  String get aging0to30 => '0–30 يوماً';
+
+  @override
+  String get aging31to60 => '31–60 يوماً';
+
+  @override
+  String get aging61to90 => '61–90 يوماً';
+
+  @override
+  String get agingOver90 => 'أكثر من 90 يوماً';
+
+  @override
+  String get sortLabel => 'الترتيب';
+
+  @override
+  String get sortByAmount => 'الأكبر مبلغاً';
+
+  @override
+  String get sortByOldest => 'أقدم دين';
+
+  @override
+  String get sortByLastPayment => 'الأبعد عن آخر دفعة';
+
+  @override
+  String get filterOverdue => 'متأخرون';
+
+  @override
+  String get filterOverLimit => 'تجاوزوا الحد';
+
+  @override
+  String get filterCreditBalances => 'أرصدة دائنة';
+
+  @override
+  String get debtorsEmpty => 'لا يوجد مدينون';
+
+  @override
+  String get debtorsNoMatch => 'لا يوجد زبائن مطابقون';
+
+  @override
+  String lastPaymentOn(String date) {
+    return 'آخر دفعة $date';
+  }
+
+  @override
+  String get paymentSheetTitle => 'الدفع';
+
+  @override
+  String get payFull => 'مدفوعة كاملة';
+
+  @override
+  String get payPartial => 'دفعة جزئية';
+
+  @override
+  String get payCredit => 'آجل (دين)';
+
+  @override
+  String get amountPaidLabel => 'المبلغ المدفوع';
+
+  @override
+  String remainingAsDebt(String amount) {
+    return 'يُسجَّل ديناً: $amount';
+  }
+
+  @override
+  String get cashReceivedLabel => 'المبلغ المستلم (اختياري)';
+
+  @override
+  String changeDue(String amount) {
+    return 'الباقي للزبون: $amount';
+  }
+
+  @override
+  String get cashShort => 'أقل من المبلغ المطلوب';
+
+  @override
+  String get customerRequiredForDebt => 'اختر زبوناً للبيع بالدين';
+
+  @override
+  String get chooseCustomer => 'اختيار زبون';
+
+  @override
+  String get changeCustomer => 'تغيير';
+
+  @override
+  String useCreditBalance(String amount) {
+    return 'استخدام الرصيد الدائن ($amount)';
+  }
+
+  @override
+  String toPayNow(String amount) {
+    return 'المطلوب الآن: $amount';
+  }
+
+  @override
+  String get dueDateLabel => 'تاريخ الاستحقاق';
+
+  @override
+  String get creditLimitWarningTitle => 'تجاوز حد الدين';
+
+  @override
+  String creditLimitWarning(
+    String balance,
+    String sale,
+    String newBalance,
+    String limit,
+  ) {
+    return 'الرصيد $balance + هذه الفاتورة $sale = $newBalance. الحد المسموح $limit.';
+  }
+
+  @override
+  String get overrideAndSave => 'تجاوز الحد والحفظ';
+
+  @override
+  String get creditLimitConfirmTitle => 'البيع فوق حد الدين؟';
+
+  @override
+  String get creditLimitBlocked =>
+      'هذه الفاتورة تتجاوز حد الدين المسموح للزبون.';
+
+  @override
+  String get partialInvalid => 'أدخل مبلغاً أقل من المطلوب';
+
+  @override
+  String salePaidLine(String paid, String remaining) {
+    return 'المدفوع $paid · على الحساب $remaining';
+  }
+
+  @override
+  String get invoicePaidLabel => 'المدفوع';
+
+  @override
+  String get invoiceFromCreditLabel => 'من الرصيد الدائن';
+
+  @override
+  String get invoiceRemainingLabel => 'الباقي (دين)';
+
+  @override
+  String get debtLinesSection => 'سطور الدين';
+
+  @override
+  String get debtLinesHint =>
+      'يُطبع المدفوع والباقي فقط في فاتورة لم تُدفع كاملة، والأرصدة فقط عند وجود زبون على الفاتورة.';
+
+  @override
+  String get showPaidAmount => 'المبلغ المدفوع';
+
+  @override
+  String get showRemainingAmount => 'المبلغ الباقي (الدين)';
+
+  @override
+  String get showPreviousBalance => 'رصيد الزبون السابق';
+
+  @override
+  String get showNewBalance => 'رصيد الزبون الجديد';
+
+  @override
+  String get debtSettingsSection => 'الديون';
+
+  @override
+  String get defaultDueDaysLabel => 'مهلة السداد';
+
+  @override
+  String get defaultDueDaysHint =>
+      'يُعتبر الدين الجديد متأخراً بعد هذا العدد من الأيام، ما لم تكن للزبون مهلة خاصة.';
+
+  @override
+  String get debtRequirePinTitle => 'طلب الرمز لفتح الديون';
+
+  @override
+  String get debtRequirePinSubtitle =>
+      'يُطلب الرمز قبل قائمة المدينين وحساب الزبون. البيع بالدين لا يطلبه.';
+
+  @override
+  String get debtReminderTitle => 'رسالة تذكير الدين';
+
+  @override
+  String get debtReminderHint =>
+      'النص الذي يُفتح به واتساب عند تذكير الزبون برصيده';
+
+  @override
+  String debtReminderDefaultText(
+    String name,
+    String shop,
+    String balance,
+    String lastPayment,
+  ) {
+    return 'مرحباً $name، تذكير من $shop: رصيدكم المستحق $balance. آخر دفعة: $lastPayment. شكراً لكم.';
+  }
+
+  @override
+  String get customerCreditLimitLabel => 'حد الدين (اختياري)';
+
+  @override
+  String get customerDueDaysLabel => 'مهلة السداد بالأيام (اختياري)';
+
+  @override
+  String customerDueDaysHint(String days) {
+    return 'فارغ = المهلة العامة ($days)';
+  }
+
+  @override
+  String deactivateWithBalanceMessage(String name, String balance) {
+    return 'للزبون \"$name\" رصيد مفتوح: $balance. التعطيل يخفيه من البحث، ويبقى الرصيد في قائمة المدينين.';
+  }
+
+  @override
+  String deleteCarriesDebt(String count) {
+    return '$count من هذه الفواتير عليها ديون. الديون لا تُحذف: تبقى في حسابات الزبائن.';
+  }
+
+  @override
+  String get deleteInvoiceCarriesDebt =>
+      'على هذه الفاتورة دين. الدين لا يُحذف: يبقى في حساب الزبون.';
+
+  @override
+  String get statsOutstandingNow => 'الديون القائمة الآن';
+
+  @override
+  String get statsNewDebt => 'ديون جديدة';
+
+  @override
+  String get statsCollected => 'المحصَّل';
+
+  @override
+  String get statsCollectionRate => 'نسبة التحصيل';
+
+  @override
+  String get statsTopDebtors => 'أكبر المدينين';
+
+  @override
+  String homeDebtsOverdue(String count) {
+    return '$count متأخر';
+  }
+
+  @override
+  String get homeDebtsNoOverdue => 'لا متأخرين';
+
+  @override
+  String get debtLockedMessage => 'الديون محمية بالرمز.';
+
+  @override
+  String get unlock => 'فتح';
+
+  @override
+  String get openingBalancesTitle => 'الأرصدة الافتتاحية';
+
+  @override
+  String get openingBalancesIntro =>
+      'للانتقال من الدفتر الورقي: أدخل ما على كل زبون، واحداً تلو الآخر.';
+
+  @override
+  String openingExistingBalance(String balance) {
+    return 'زبون موجود · $balance';
+  }
+
+  @override
+  String get openingOwesToggle => 'عليه';
+
+  @override
+  String get openingCreditToggle => 'له';
+
+  @override
+  String get openingDateLabel => 'التاريخ (اختياري)';
+
+  @override
+  String get openingAddedNew => 'زبون جديد';
+
+  @override
+  String get openingAddedExisting => 'زبون موجود';
+
+  @override
+  String openingSessionTotal(String count) {
+    return 'أُدخل $count';
+  }
+
+  @override
+  String get openingNameRequired => 'اكتب اسم الزبون';
+
+  @override
+  String openingPickedCustomer(String name) {
+    return 'الإضافة إلى $name';
+  }
+
+  @override
+  String get manualDebtNoteHint => 'مقابل ماذا؟ (اختياري)';
+
+  @override
+  String get adjustmentIncrease => 'زيادة الدين';
+
+  @override
+  String get adjustmentDecrease => 'إنقاص الدين';
+
+  @override
+  String get entrySaved => 'تم الحفظ';
+
+  @override
+  String get auditDebtReversal => 'عكس حركة في دفتر الديون';
+
+  @override
+  String get auditDebtAdjustment => 'تسوية رصيد';
+
+  @override
+  String get auditCreditLimitOverride => 'تجاوز حد الدين';
+
+  @override
+  String get seedDebtsTitle => 'توليد دفتر ديون (تجريبي)';
+
+  @override
+  String get seedDebtsSubtitle =>
+      '5,000 زبون و200,000 حركة، لتجربة قائمة المدينين بالحجم الكامل';
+
+  @override
+  String seedingDebts(String done, String total) {
+    return 'كتابة الحركات: $done / $total';
+  }
+
+  @override
+  String get pinAutoLockTitle => 'إعادة القفل بعد';
+
+  @override
+  String get pinAutoLockHint =>
+      'ما يفتحه الرمز — الديون وسجل العمليات وأكواد البطاقات — يُقفل من جديد بعد هذه المدة دون لمس، وفوراً عند الخروج من التطبيق.';
+
+  @override
+  String minutesCount(int minutes) {
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutesString دقيقة',
+      few: '$minutesString دقائق',
+      two: 'دقيقتان',
+      one: 'دقيقة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get saleCreditButton => 'آجل / جزئي';
+
+  @override
+  String get settingCashReceived => 'حقل المبلغ المستلم';
+
+  @override
+  String get settingCashReceivedHint =>
+      'إظهار حقل صغير «المبلغ المستلم» تحت الإجمالي يحسب الباقي للزبون';
+
+  @override
+  String get cashReceivedTitle => 'المبلغ المستلم';
+
+  @override
+  String cashReceivedValue(String amount) {
+    return 'المستلم $amount';
+  }
+
+  @override
+  String changeShort(String amount) {
+    return 'الباقي $amount';
+  }
+
+  @override
+  String get cashReceivedClear => 'مسح';
 }

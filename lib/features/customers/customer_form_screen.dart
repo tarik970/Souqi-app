@@ -2,14 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../config/features.dart';
+import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/normalize.dart';
 import '../../domain/models/customer.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../debts/debt_providers.dart';
 import 'account_form_screen.dart';
 import 'customers_providers.dart';
 
-/// Add or edit a customer: name (required), phone and notes.
+/// Add or edit a customer: name (required), phone and notes — and, with the
+/// debt ledger on, an optional credit limit and number of days to pay.
 ///
 /// When ADDING, the form can also take the customer's first card / account
 /// number and provider, so "this card is not registered yet" at the till is
@@ -48,6 +51,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   late final TextEditingController _notes;
   late final TextEditingController _accountNumber;
   late final TextEditingController _provider;
+  late final TextEditingController _creditLimit;
+  late final TextEditingController _dueDays;
   bool _saving = false;
 
   Customer? get _initial => widget.customer;
@@ -63,6 +68,18 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     _notes = TextEditingController(text: c?.notes ?? '');
     _accountNumber = TextEditingController(text: widget.initialAccountNumber);
     _provider = TextEditingController();
+    // The limit is prefilled once the base currency (its decimals) is known.
+    _creditLimit = TextEditingController();
+    _dueDays = TextEditingController(text: c?.defaultDueDays?.toString() ?? '');
+    final limit = c?.creditLimitBaseMinor;
+    if (limit != null) {
+      ref.read(baseCurrencyProvider.future).then((base) {
+        if (mounted && _creditLimit.text.isEmpty) {
+          _creditLimit.text =
+              minorToPlainText(limit, decimals: base.decimalPlaces);
+        }
+      });
+    }
   }
 
   @override
@@ -72,6 +89,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     _notes.dispose();
     _accountNumber.dispose();
     _provider.dispose();
+    _creditLimit.dispose();
+    _dueDays.dispose();
     super.dispose();
   }
 
@@ -87,6 +106,14 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     final notes = _notes.text.trim();
     final accountNumber = _withAccount ? _accountNumber.text.trim() : '';
     final provider = _provider.text.trim();
+    // Debt ledger: both optional, both already checked by their validators.
+    final debtOn = ref.read(debtFeatureProvider);
+    final base = await ref.read(baseCurrencyProvider.future);
+    if (!mounted) return;
+    final creditLimit = _creditLimit.text.trim().isEmpty
+        ? null
+        : parseAmountMinor(_creditLimit.text, decimals: base.decimalPlaces);
+    final dueDays = int.tryParse(normalizeDigits(_dueDays.text.trim()));
 
     if (normalizeCode(accountNumber).isNotEmpty) {
       final duplicates = await repository.findDuplicateAccounts(
@@ -111,6 +138,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         name: name,
         phone: () => phone,
         notes: () => notes,
+        // With the ledger off the fields are not shown: keep what is stored.
+        creditLimitBaseMinor: debtOn ? () => creditLimit : null,
+        defaultDueDays: debtOn ? () => dueDays : null,
       ));
       refreshCustomerData(container);
       if (navigator.mounted) navigator.pop();
@@ -119,7 +149,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
     final hasAccount = normalizeCode(accountNumber).isNotEmpty;
     final (customerId, accountId) = await repository.insertWithAccount(
-      Customer(name: name, phone: phone, notes: notes),
+      Customer(
+        name: name,
+        phone: phone,
+        notes: notes,
+        creditLimitBaseMinor: debtOn ? creditLimit : null,
+        defaultDueDays: debtOn ? dueDays : null,
+      ),
       account: hasAccount
           ? CustomerAccount(
               customerId: 0, // replaced by the new customer's id
@@ -144,6 +180,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final debtOn = ref.watch(debtFeatureProvider);
+    final base = ref.watch(baseCurrencyProvider).value;
+    final shopDueDays = ref.watch(debtDefaultDueDaysProvider).value ?? 30;
 
     return Scaffold(
       appBar: AppBar(
@@ -190,6 +229,55 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               maxLines: 3,
               decoration: InputDecoration(labelText: l10n.notesLabel),
             ),
+            if (debtOn) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const ValueKey('customer-credit-limit-field'),
+                controller: _creditLimit,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: l10n.customerCreditLimitLabel,
+                  suffixText: base == null
+                      ? null
+                      : (base.symbol.isEmpty ? base.code : base.symbol),
+                ),
+                validator: (v) {
+                  final text = v?.trim() ?? '';
+                  if (text.isEmpty) return null;
+                  final minor = parseAmountMinor(
+                    text,
+                    decimals: base?.decimalPlaces ?? 0,
+                  );
+                  return minor == null ? l10n.invalidNumber : null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const ValueKey('customer-due-days-field'),
+                controller: _dueDays,
+                keyboardType: TextInputType.number,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: l10n.customerDueDaysLabel,
+                  helperText: l10n.customerDueDaysHint(
+                    localizeDigits('$shopDueDays', Localizations.localeOf(context).languageCode),
+                  ),
+                  helperMaxLines: 2,
+                ),
+                validator: (v) {
+                  final text = normalizeDigits(v?.trim() ?? '');
+                  if (text.isEmpty) return null;
+                  final days = int.tryParse(text);
+                  return days == null || days < 0 || days > 3650
+                      ? l10n.invalidNumber
+                      : null;
+                },
+              ),
+            ],
             if (_withAccount) ...[
               const SizedBox(height: 24),
               Text(

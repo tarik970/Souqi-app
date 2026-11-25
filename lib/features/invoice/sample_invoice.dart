@@ -25,6 +25,10 @@ int _samplePrice(Currency currency, int whole) => currency.decimalPlaces == 0
 
 /// A made-up invoice for the settings preview and the test print.
 ///
+/// With [withDebtLines] (the debt ledger is on) it is a sale that was partly
+/// paid by a customer who already owed something — so each of the four debt
+/// toggles of the invoice settings has a line to show or hide.
+///
 /// It goes through the REAL cart math with the shop's own currencies, so the
 /// preview shows exactly how amounts, extra totals and exchange rates will
 /// look — including a cross-currency line when the shop has a second
@@ -35,6 +39,7 @@ Invoice buildSampleInvoice({
   required List<Currency> currencies,
   required String baseCode,
   DateTime? now,
+  bool withDebtLines = false,
 }) {
   final l10n = lookupAppLocalizations(Locale(settings.language));
   final ctx = CurrencyContext.of(
@@ -83,7 +88,7 @@ Invoice buildSampleInvoice({
     cart = cart.withDiscount(const Discount.percent(500));
   }
 
-  return Invoice.fromCart(
+  final invoice = Invoice.fromCart(
     cart: cart,
     ctx: ctx,
     createdAt: now ?? DateTime.now(),
@@ -91,4 +96,16 @@ Invoice buildSampleInvoice({
     customerPhone: customersEnabled ? '0944 123 456' : null,
     accountNumber: accountsEnabled ? '0011223344' : null,
   ).copyWith(invoiceNo: 125);
+  if (!withDebtLines || !customersEnabled) return invoice;
+  // Half paid; the other half goes on top of a previous balance of a
+  // quarter of the total.
+  final paid = invoice.totalMinor ~/ 2;
+  final previous = invoice.totalBaseMinor ~/ 4;
+  return invoice.copyWith(
+    paidMinor: paid,
+    creditUsedMinor: 0,
+    prevBalanceBaseMinor: previous,
+    newBalanceBaseMinor:
+        previous + invoice.totalBaseMinor - invoice.totalBaseMinor ~/ 2,
+  );
 }

@@ -9,6 +9,7 @@ import '../../data/repositories/archive_repository.dart';
 import '../../data/repositories/stats_repository.dart';
 import '../../domain/models/currency.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../debts/debt_stats_card.dart';
 import 'stats_providers.dart';
 
 /// Sales statistics for a period, against the period before it.
@@ -271,6 +272,9 @@ class _Report extends ConsumerWidget {
           ),
           if (showByCurrency) _CurrencyBreakdown(rows: report.byCurrency),
         ],
+        // The debt ledger's figures: there whether or not anything was sold
+        // in the period — a payment is not a sale.
+        const DebtStatsCard(),
       ],
     );
   }

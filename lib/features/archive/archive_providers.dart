@@ -148,6 +148,16 @@ final deleteSummaryProvider =
   (ref, filter) => ref.watch(archiveRepositoryProvider).summary(filter),
 );
 
+/// How many of the invoices a delete is about to remove carry a debt — what
+/// the confirmation says before they go ("the debts stay in the customers'
+/// accounts"). Counted for the same criteria as [deleteSummaryProvider];
+/// zero while the debt ledger is off.
+final deleteDebtCountProvider = FutureProvider.family<int, ArchiveFilter>(
+  (ref, filter) => ref.watch(debtFeatureProvider)
+      ? ref.watch(archiveRepositoryProvider).countCarryingDebt(filter)
+      : Future.value(0),
+);
+
 /// One invoice with its items, for the detail screen.
 final archivedInvoiceProvider =
     FutureProvider.family((ref, int id) =>
