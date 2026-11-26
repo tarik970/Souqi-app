@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/app.dart';
+import 'package:souqi/config/features.dart';
 import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/providers.dart';
 import 'package:souqi/data/db/app_database.dart';
@@ -134,6 +135,9 @@ void main() {
     tester.view.physicalSize = const Size(1200, 2600);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
+    // The ledger off = a license (or a build) without it: `featureOn`.
+    FeatureGate.applyWithout([if (!debtOn) Feature.debt]);
+    addTearDown(FeatureGate.reset);
     await tester.pumpWidget(
       ProviderScope(
         key: UniqueKey(),
@@ -144,7 +148,6 @@ void main() {
           // tells the PIN locks ("the app is opening WhatsApp") is real.
           platformBridgeProvider.overrideWithValue(bridge),
           outputDirectoryProvider.overrideWithValue(() async => outputDir),
-          if (!debtOn) debtFeatureProvider.overrideWithValue(false),
         ],
         child: MaterialApp(
           locale: Locale(locale),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../config/features.dart';
 import '../../../core/platform/native_bridge.dart';
 import '../../../core/providers.dart';
 import '../../../domain/models/voucher.dart';
@@ -70,6 +71,8 @@ class DebtReportTile extends ConsumerWidget {
     final locale = ref.watch(appLocaleProvider).languageCode;
     final now = ref.watch(clockProvider)();
     final on = settings?.enabled ?? false;
+    // A license without the daily report: no way into the page.
+    if (!featureOn(Feature.dailyReport)) return const SizedBox.shrink();
     return ListTile(
       key: const ValueKey('setting-debt-report'),
       leading: const Icon(Icons.summarize_outlined),

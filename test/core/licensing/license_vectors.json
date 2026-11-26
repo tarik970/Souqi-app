@@ -1,0 +1,195 @@
+{
+  "format": "souqi-license-vectors",
+  "v": 1,
+  "note": "Signed with a TEST key (seed = bytes 0..31). Not the developer's key. Regenerate with: dart run tool/make_vectors.dart",
+  "testPublicKeyHex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+  "featureBits": {
+    "debt": 1,
+    "customers": 2,
+    "accounts": 4,
+    "vouchers": 8,
+    "barcode": 16,
+    "discount": 32,
+    "multiCurrency": 64,
+    "dailyReport": 128,
+    "backup": 256
+  },
+  "base32": [
+    {
+      "hex": "",
+      "text": ""
+    },
+    {
+      "hex": "00",
+      "text": "00"
+    },
+    {
+      "hex": "ff",
+      "text": "ZW"
+    },
+    {
+      "hex": "0123456789abcdef",
+      "text": "04HMASW9NF6YY"
+    },
+    {
+      "hex": "031c354e678099b2cbe4",
+      "text": "0CE3AKK7G2CV5JZ4"
+    },
+    {
+      "hex": "536f757169",
+      "text": "ADQQAWB9"
+    }
+  ],
+  "normalize": [
+    {
+      "input": "k7qm-29xd hf4p\n8wzn",
+      "output": "K7QM29XDHF4P8WZN"
+    },
+    {
+      "input": "oO iI lL",
+      "output": "001111"
+    },
+    {
+      "input": "٠١٢٣٤٥٦٧٨٩",
+      "output": "0123456789"
+    },
+    {
+      "input": " A0J3K - 9QXA2 \r\n ZZ ",
+      "output": "A0J3K9QXA2ZZ"
+    }
+  ],
+  "devices": [
+    {
+      "androidId": "9774d56d682e549c",
+      "packageName": "com.souqi.souqi",
+      "salt": "souqi-device-16400f75d8a914f24b22e1355c5d8b3d",
+      "hashHex": "71e9140c3a7b167b10cf",
+      "requestCode": "E7MH-831T-FCB7-P46F"
+    },
+    {
+      "androidId": "0123456789abcdef",
+      "packageName": "com.souqi.souqi",
+      "salt": "souqi-device-16400f75d8a914f24b22e1355c5d8b3d",
+      "hashHex": "d38e727a114552a9a419",
+      "requestCode": "TE77-4YGH-8N9A-K90S"
+    }
+  ],
+  "licenses": [
+    {
+      "name": "lifetime, every feature, an Arabic shop name",
+      "requestCode": "E7MH-831T-FCB7-P46F",
+      "licenseId": 1,
+      "features": [
+        "debt",
+        "customers",
+        "accounts",
+        "vouchers",
+        "barcode",
+        "discount",
+        "multiCurrency",
+        "dailyReport",
+        "backup"
+      ],
+      "featureMask": 511,
+      "issuedAt": 1795687200,
+      "expiresAt": null,
+      "shopName": "بقالة النور",
+      "payloadHex": "500171e9140c3a7b167b10cf00000001000001ff6b0803200000000015d8a8d982d8a7d984d8a920d8a7d984d986d988d8b1",
+      "code": "A00Q3T8M1GX7P5KV237G0000040000FZDC406800000005ERN3CR5P57V62DHA90V2KXK16SGVCRHP5H6QMK6GGEPSPTR746FVBCY08M20N83MCGCFCTYWHDR4MAFVCME8QAEN9BA4ZPY4FPCDJCT4MPW8X6179JEVYEZ27K6ZWDENS0WR58820",
+      "display": "A00Q3-T8M1G-X7P5K-V237G-00000-40000-FZDC4-06800-00000-5ERN3-CR5P5-7V62D-HA90V-2KXK1-6SGVC-RHP5H-6QMK6-GGEPS-PTR74-6FVBC-Y08M2-0N83M-CGCFC-TYWHD-R4MAF-VCME8-QAEN9-BA4ZP-Y4FPC-DJCT4-MPW8X-6179J-EVYEZ-27K6Z-WDENS-0WR58-820"
+    },
+    {
+      "name": "until the end of 2027, three features",
+      "requestCode": "E7MH-831T-FCB7-P46F",
+      "licenseId": 2,
+      "features": [
+        "debt",
+        "customers",
+        "barcode"
+      ],
+      "featureMask": 19,
+      "issuedAt": 1795687200,
+      "expiresAt": 1830297599,
+      "shopName": "Al Noor Market",
+      "payloadHex": "500171e9140c3a7b167b10cf00000002000000136b0803206d181fff0e416c204e6f6f72204d61726b6574",
+      "code": "A00Q3T8M1GX7P5KV237G00000800000KDC40683D30FZY3J1DGG4WVVFE8G4TRBJDDJQ93DQD9RTQKTAXYT83P4VZPCANMVP26MK4G1FEVY9GMGN2CRFDBC8MD26R6XCXDSWVFJ8GXX6HSS3XJWGSZXBQBNP414YQZ27YN1TS460",
+      "display": "A00Q3-T8M1G-X7P5K-V237G-00000-80000-0KDC4-0683D-30FZY-3J1DG-G4WVV-FE8G4-TRBJD-DJQ93-DQD9R-TQKTA-XYT83-P4VZP-CANMV-P26MK-4G1FE-VY9GM-GN2CR-FDBC8-MD26R-6XCXD-SWVFJ-8GXX6-HSS3X-JWGSZ-XBQBN-P414Y-QZ27Y-N1TS4-60"
+    },
+    {
+      "name": "for another phone",
+      "requestCode": "TE77-4YGH-8N9A-K90S",
+      "licenseId": 3,
+      "features": [
+        "debt",
+        "customers",
+        "accounts",
+        "vouchers",
+        "barcode",
+        "discount",
+        "multiCurrency",
+        "dailyReport",
+        "backup"
+      ],
+      "featureMask": 511,
+      "issuedAt": 1795687200,
+      "expiresAt": null,
+      "shopName": "Second Shop",
+      "payloadHex": "5001d38e727a114552a9a41900000003000001ff6b080320000000000b5365636f6e642053686f70",
+      "code": "A00X73KJF88MAMN9MGCG00000C0000FZDC406800000002TKCNHPYVK4419PGVVG6CAC8ZMWZTH1DFDAJZATBW0XKGKVDX0G9M5WGXFKPPH32BEAEG3KP88MYFZKE7R7CBBBQ9D70HAN8S9PP73S5SZ1GCWHWMWYW91TM2G",
+      "display": "A00X7-3KJF8-8MAMN-9MGCG-00000-C0000-FZDC4-06800-00000-2TKCN-HPYVK-4419P-GVVG6-CAC8Z-MWZTH-1DFDA-JZATB-W0XKG-KVDX0-G9M5W-GXFKP-PH32B-EAEG3-KP88M-YFZKE-7R7CB-BBQ9D-70HAN-8S9PP-73S5S-Z1GCW-HWMWY-W91TM-2G"
+    },
+    {
+      "name": "expired at the end of 2025",
+      "requestCode": "E7MH-831T-FCB7-P46F",
+      "licenseId": 4,
+      "features": [
+        "debt",
+        "customers",
+        "accounts",
+        "vouchers",
+        "barcode",
+        "discount",
+        "multiCurrency",
+        "dailyReport",
+        "backup"
+      ],
+      "featureMask": 511,
+      "issuedAt": 1735689600,
+      "expiresAt": 1767225599,
+      "shopName": "Old License",
+      "payloadHex": "500171e9140c3a7b167b10cf00000004000001ff677485806955b8ff0b4f6c64204c6963656e7365",
+      "code": "A00Q3T8M1GX7P5KV237G00000G0000FZCXT8B039APWFY2TFDHJ20K39CDJPWWV5A7E98GRAX4EJ1W48EZKBR1Y5FWCVBXV4WNB7FP629VZ0A78WYE4ZWTHZY3RGDXE39VQ44MD0BJY91H56XPC6EYHF6BNK5PBH63AB220",
+      "display": "A00Q3-T8M1G-X7P5K-V237G-00000-G0000-FZCXT-8B039-APWFY-2TFDH-J20K3-9CDJP-WWV5A-7E98G-RAX4E-J1W48-EZKBR-1Y5FW-CVBXV-4WNB7-FP629-VZ0A7-8WYE4-ZWTHZ-Y3RGD-XE39V-Q44MD-0BJY9-1H56X-PC6EY-HF6BN-K5PBH-63AB2-20"
+    }
+  ],
+  "pinResets": [
+    {
+      "name": "for the first phone, 48 hours",
+      "requestCode": "E7MH-831T-FCB7-P46F",
+      "resetId": 7,
+      "issuedAt": 1795687200,
+      "expiresAt": 1795860000,
+      "payloadHex": "b00171e9140c3a7b167b10cf000000076b0803206b0aa620",
+      "code": "P00Q3T8M1GX7P5KV237G00000XNGG0S0DC5AC814TMVQQS2FVD36FCBPCGJTWT8ACDG7YF9R0CJZX7CZKBSBSZN3NFEG7R55CT988MPG6Y43414C0NS1S14AP7F09ZTKF21BHK5PH4A0Y"
+    },
+    {
+      "name": "for another phone",
+      "requestCode": "TE77-4YGH-8N9A-K90S",
+      "resetId": 8,
+      "issuedAt": 1795687200,
+      "expiresAt": 1795860000,
+      "payloadHex": "b001d38e727a114552a9a419000000086b0803206b0aa620",
+      "code": "P00X73KJF88MAMN9MGCG000011NGG0S0DC5AC83P61CN36HTGHP2VJHS4RWH4ECJDVNJ56S9YDQSQFX8D903A0KRXMZKTKTPZ7BNVA2NW574WRSSMTSKY3998A4DQGACE28MX52AQD102"
+    }
+  ],
+  "rejected": [
+    {
+      "name": "the payload was changed after it was signed",
+      "code": "A00Q3T8M1GX7P5KV237G0000040000FZDC406800000005ERN3CR5P57V62DHA90V2KXK16SGVCRHP5G6QMK6GGEPSPTR746FVBCY08M20N83MCGCFCTYWHDR4MAFVCME8QAEN9BA4ZPY4FPCDJCT4MPW8X6179JEVYEZ27K6ZWDENS0WR58820"
+    },
+    {
+      "name": "signed with another key",
+      "code": "A00Q3T8M1GX7P5KV237G0000CC0000FZDC406800000001J6DXS6ESB42465YN1KYF0QRNT4EA12XPX9TBHGV55QSNQ22RV23V9S77BR9TM4ABZXFPRPKDWKEMSWDSR9M3VAK5QTWWF7TJJJBQD5YSB80P03R3R"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import '../../core/widgets/numeric_input.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../license/license_providers.dart';
 import '../security/pin_session.dart';
 import 'invoice_output.dart';
 import 'invoice_preview.dart';
@@ -159,7 +160,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
           settings: settings,
           currencies: currencies,
           baseCode: baseCode,
-          withDebtLines: container.read(debtFeatureProvider),
+          withDebtLines: featureOn(Feature.debt),
         ),
       );
       messenger
@@ -251,7 +252,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
           currencies: currencies,
           baseCode: baseCode,
           now: _sampleTime,
-          withDebtLines: ref.watch(debtFeatureProvider),
+          withDebtLines: featureOn(Feature.debt),
         ),
         settings: s,
         currencies: {for (final c in currencies) c.code: c},
@@ -596,17 +597,31 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
     InvoiceSettings s,
   ) {
     final logoPng = s.logoPng;
+    final licensedName = ref.watch(licenseProvider).shopName;
     return [
       _SectionTitle(l10n.sectionShop),
-      _Padded(
-        child: TextField(
-          key: const ValueKey('shop-name'),
-          controller: _shopName,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: l10n.shopNameLabel),
-          onChanged: (text) => _change((s) => s.copyWith(shopName: text)),
+      // THE SHOP NAME COMES FROM THE LICENSE once the phone is activated:
+      // shown here, not editable. (The header text under it stays the
+      // shop's own.) Before that — on the trial — it is typed here.
+      if (licensedName != null)
+        ListTile(
+          key: const ValueKey('shop-name-licensed'),
+          leading: const Icon(Icons.verified_outlined),
+          title: Text(licensedName),
+          subtitle: Text(
+            '${l10n.shopNameLabel} · ${l10n.shopNameFromLicense}',
+          ),
+        )
+      else
+        _Padded(
+          child: TextField(
+            key: const ValueKey('shop-name'),
+            controller: _shopName,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(labelText: l10n.shopNameLabel),
+            onChanged: (text) => _change((s) => s.copyWith(shopName: text)),
+          ),
         ),
-      ),
       ListTile(
         leading: Container(
           width: 56,
@@ -734,13 +749,13 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
       toggle(l10n.showUnitLabel, s.showUnit, (s, v) => s.copyWith(showUnit: v)),
       toggle(l10n.showUnitPriceLabel, s.showUnitPrice,
           (s, v) => s.copyWith(showUnitPrice: v)),
-      if (customersEnabled) ...[
+      if (featureOn(Feature.customers)) ...[
         toggle(l10n.showCustomerNameLabel, s.showCustomerName,
             (s, v) => s.copyWith(showCustomerName: v)),
         toggle(l10n.showCustomerPhoneLabel, s.showCustomerPhone,
             (s, v) => s.copyWith(showCustomerPhone: v)),
       ],
-      if (accountsEnabled) ...[
+      if (featureOn(Feature.accounts)) ...[
         toggle(l10n.showAccountNumberLabel, s.showAccountNumber,
             (s, v) => s.copyWith(showAccountNumber: v)),
         if (s.showAccountNumber)
@@ -751,7 +766,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
       toggle(l10n.showPoweredBy, s.showPoweredBy,
           (s, v) => s.copyWith(showPoweredBy: v)),
       // How sold prepaid card codes are printed.
-      if (voucherStockEnabled) ...[
+      if (featureOn(Feature.vouchers)) ...[
         _SectionTitle(l10n.sectionCardCodes),
         toggle(l10n.printCodeQrLabel, s.printCodeQr,
             (s, v) => s.copyWith(printCodeQr: v),
@@ -762,7 +777,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
         _Hint(l10n.codesSeparateSlipsHint),
       ],
       // What the invoice says about a sale on credit.
-      if (ref.watch(debtFeatureProvider)) ...[
+      if (featureOn(Feature.debt)) ...[
         _SectionTitle(l10n.debtLinesSection),
         toggle(l10n.showPaidAmount, s.showPaidAmount,
             (s, v) => s.copyWith(showPaidAmount: v),
@@ -818,42 +833,45 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
               _change((s) => s.copyWith(currencyDisplay: selection.first)),
         ),
       ),
-      _Padded(
-        child: Text(l10n.extraCurrenciesLabel, style: theme.textTheme.bodyLarge),
-      ),
-      _Padded(
-        child: candidates.length < 2
-            ? Text(
-                l10n.extraCurrenciesNone,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.outline),
-              )
-            : Wrap(
-                spacing: 8,
-                children: [
-                  for (final currency in candidates)
-                    FilterChip(
-                      key: ValueKey('extra-currency-${currency.code}'),
-                      label: Text('${currency.code} · '
-                          '${currency.nameFor(appLocale)}'),
-                      selected: selected.contains(currency.code),
-                      // A third currency cannot be added: two at most.
-                      onSelected: !selected.contains(currency.code) &&
-                              selected.length >= 2
-                          ? null
-                          : (on) => _change((s) => s.copyWith(
-                                extraCurrencies: on
-                                    ? [...s.extraCurrencies, currency.code]
-                                    : [
-                                        for (final code in s.extraCurrencies)
-                                          if (code != currency.code) code,
-                                      ],
-                              )),
-                    ),
-                ],
-              ),
-      ),
-      _Hint(l10n.extraCurrenciesHint),
+      // The total in other currencies: only with more than one currency.
+      if (featureOn(Feature.multiCurrency)) ...[
+        _Padded(
+          child: Text(l10n.extraCurrenciesLabel, style: theme.textTheme.bodyLarge),
+        ),
+        _Padded(
+          child: candidates.length < 2
+              ? Text(
+                  l10n.extraCurrenciesNone,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.outline),
+                )
+              : Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final currency in candidates)
+                      FilterChip(
+                        key: ValueKey('extra-currency-${currency.code}'),
+                        label: Text('${currency.code} · '
+                            '${currency.nameFor(appLocale)}'),
+                        selected: selected.contains(currency.code),
+                        // A third currency cannot be added: two at most.
+                        onSelected: !selected.contains(currency.code) &&
+                                selected.length >= 2
+                            ? null
+                            : (on) => _change((s) => s.copyWith(
+                                  extraCurrencies: on
+                                      ? [...s.extraCurrencies, currency.code]
+                                      : [
+                                          for (final code in s.extraCurrencies)
+                                            if (code != currency.code) code,
+                                        ],
+                                )),
+                      ),
+                  ],
+                ),
+        ),
+        _Hint(l10n.extraCurrenciesHint),
+      ],
     ];
   }
 

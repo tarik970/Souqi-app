@@ -84,7 +84,7 @@ Invoice buildSampleInvoice({
         priceCurrencyCode: base.code,
         qtyThousandths: 1000,
       ));
-  if (discountEnabled) {
+  if (featureOn(Feature.discount)) {
     cart = cart.withDiscount(const Discount.percent(500));
   }
 
@@ -92,11 +92,11 @@ Invoice buildSampleInvoice({
     cart: cart,
     ctx: ctx,
     createdAt: now ?? DateTime.now(),
-    customerName: customersEnabled ? l10n.sampleCustomerName : null,
-    customerPhone: customersEnabled ? '0944 123 456' : null,
-    accountNumber: accountsEnabled ? '0011223344' : null,
+    customerName: featureOn(Feature.customers) ? l10n.sampleCustomerName : null,
+    customerPhone: featureOn(Feature.customers) ? '0944 123 456' : null,
+    accountNumber: featureOn(Feature.accounts) ? '0011223344' : null,
   ).copyWith(invoiceNo: 125);
-  if (!withDebtLines || !customersEnabled) return invoice;
+  if (!withDebtLines || !featureOn(Feature.customers)) return invoice;
   // Half paid; the other half goes on top of a previous balance of a
   // quarter of the total.
   final paid = invoice.totalMinor ~/ 2;

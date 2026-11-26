@@ -5,6 +5,8 @@ import 'package:sqflite/sqflite.dart';
 
 import 'app_root.dart';
 import 'config/features.dart';
+import 'core/licensing/license_service.dart';
+import 'core/platform/license_platform.dart';
 import 'core/platform/report_platform.dart';
 import 'core/security/secure_key_store.dart';
 import 'data/backup/backup_service.dart';
@@ -12,8 +14,8 @@ import 'data/backup/restore_journal.dart';
 import 'data/db/app_database.dart';
 import 'features/backup/auto_backup.dart';
 import 'features/backup/backup_providers.dart';
-import 'features/debts/report/daily_job.dart';
 import 'features/debts/report/report_providers.dart';
+import 'features/license/background_license.dart';
 
 Future<void> main() async {
   assert(featureFlagsConsistent,
@@ -34,6 +36,8 @@ Future<void> main() async {
   }
 
   final appDb = await AppDatabase.open();
+  // The license of this phone is checked here, on every start, before the
+  // first screen exists (`AppStart.load`).
   final start = await AppStart.load(appDb);
 
   // What an earlier backup or restore left in the temporary folder.
@@ -58,6 +62,11 @@ Future<void> main() async {
 /// It takes the run lock BEFORE it opens the database, and stays away while
 /// a restore is half-way: a restore in the app holds the same lock for its
 /// swap, so the file is never replaced under this engine.
+///
+/// THE LICENSE IS CHECKED HERE TOO (`runDailyJobInBackground`): this engine
+/// has no `ProviderScope` and never saw the app's own check, so it reads
+/// the stored activation code itself, verifies it, and makes only what the
+/// license allows.
 @pragma('vm:entry-point')
 Future<void> debtReportWorkerMain() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,14 +78,16 @@ Future<void> debtReportWorkerMain() async {
     locked = true;
     final appDb = await AppDatabase.open();
     try {
-      await DailyReportJob(
+      await runDailyJobInBackground(
         db: appDb.db,
         platform: platform,
+        license: LicenseService(
+          db: appDb.db,
+          keys: const SecureStorageKeyStore(),
+          platform: const MethodChannelLicensePlatform(),
+        ),
         stagingDir: appReportStagingDir,
         loadFonts: loadBundledReportFonts,
-        // The same switch as `debtFeatureProvider`, which this engine has
-        // no ProviderScope for. PHASE 5b: also check the license here.
-        featureOn: debtEnabled && customersEnabled,
         backupOutput: (stored) => autoBackupOutput(
           stored,
           keys: const SecureStorageKeyStore(),
@@ -84,7 +95,7 @@ Future<void> debtReportWorkerMain() async {
           workDir: appBackupWorkDir,
           appVersion: platformAppVersion,
         ),
-      ).run(ReportTrigger.scheduled, lockHeld: true);
+      );
     } finally {
       await appDb.close();
     }

@@ -33,6 +33,10 @@ class SnapshotInfo {
 ///
 /// Works on sqlite 3.9 (Android 7): no `VACUUM INTO` (3.27), no backup API.
 /// The live database is only read.
+///
+/// ONE THING IS LEFT OUT: the settings that belong to the device and not to
+/// the shop ([SettingsKeys.deviceBoundKeys] — the activation code). A
+/// license is issued for one phone; a backup never carries it.
 Future<SnapshotInfo> snapshotDatabase(
   Database source,
   String targetPath, {
@@ -112,6 +116,16 @@ Future<SnapshotInfo> snapshotDatabase(
         await txn.execute(
           'INSERT INTO snap.sqlite_sequence (name, seq) '
           'SELECT name, seq FROM main.sqlite_sequence',
+        );
+      }
+
+      // The license stays on the phone it was issued for.
+      if (tables.contains('settings')) {
+        final marks =
+            List.filled(SettingsKeys.deviceBoundKeys.length, '?').join(', ');
+        await txn.rawDelete(
+          'DELETE FROM snap.settings WHERE key IN ($marks)',
+          SettingsKeys.deviceBoundKeys,
         );
       }
 

@@ -21,6 +21,7 @@ import '../data/repositories/voucher_repository.dart';
 import '../domain/models/currency.dart';
 import '../domain/models/unit.dart';
 import 'constants/settings_keys.dart';
+import 'licensing/license_service.dart';
 import 'money/exchange.dart';
 import 'security/code_cipher.dart';
 import 'security/secure_key_store.dart';
@@ -36,9 +37,10 @@ final databaseFactoryProvider = Provider<DatabaseFactory>(
   (ref) => databaseFactory,
 );
 
-/// RESTARTS THE APP STATE on another database — after a restore: every
-/// provider, the cipher with its loaded keys and every screen are built
-/// again from scratch (see `SouqiRoot` in main.dart). The default does
+/// RESTARTS THE APP STATE on another database — after a restore — or on the
+/// same one after an activation: every provider, the cipher with its loaded
+/// keys and every screen are built again from scratch, and the license is
+/// checked again (see `SouqiRoot` in app_root.dart). The default does
 /// nothing (tests that pump a screen have no root to restart).
 final appRestartProvider = Provider<
     Future<void> Function(AppDatabase db, AppRestartNotice? notice)>(
@@ -46,7 +48,14 @@ final appRestartProvider = Provider<
 );
 
 /// What the app says once it has started over (see [appRestartProvider]).
-enum AppRestartNotice { restored, restoreFailed }
+enum AppRestartNotice {
+  restored,
+  restoreFailed,
+
+  /// An activation code was accepted: the app starts over with what the
+  /// license turns on.
+  activated,
+}
 
 /// The notice of THIS start, shown once over the first screen; null on a
 /// normal start.
@@ -79,12 +88,24 @@ final codeCipherProvider = Provider<CodeCipher>(
   (ref) => CodeCipher(ref.watch(secretKeyStoreProvider)),
 );
 
+/// OFFLINE LICENSING (phase 5b): the service that checks the activation
+/// code of this device, the trial and the clock — started by `AppStart` and
+/// put here by `SouqiRoot`, like the database.
+///
+/// Null = no licensing in this scope: a widget test that pumps one screen
+/// sells and prints freely. The app itself ALWAYS has one — `SouqiRoot`
+/// cannot be built without it.
+final licenseServiceProvider = Provider<LicenseService?>((ref) => null);
+
 final invoiceRepositoryProvider = Provider<InvoiceRepository>(
   (ref) => InvoiceRepository(
     ref.watch(databaseProvider).db,
-    // With the flag off no code is ever taken: a product marked "sold from
-    // code stock" then sells like any other service.
-    codeCipher: voucherStockEnabled ? ref.watch(codeCipherProvider) : null,
+    // With the feature off no code is ever taken: a product marked "sold
+    // from code stock" then sells like any other service.
+    codeCipher:
+        featureOn(Feature.vouchers) ? ref.watch(codeCipherProvider) : null,
+    // The license is checked again before every sale is saved.
+    guard: ref.watch(licenseServiceProvider),
   ),
 );
 
@@ -103,12 +124,13 @@ final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(ref.watch(settingsRepositoryProvider)),
 );
 
-/// PHASE 5b HOOK: the check of a developer-signed, device-bound "PIN reset"
+/// The check of a developer-signed, device-bound, single-use "PIN reset"
 /// code against the licensing public key — for a shop that lost both its PIN
-/// and its recovery code. Null until licensing exists: "Forgot PIN?" then
-/// takes the recovery code only. Phase 5b overrides this with its
-/// [SignedPinReset]; nothing else has to change.
-final signedPinResetProvider = Provider<SignedPinReset?>((ref) => null);
+/// and its recovery code (`LicenseService.pinReset`). Null without a license
+/// service: "Forgot PIN?" then takes the recovery code only.
+final signedPinResetProvider = Provider<SignedPinReset?>(
+  (ref) => ref.watch(licenseServiceProvider)?.pinReset,
+);
 
 final archiveRepositoryProvider = Provider<ArchiveRepository>(
   (ref) => ArchiveRepository(ref.watch(databaseProvider).db),
@@ -119,16 +141,11 @@ final customerRepositoryProvider = Provider<CustomerRepository>(
 );
 
 final debtRepositoryProvider = Provider<DebtRepository>(
-  (ref) => DebtRepository(ref.watch(databaseProvider).db),
-);
-
-/// THE switch of the customer debt ledger. Every debt screen, button,
-/// invoice line and statistic asks this provider — never the compile-time
-/// flag — so there is one place to turn the feature off. Phase 5b makes it
-/// also depend on the license (the ledger becomes a licensable feature);
-/// tests override it to prove nothing of the feature shows when it is off.
-final debtFeatureProvider = Provider<bool>(
-  (ref) => debtEnabled && customersEnabled,
+  (ref) => DebtRepository(
+    ref.watch(databaseProvider).db,
+    // A new ledger entry needs the license; reading the ledger never does.
+    guard: ref.watch(licenseServiceProvider),
+  ),
 );
 
 final statsRepositoryProvider = Provider<StatsRepository>(

@@ -186,6 +186,15 @@ class FakeNativeBridge implements NativeBridge {
     return chatOpens;
   }
 
+  bool textShareOpens = true;
+  final sharedTexts = <({String text, String? package})>[];
+
+  @override
+  Future<bool> shareText(String text, {String? package}) async {
+    sharedTexts.add((text: text, package: package));
+    return textShareOpens;
+  }
+
   @override
   Future<bool> dial(String phone) async {
     dialed.add(phone);

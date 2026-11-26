@@ -105,7 +105,7 @@ class CustomerHitTile extends StatelessWidget {
     final outline = theme.textTheme.bodySmall
         ?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final customer = hit.customer;
-    final account = accountsEnabled ? hit.account : null;
+    final account = featureOn(Feature.accounts) ? hit.account : null;
     final dates = DateFormat.yMd(locale);
 
     final accountLine = account == null

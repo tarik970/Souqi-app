@@ -13,7 +13,7 @@ import '../stats/stats_providers.dart';
 /// a card product: the products list, the favorites bar, the sale search,
 /// the quantity sheet and the cart.
 final voucherAvailabilityProvider = FutureProvider<Map<int, int>>((ref) {
-  if (!voucherStockEnabled) return const <int, int>{};
+  if (!featureOn(Feature.vouchers)) return const <int, int>{};
   return ref.watch(voucherRepositoryProvider).availableByProduct();
 });
 
@@ -25,7 +25,7 @@ final stockOverviewProvider = FutureProvider<List<ProductStock>>(
 /// Card products that are out of stock or at their threshold: the badge on
 /// the home screen. Zero when the feature is off.
 final lowStockCountProvider = FutureProvider<int>((ref) {
-  if (!voucherStockEnabled) return 0;
+  if (!featureOn(Feature.vouchers)) return 0;
   return ref.watch(voucherRepositoryProvider).lowStockCount();
 });
 
@@ -51,7 +51,7 @@ final expiredCodesProvider =
 /// invoice screens. Empty when the feature is off.
 final invoiceCodesProvider =
     FutureProvider.family<List<VoucherCodeView>, int>((ref, invoiceId) {
-  if (!voucherStockEnabled) return const <VoucherCodeView>[];
+  if (!featureOn(Feature.vouchers)) return const <VoucherCodeView>[];
   return ref.watch(voucherRepositoryProvider).codesOfInvoice(invoiceId);
 });
 
@@ -59,7 +59,7 @@ final invoiceCodesProvider =
 /// what the on-screen preview shows in place of the real thing.
 final invoicePreviewCodesProvider =
     FutureProvider.family<List<InvoiceCode>, int>((ref, invoiceId) async {
-  if (!voucherStockEnabled) return const <InvoiceCode>[];
+  if (!featureOn(Feature.vouchers)) return const <InvoiceCode>[];
   // Depends on the list above so one invalidation refreshes both.
   await ref.watch(invoiceCodesProvider(invoiceId).future);
   final codes =

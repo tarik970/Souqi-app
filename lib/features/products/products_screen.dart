@@ -175,7 +175,7 @@ class _ProductTile extends ConsumerWidget {
     ].join(' · ');
 
     // A product sold from code stock shows what is left of it.
-    final isCard = voucherStockEnabled &&
+    final isCard = featureOn(Feature.vouchers) &&
         product.kind == ProductKind.service &&
         product.soldFromCodeStock;
     final stock = isCard ? ref.watch(voucherAvailabilityProvider).value : null;

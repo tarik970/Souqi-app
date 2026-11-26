@@ -344,6 +344,18 @@ class BackupService {
       }
       final autoKey = BackupKey.fromStored(await keys.read(autoBackupKeyName));
       await db.db.transaction((txn) async {
+        // A LICENSE BELONGS TO THE DEVICE: whatever activation code a backup
+        // might hold is dropped here. This phone's own license is written
+        // back when the app starts over on the restored data
+        // (`LicenseService.start`) — a phone that has none needs its own
+        // activation, whoever made the backup.
+        final marks =
+            List.filled(SettingsKeys.deviceBoundKeys.length, '?').join(', ');
+        await txn.delete(
+          'settings',
+          where: 'key IN ($marks)',
+          whereArgs: SettingsKeys.deviceBoundKeys,
+        );
         // The automatic backup's password lives in THIS phone's Keystore.
         // On another phone there is none yet: the daily backup stays off
         // until it is set here, instead of failing every night.

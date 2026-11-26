@@ -9,6 +9,7 @@ import 'features/backup/restart_notice.dart';
 import 'features/debts/report/report_launch.dart';
 import 'features/debts/report/report_providers.dart';
 import 'features/home/home_screen.dart';
+import 'features/license/license_gate.dart';
 import 'features/security/pin_session.dart';
 import 'features/settings/storage_providers.dart';
 import 'features/setup/setup_screen.dart';
@@ -118,7 +119,12 @@ class SouqiApp extends ConsumerWidget {
           ),
         ),
       ),
-      home: setupDone ? const HomeScreen() : const SetupScreen(),
+      // An app that is not licensed opens on the activation screen instead
+      // of the home screen (`LicenseGate`). The first-launch setup comes
+      // before both: the trial starts with the first launch.
+      home: setupDone
+          ? const LicenseGate(child: HomeScreen())
+          : const SetupScreen(),
     );
   }
 }

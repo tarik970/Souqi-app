@@ -339,7 +339,10 @@ enum AuditAction {
   /// The daily automatic backup turned on or off, and its password changed.
   backupAutoOn('BACKUP_AUTO_ON'),
   backupAutoOff('BACKUP_AUTO_OFF'),
-  backupPasswordChange('BACKUP_PASSWORD_CHANGE');
+  backupPasswordChange('BACKUP_PASSWORD_CHANGE'),
+
+  /// An activation code accepted (phase 5b): which license, for which shop.
+  licenseActivate('LICENSE_ACTIVATE');
 
   const AuditAction(this.db);
 

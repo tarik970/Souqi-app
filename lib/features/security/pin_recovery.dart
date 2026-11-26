@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
@@ -10,6 +11,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../invoice/invoice_output.dart';
 import '../invoice/invoice_providers.dart';
 import '../invoice/output_messages.dart';
+import '../license/license_providers.dart';
 import 'pin_dialogs.dart';
 
 /// What authorises replacing a forgotten PIN.
@@ -235,9 +237,15 @@ class _RecoveryCodeDialogState extends ConsumerState<RecoveryCodeDialog> {
 /// saved. Pops `true` once the PIN has been replaced.
 ///
 /// Wrong codes are counted like wrong PINs, with the same lock-out, on a
-/// counter of their own. When phase 5b's signed reset is available
-/// (`signedPinResetProvider`), text that is not shaped like a recovery code
-/// is checked as a developer reset code instead.
+/// counter of their own.
+///
+/// THE DEVELOPER'S RESET CODE (`signedPinResetProvider`, licensing): for
+/// the shop that lost the recovery code too. The dialog shows this phone's
+/// REQUEST CODE to send to the developer, and takes the reset code that
+/// comes back — pasted into the same field, or scanned as a QR code. Text
+/// that is not shaped like a recovery code is checked as a reset code:
+/// signed by the developer, for this phone, not older than 48 hours, and
+/// never used before.
 class PinRecoveryDialog extends ConsumerStatefulWidget {
   const PinRecoveryDialog({super.key});
 
@@ -254,6 +262,18 @@ class _PinRecoveryDialogState extends ConsumerState<PinRecoveryDialog> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _copyRequestCode(String requestCode) async {
+    await Clipboard.setData(ClipboardData(text: requestCode));
+  }
+
+  /// The reset code as a QR code: read, put into the field and checked.
+  Future<void> _scan() async {
+    final scanned = await ref.read(licenseScannerProvider)(context);
+    if (!mounted || scanned == null || scanned.trim().isEmpty) return;
+    _controller.text = scanned.trim();
+    await _submit();
   }
 
   void _fail(String message) {
@@ -313,6 +333,8 @@ class _PinRecoveryDialogState extends ConsumerState<PinRecoveryDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final signed = ref.watch(signedPinResetProvider) != null;
+    final requestCode = signed ? ref.watch(requestCodeProvider) : null;
+    final theme = Theme.of(context);
     return AlertDialog(
       key: const ValueKey('pin-recovery-dialog'),
       scrollable: true,
@@ -341,6 +363,39 @@ class _PinRecoveryDialogState extends ConsumerState<PinRecoveryDialog> {
               errorMaxLines: 3,
             ),
           ),
+          if (requestCode != null) ...[
+            const SizedBox(height: 16),
+            Text(l10n.recoveryRequestIntro, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: SelectableText(
+                requestCode,
+                key: const ValueKey('recovery-request-code'),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            Wrap(
+              spacing: 8,
+              children: [
+                TextButton.icon(
+                  key: const ValueKey('recovery-request-copy'),
+                  onPressed: () => _copyRequestCode(requestCode),
+                  icon: const Icon(Icons.copy, size: 18),
+                  label: Text(l10n.licenseCopy),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('recovery-scan'),
+                  onPressed: _checking ? null : _scan,
+                  icon: const Icon(Icons.qr_code_scanner, size: 18),
+                  label: Text(l10n.licenseScan),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
       actions: [

@@ -161,30 +161,34 @@ class _QuickItemSheetState extends ConsumerState<QuickItemSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: currencyCode,
-                    // The code plus the arrow must fit a narrow phone at a
-                    // large system font: the field takes the width it is
-                    // given instead of its content's natural width.
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.productCurrency,
-                      border: const OutlineInputBorder(),
+                // One currency to offer (the multi-currency feature is
+                // off, or no other has a rate): no picker.
+                if (sellable.length > 1) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: currencyCode,
+                      // The code plus the arrow must fit a narrow phone at a
+                      // large system font: the field takes the width it is
+                      // given instead of its content's natural width.
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.productCurrency,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (final currency in sellable)
+                          DropdownMenuItem(
+                            value: currency.code,
+                            child: Text(currency.code),
+                          ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _currencyCode = value),
                     ),
-                    items: [
-                      for (final currency in sellable)
-                        DropdownMenuItem(
-                          value: currency.code,
-                          child: Text(currency.code),
-                        ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _currencyCode = value),
                   ),
-                ),
+                ],
               ],
             ),
             const SizedBox(height: 12),

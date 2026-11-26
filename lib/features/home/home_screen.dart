@@ -16,6 +16,7 @@ import '../customers/quick_search.dart';
 import '../customers/renewal.dart';
 import '../debts/debt_providers.dart';
 import '../debts/debtors_screen.dart';
+import '../license/license_gate.dart';
 import '../products/products_screen.dart';
 import '../sale/sale_screen.dart';
 import '../settings/settings_screen.dart';
@@ -125,20 +126,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final shopType = ref.watch(shopTypeProvider).value ?? shopTypeGrocery;
     final grocery = shopType == shopTypeGrocery;
     // The renewals card belongs to a shop that sells subscriptions.
-    final renewalsCard = customersEnabled && accountsEnabled && !grocery;
+    final renewalsCard = featureOn(Feature.customers) && featureOn(Feature.accounts) && !grocery;
     final dueCount =
-        accountsEnabled ? ref.watch(dueCountProvider).value ?? 0 : 0;
+        featureOn(Feature.accounts) ? ref.watch(dueCountProvider).value ?? 0 : 0;
     final lowStock =
-        voucherStockEnabled ? ref.watch(lowStockCountProvider).value ?? 0 : 0;
+        featureOn(Feature.vouchers) ? ref.watch(lowStockCountProvider).value ?? 0 : 0;
     // "There is at least one card product": one is either low on stock or
     // has codes left, so the two counts together answer it (and both are
     // already read for the badges).
-    final hasCardProducts = voucherStockEnabled &&
+    final hasCardProducts = featureOn(Feature.vouchers) &&
         (lowStock > 0 ||
             (ref.watch(voucherAvailabilityProvider).value?.isNotEmpty ??
                 false));
     final query = _query.trim();
-    final debtOn = ref.watch(debtFeatureProvider);
+    final debtOn = featureOn(Feature.debt);
 
     // Every destination this build has, by id; the order comes after.
     final byId = <String, _NavItem>{
@@ -148,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         icon: Icons.point_of_sale,
         builder: (_) => const SaleScreen(),
       ),
-      if (customersEnabled)
+      if (featureOn(Feature.customers))
         'customers': _NavItem(
           id: 'customers',
           label: l10n.navCustomers,
@@ -156,7 +157,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           builder: (_) => const CustomersScreen(),
         ),
       // Grocery: only once something is actually due.
-      if (accountsEnabled && (!grocery || dueCount > 0))
+      if (featureOn(Feature.accounts) && (!grocery || dueCount > 0))
         'due': _NavItem(
           id: 'due',
           label: l10n.navDue,
@@ -171,7 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         builder: (_) => const ProductsScreen(),
       ),
       // Grocery: only once the shop has card products.
-      if (voucherStockEnabled && (!grocery || hasCardProducts))
+      if (featureOn(Feature.vouchers) && (!grocery || hasCardProducts))
         'cards': _NavItem(
           id: 'cards',
           label: l10n.navCardStock,
@@ -210,6 +211,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       key: const ValueKey('home-idle'),
       padding: const EdgeInsets.only(bottom: 24),
       children: [
+        // The trial that is running, or "not activated": nothing once a
+        // license is in place.
+        const LicenseBanner(),
         if (debtOn)
           const Padding(
             padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -250,7 +254,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // loses its state and drops the keyboard).
       body: Column(
         children: [
-          if (customersEnabled)
+          if (featureOn(Feature.customers))
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
               child: QuickSearchField(
@@ -265,7 +269,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     query: query,
                     onTap: _openCustomer,
                     actionsFor: (hit) => [
-                      if (accountsEnabled && hit.account != null)
+                      if (featureOn(Feature.accounts) && hit.account != null)
                         RenewButton(
                           key: ValueKey('renew-${hit.account!.id}'),
                           onPressed: () => startRenewal(context, hit),

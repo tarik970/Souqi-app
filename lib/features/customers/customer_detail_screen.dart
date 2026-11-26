@@ -75,7 +75,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       // A customer with an open balance is not deactivated without the
       // balance being shown first: hiding someone who owes money (or is
       // owed some) must be a decision, not an accident.
-      final balance = ref.read(debtFeatureProvider)
+      final balance = featureOn(Feature.debt)
           ? await ref.read(debtRepositoryProvider).balanceOf(customer.id!)
           : 0;
       if (!mounted) return;
@@ -120,7 +120,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     final l10n = AppLocalizations.of(context);
     final customer = ref.watch(customerProvider(_id));
     final data = customer.value;
-    final tabs = ref.watch(debtFeatureProvider);
+    final tabs = featureOn(Feature.debt);
 
     final page = Scaffold(
       appBar: AppBar(
@@ -331,7 +331,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               ],
             ),
           ),
-        if (accountsEnabled) ...[
+        if (featureOn(Feature.accounts)) ...[
           header(
             l10n.accountsTitle,
             action: TextButton.icon(
@@ -429,7 +429,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   decimals: 0,
                   locale: locale,
                 )),
-                if (accountsEnabled && invoice.accountNumber != null)
+                if (featureOn(Feature.accounts) && invoice.accountNumber != null)
                   ltrIsolate(invoice.accountNumber!),
               ].join(' · '),
               maxLines: 2,

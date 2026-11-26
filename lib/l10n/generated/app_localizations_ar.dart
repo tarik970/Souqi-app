@@ -3848,4 +3848,225 @@ class AppLocalizationsAr extends AppLocalizations {
   String backupNoticeFailedText(String reason) {
     return '$reason. افتح الإعدادات ← النسخ الاحتياطي والاستعادة لعمل نسخة يدوياً.';
   }
+
+  @override
+  String get licenseTitle => 'التفعيل';
+
+  @override
+  String get licenseStatusLicensed => 'مفعّل';
+
+  @override
+  String get licenseStatusTrial => 'نسخة تجريبية';
+
+  @override
+  String get licenseStatusUnlicensed => 'غير مفعّل';
+
+  @override
+  String licenseShopLine(String shop) {
+    return 'مرخّص لـ: $shop';
+  }
+
+  @override
+  String licenseExpiresLine(String date) {
+    return 'صالح حتى $date';
+  }
+
+  @override
+  String get licenseLifetime => 'ترخيص دائم';
+
+  @override
+  String licenseIdLine(String id) {
+    return 'رقم الترخيص $id';
+  }
+
+  @override
+  String get licenseFeaturesLabel => 'يشمل';
+
+  @override
+  String get licenseFeatureDebt => 'دفتر الديون';
+
+  @override
+  String get licenseFeatureCustomers => 'الزبائن';
+
+  @override
+  String get licenseFeatureAccounts => 'البطاقات والتجديد';
+
+  @override
+  String get licenseFeatureVouchers => 'مخزون أكواد البطاقات';
+
+  @override
+  String get licenseFeatureBarcode => 'الباركود';
+
+  @override
+  String get licenseFeatureDiscount => 'الخصومات';
+
+  @override
+  String get licenseFeatureMultiCurrency => 'تعدد العملات';
+
+  @override
+  String get licenseFeatureDailyReport => 'تقرير الديون اليومي';
+
+  @override
+  String get licenseFeatureBackup => 'النسخ الاحتياطي والاستعادة';
+
+  @override
+  String licenseTrialLeft(String days, String invoices) {
+    return 'المتبقي من التجربة: $days يوم أو $invoices فاتورة، أيهما ينتهي أولاً. كل الميزات تعمل.';
+  }
+
+  @override
+  String get licenseReasonTrialDays => 'انتهت فترة التجربة (7 أيام).';
+
+  @override
+  String get licenseReasonTrialInvoices => 'استُهلكت فواتير التجربة الثلاثون.';
+
+  @override
+  String licenseReasonExpired(String date) {
+    return 'انتهى الترخيص بتاريخ $date.';
+  }
+
+  @override
+  String get licenseReasonWrongDevice =>
+      'التفعيل المحفوظ مع هذه البيانات يخص هاتفاً آخر. هذا الهاتف يحتاج إلى رمز تفعيل خاص به.';
+
+  @override
+  String get licenseReasonModified =>
+      'هذه النسخة من سوقي معدّلة وليست التطبيق الأصلي. ثبّت التطبيق الأصلي لتعود إلى البيع.';
+
+  @override
+  String get licenseReasonUnsealed =>
+      'هذه النسخة بلا بصمة توقيع بعد (للمطوّر: املأ expectedSigningCertSha256). نسخ التصحيح فقط تعمل بدونها.';
+
+  @override
+  String get licenseLockedNote =>
+      'البيع والطباعة وتسجيل الديون الجديدة متوقفة. بياناتك محفوظة: الأرشيف وأرصدة الزبائن والنسخ الاحتياطي والتقرير اليومي تبقى تعمل.';
+
+  @override
+  String get licenseRequestTitle => 'رمز الطلب';
+
+  @override
+  String get licenseRequestHint =>
+      'أرسل هذا الرمز إلى المطوّر لتحصل على رمز تفعيل هذا الهاتف.';
+
+  @override
+  String get licenseRequestUnavailable =>
+      'تعذّر تحديد هوية هذا الهاتف. أغلق التطبيق وافتحه من جديد ثم حاول مرة أخرى.';
+
+  @override
+  String licenseRequestMessage(String code) {
+    return 'سوقي — طلب تفعيل\nرمز الطلب: $code';
+  }
+
+  @override
+  String get licenseCopy => 'نسخ';
+
+  @override
+  String get licenseCopied => 'تم نسخ رمز الطلب';
+
+  @override
+  String get licenseShareFailed =>
+      'تعذّر فتح واتساب أو قائمة المشاركة. انسخ الرمز بدلاً من ذلك.';
+
+  @override
+  String get licenseEnterTitle => 'رمز التفعيل';
+
+  @override
+  String get licenseEnterHint =>
+      'الصق الرمز الذي وصلك، أو امسح رمز QR الخاص به. المسافات والشرطات وفواصل الأسطر لا تؤثر.';
+
+  @override
+  String get licensePaste => 'لصق';
+
+  @override
+  String get licenseScan => 'مسح QR';
+
+  @override
+  String get licenseActivate => 'تفعيل';
+
+  @override
+  String licenseActivatedFor(String shop) {
+    return 'تم التفعيل لـ $shop';
+  }
+
+  @override
+  String get licenseErrorNotConfigured =>
+      'هذه النسخة لا تقبل رموز التفعيل بعد (لا يوجد مفتاح عام).';
+
+  @override
+  String get licenseErrorMalformed =>
+      'هذا ليس رمز تفعيل كاملاً. الصق الرمز كاملاً.';
+
+  @override
+  String get licenseErrorPinReset =>
+      'هذا رمز لإعادة تعيين رمز القفل وليس رمز تفعيل. أدخله من «نسيت رمز القفل؟».';
+
+  @override
+  String get licenseErrorNewer => 'هذا الرمز يحتاج إلى إصدار أحدث من سوقي.';
+
+  @override
+  String get licenseErrorSignature =>
+      'هذا الرمز غير صالح. تأكد من نسخه كاملاً.';
+
+  @override
+  String get licenseErrorWrongDevice =>
+      'هذا الرمز صادر لهاتف آخر. أرسل رمز الطلب الظاهر أعلاه.';
+
+  @override
+  String get licenseErrorExpired => 'هذا الرمز منتهي الصلاحية.';
+
+  @override
+  String get licenseErrorOlder => 'يوجد على هذا الهاتف تفعيل أحدث.';
+
+  @override
+  String get licenseBrowse => 'تصفّح بياناتي (للقراءة فقط)';
+
+  @override
+  String get licenseClockWarning =>
+      'تاريخ الهاتف رجع إلى الوراء. اضبط التاريخ والوقت الصحيحين. حتى ذلك الحين تُحسب التجربة والترخيص من آخر تاريخ ظهر على هذا الهاتف.';
+
+  @override
+  String licenseBannerTrial(String days, String invoices) {
+    return 'نسخة تجريبية — بقي $days يوم / $invoices فاتورة';
+  }
+
+  @override
+  String get licenseBannerLocked => 'غير مفعّل — البيع متوقف';
+
+  @override
+  String get licenseNeededTitle => 'يلزم التفعيل';
+
+  @override
+  String get licenseNeededSell => 'البيع متوقف حتى يتم تفعيل سوقي.';
+
+  @override
+  String get licenseNeededPrint =>
+      'الطباعة والمشاركة متوقفتان حتى يتم تفعيل سوقي.';
+
+  @override
+  String get licenseNeededDebt =>
+      'تسجيل الديون والدفعات متوقف حتى يتم تفعيل سوقي. الأرصدة تبقى للقراءة.';
+
+  @override
+  String get licenseActivatedTitle => 'تم تفعيل سوقي';
+
+  @override
+  String get licenseActivatedText => 'شكراً لك. كل ما يشمله ترخيصك يعمل الآن.';
+
+  @override
+  String get invoiceTrialLine => 'نسخة تجريبية';
+
+  @override
+  String get shopNameFromLicense => 'من التفعيل. لا يمكن تغييره من هنا.';
+
+  @override
+  String get auditLicenseActivate => 'تفعيل سوقي';
+
+  @override
+  String get recoveryRequestIntro =>
+      'أضعت رمز الاسترجاع أيضاً؟ أرسل رمز طلب هذا الهاتف إلى المطوّر وأدخل رمز إعادة التعيين الذي يصلك:';
+
+  @override
+  String licenseBannerEnding(String days) {
+    return 'ينتهي الترخيص خلال $days يوم. اطلب من المطوّر رمز تفعيل جديداً.';
+  }
 }

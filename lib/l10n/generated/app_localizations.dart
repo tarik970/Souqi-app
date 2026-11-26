@@ -6534,6 +6534,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{reason}. Open Settings → Backup & restore to make one by hand.'**
   String backupNoticeFailedText(String reason);
+
+  /// No description provided for @licenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation'**
+  String get licenseTitle;
+
+  /// No description provided for @licenseStatusLicensed.
+  ///
+  /// In en, this message translates to:
+  /// **'Activated'**
+  String get licenseStatusLicensed;
+
+  /// No description provided for @licenseStatusTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial version'**
+  String get licenseStatusTrial;
+
+  /// No description provided for @licenseStatusUnlicensed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not activated'**
+  String get licenseStatusUnlicensed;
+
+  /// No description provided for @licenseShopLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed to: {shop}'**
+  String licenseShopLine(String shop);
+
+  /// No description provided for @licenseExpiresLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String licenseExpiresLine(String date);
+
+  /// No description provided for @licenseLifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime license'**
+  String get licenseLifetime;
+
+  /// No description provided for @licenseIdLine.
+  ///
+  /// In en, this message translates to:
+  /// **'License no. {id}'**
+  String licenseIdLine(String id);
+
+  /// No description provided for @licenseFeaturesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Included'**
+  String get licenseFeaturesLabel;
+
+  /// No description provided for @licenseFeatureDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt ledger'**
+  String get licenseFeatureDebt;
+
+  /// No description provided for @licenseFeatureCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get licenseFeatureCustomers;
+
+  /// No description provided for @licenseFeatureAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards & renewals'**
+  String get licenseFeatureAccounts;
+
+  /// No description provided for @licenseFeatureVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'Card code stock'**
+  String get licenseFeatureVouchers;
+
+  /// No description provided for @licenseFeatureBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcodes'**
+  String get licenseFeatureBarcode;
+
+  /// No description provided for @licenseFeatureDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts'**
+  String get licenseFeatureDiscount;
+
+  /// No description provided for @licenseFeatureMultiCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple currencies'**
+  String get licenseFeatureMultiCurrency;
+
+  /// No description provided for @licenseFeatureDailyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily debt report'**
+  String get licenseFeatureDailyReport;
+
+  /// No description provided for @licenseFeatureBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get licenseFeatureBackup;
+
+  /// No description provided for @licenseTrialLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left in the trial: {days} days or {invoices} invoices, whichever ends first. Every feature is on.'**
+  String licenseTrialLeft(String days, String invoices);
+
+  /// No description provided for @licenseReasonTrialDays.
+  ///
+  /// In en, this message translates to:
+  /// **'The 7-day trial has ended.'**
+  String get licenseReasonTrialDays;
+
+  /// No description provided for @licenseReasonTrialInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'The 30 invoices of the trial are used up.'**
+  String get licenseReasonTrialInvoices;
+
+  /// No description provided for @licenseReasonExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The license expired on {date}.'**
+  String licenseReasonExpired(String date);
+
+  /// No description provided for @licenseReasonWrongDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'The activation stored with this data belongs to another phone. This phone needs an activation code of its own.'**
+  String get licenseReasonWrongDevice;
+
+  /// No description provided for @licenseReasonModified.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of Souqi was modified and is not the original app. Install the original app to sell again.'**
+  String get licenseReasonModified;
+
+  /// No description provided for @licenseReasonUnsealed.
+  ///
+  /// In en, this message translates to:
+  /// **'This build has no signing fingerprint yet (developer: fill in expectedSigningCertSha256). Only debug builds run without it.'**
+  String get licenseReasonUnsealed;
+
+  /// No description provided for @licenseLockedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling, printing and new debt entries are locked. Your data is safe: the archive, the customers\' balances, backups and the daily report keep working.'**
+  String get licenseLockedNote;
+
+  /// No description provided for @licenseRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request code'**
+  String get licenseRequestTitle;
+
+  /// No description provided for @licenseRequestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this code to the developer to receive the activation code of this phone.'**
+  String get licenseRequestHint;
+
+  /// No description provided for @licenseRequestUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone could not be identified. Close the app, open it again and retry.'**
+  String get licenseRequestUnavailable;
+
+  /// No description provided for @licenseRequestMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi — activation request\nRequest code: {code}'**
+  String licenseRequestMessage(String code);
+
+  /// No description provided for @licenseCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get licenseCopy;
+
+  /// No description provided for @licenseCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Request code copied'**
+  String get licenseCopied;
+
+  /// No description provided for @licenseShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open WhatsApp or the share menu. Copy the code instead.'**
+  String get licenseShareFailed;
+
+  /// No description provided for @licenseEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation code'**
+  String get licenseEnterTitle;
+
+  /// No description provided for @licenseEnterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the code you received, or scan its QR code. Spaces, dashes and line breaks do not matter.'**
+  String get licenseEnterHint;
+
+  /// No description provided for @licensePaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get licensePaste;
+
+  /// No description provided for @licenseScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR'**
+  String get licenseScan;
+
+  /// No description provided for @licenseActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get licenseActivate;
+
+  /// No description provided for @licenseActivatedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Activated for {shop}'**
+  String licenseActivatedFor(String shop);
+
+  /// No description provided for @licenseErrorNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'This build cannot accept activation codes yet (it has no public key).'**
+  String get licenseErrorNotConfigured;
+
+  /// No description provided for @licenseErrorMalformed.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not a complete activation code. Paste the whole code.'**
+  String get licenseErrorMalformed;
+
+  /// No description provided for @licenseErrorPinReset.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a PIN reset code, not an activation code. Enter it under \"Forgot PIN?\".'**
+  String get licenseErrorPinReset;
+
+  /// No description provided for @licenseErrorNewer.
+  ///
+  /// In en, this message translates to:
+  /// **'This code needs a newer version of Souqi.'**
+  String get licenseErrorNewer;
+
+  /// No description provided for @licenseErrorSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'This code is not valid. Make sure it was copied completely.'**
+  String get licenseErrorSignature;
+
+  /// No description provided for @licenseErrorWrongDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This code was issued for another phone. Send the request code shown above.'**
+  String get licenseErrorWrongDevice;
+
+  /// No description provided for @licenseErrorExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This code has already expired.'**
+  String get licenseErrorExpired;
+
+  /// No description provided for @licenseErrorOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer activation is already in place on this phone.'**
+  String get licenseErrorOlder;
+
+  /// No description provided for @licenseBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse my data (read-only)'**
+  String get licenseBrowse;
+
+  /// No description provided for @licenseClockWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone\'s date went back. Set the correct date and time. Until then the trial and the license are counted from the latest date this phone has shown.'**
+  String get licenseClockWarning;
+
+  /// No description provided for @licenseBannerTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial version — {days} days / {invoices} invoices left'**
+  String licenseBannerTrial(String days, String invoices);
+
+  /// No description provided for @licenseBannerLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not activated — selling is locked'**
+  String get licenseBannerLocked;
+
+  /// No description provided for @licenseNeededTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation needed'**
+  String get licenseNeededTitle;
+
+  /// No description provided for @licenseNeededSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling is locked until Souqi is activated.'**
+  String get licenseNeededSell;
+
+  /// No description provided for @licenseNeededPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing and sharing are locked until Souqi is activated.'**
+  String get licenseNeededPrint;
+
+  /// No description provided for @licenseNeededDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'New debts and payments are locked until Souqi is activated. Balances stay readable.'**
+  String get licenseNeededDebt;
+
+  /// No description provided for @licenseActivatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi is activated'**
+  String get licenseActivatedTitle;
+
+  /// No description provided for @licenseActivatedText.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you. Everything your license includes is now on.'**
+  String get licenseActivatedText;
+
+  /// No description provided for @invoiceTrialLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial version'**
+  String get invoiceTrialLine;
+
+  /// No description provided for @shopNameFromLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'From your activation. It cannot be changed here.'**
+  String get shopNameFromLicense;
+
+  /// No description provided for @auditLicenseActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi activated'**
+  String get auditLicenseActivate;
+
+  /// No description provided for @recoveryRequestIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Lost the recovery code too? Send this phone\'s request code to the developer and enter the reset code you receive:'**
+  String get recoveryRequestIntro;
+
+  /// No description provided for @licenseBannerEnding.
+  ///
+  /// In en, this message translates to:
+  /// **'The license ends in {days} days. Ask the developer for a new activation code.'**
+  String licenseBannerEnding(String days);
 }
 
 class _AppLocalizationsDelegate

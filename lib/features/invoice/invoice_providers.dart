@@ -2,11 +2,13 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/features.dart';
 import '../../core/platform/external_action_bridge.dart';
 import '../../core/platform/native_bridge.dart';
 import '../../core/providers.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../license/license_providers.dart';
 import '../security/pin_session.dart';
 
 /// The Android side itself (Bluetooth, WhatsApp intent, Downloads, share
@@ -107,8 +109,15 @@ final invoiceRenderContextProvider =
   final stored = await ref.watch(invoiceSettingsProvider.future);
   // With the debt ledger off, nothing of it reaches the paper — not even on
   // an invoice that was saved while it was on.
-  final settings =
-      ref.watch(debtFeatureProvider) ? stored : stored.withoutDebtLines();
+  var settings = featureOn(Feature.debt) ? stored : stored.withoutDebtLines();
+  // THE LICENSE ON THE PAPER: the shop name is the license's (the header
+  // text under it stays the shop's own), and an invoice made on the trial
+  // carries the small "trial version" line.
+  final license = ref.watch(licenseProvider);
+  settings = settings.copyWith(
+    shopName: license.shopName,
+    trialNotice: license.isTrial,
+  );
   final currencies = await ref.watch(currenciesProvider.future);
   final logo = await ref.watch(invoiceLogoProvider.future);
   return InvoiceRenderContext(

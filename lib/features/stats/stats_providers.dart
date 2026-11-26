@@ -136,7 +136,7 @@ class StatsReport {
 /// Its own provider, beside the sales report: the ledger changes without an
 /// invoice (a payment), and the sales report without the ledger.
 final debtStatsProvider = FutureProvider<DebtStats?>((ref) async {
-  if (!ref.watch(debtFeatureProvider)) return null;
+  if (!featureOn(Feature.debt)) return null;
   final range = ref.watch(statsPeriodProvider).range;
   return ref.watch(debtRepositoryProvider).stats(
         from: range.from,
@@ -156,10 +156,10 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
   // so they go out together. The customer and renewal ones are only asked
   // for when their feature is on: a flag that is off shows nothing anywhere.
   final customerStats = Future.wait([
-    accountsEnabled
+    featureOn(Feature.accounts)
         ? repository.renewals(from: range.from, to: range.to)
         : Future.value(const RenewalStats(count: 0, totalBaseMinor: 0)),
-    accountsEnabled
+    featureOn(Feature.accounts)
         ? repository.topProducts(
             from: range.from,
             to: range.to,
@@ -168,10 +168,10 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
             renewalsOnly: true,
           )
         : Future.value(const <ProductStat>[]),
-    customersEnabled
+    featureOn(Feature.customers)
         ? repository.topCustomers(from: range.from, to: range.to)
         : Future.value(const <CustomerStat>[]),
-    voucherStockEnabled
+    featureOn(Feature.vouchers)
         ? repository.cardSales(from: range.from, to: range.to)
         : Future.value(const <CardSaleStat>[]),
   ]);

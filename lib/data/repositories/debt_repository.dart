@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/constants/settings_keys.dart';
+import '../../core/licensing/license_status.dart';
 import '../../core/money/exchange.dart';
 import '../../core/utils/due_dates.dart';
 import '../../domain/models/customer.dart';
@@ -60,9 +61,17 @@ class SaleLedgerPlan {
 /// allocation itself is [fifoUnpaid] — one definition for the single
 /// account and for the whole list.
 class DebtRepository {
-  DebtRepository(this._db);
+  DebtRepository(this._db, {this.guard});
 
   final Database _db;
+
+  /// The license check of a NEW ledger entry (phase 5b): a payment, a
+  /// manual debt, an opening balance, an adjustment, a reversal. Without a
+  /// valid license or a running trial they throw
+  /// [LicenseRequiredException] and write nothing; reading — balances,
+  /// statements, the debtors list — never asks. (A sale's own entry is
+  /// covered by the invoice's check.) Null = no licensing (a test).
+  final LicenseGuard? guard;
 
   static const _counters = CounterRepository();
 
@@ -233,6 +242,7 @@ class DebtRepository {
     String? note,
     DateTime? at,
   }) async {
+    await guard?.ensureCanRecordDebt();
     final amountBase = _toBase(
       amountMinor: amountMinor,
       currencyCode: currencyCode,
@@ -315,6 +325,7 @@ class DebtRepository {
     DateTime? at,
     Future<void> Function(Transaction txn, int entryId)? alsoInTransaction,
   }) async {
+    await guard?.ensureCanRecordDebt();
     final now = DateTime.now();
     final date = at ?? now;
     final id = await _db.transaction((txn) async {
@@ -401,6 +412,7 @@ class DebtRepository {
     if (draft.customerId == null && name.isEmpty) {
       throw ArgumentError.value(draft.name, 'name', 'a name is required');
     }
+    await guard?.ensureCanRecordDebt();
     final now = DateTime.now();
     final date = draft.date ?? now;
     final (entryId, customerId, customerName, created) =
@@ -460,6 +472,7 @@ class DebtRepository {
     if (why.isEmpty) {
       throw ArgumentError.value(reason, 'reason', 'a reason is required');
     }
+    await guard?.ensureCanRecordDebt();
     final now = DateTime.now();
     final id = await _db.transaction((txn) async {
       final rows = await txn.rawQuery(

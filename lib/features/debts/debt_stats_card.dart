@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../invoice/invoice_text.dart' show formatBasisPoints;
@@ -20,7 +21,7 @@ class DebtStatsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!ref.watch(debtFeatureProvider)) return const SizedBox.shrink();
+    if (!featureOn(Feature.debt)) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final pinRequired = ref.watch(debtRequirePinProvider).value;

@@ -91,6 +91,13 @@ class ExternalActionBridge implements NativeBridge {
         opened: (answer) => answer,
       );
 
+  /// The activation request code on its way to the developer.
+  @override
+  Future<bool> shareText(String text, {String? package}) => _external(
+        () => _inner.shareText(text, package: package),
+        opened: (answer) => answer,
+      );
+
   @override
   Future<bool> dial(String phone) =>
       _external(() => _inner.dial(phone), opened: (answer) => answer);

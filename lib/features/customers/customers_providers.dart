@@ -36,7 +36,7 @@ final quickSearchProvider = FutureProvider.autoDispose
   final countryCode = await ref.watch(defaultCountryCodeProvider.future);
   return ref.watch(customerRepositoryProvider).quickSearch(
         query,
-        includeAccounts: accountsEnabled,
+        includeAccounts: featureOn(Feature.accounts),
         countryCode: countryCode,
       );
 });

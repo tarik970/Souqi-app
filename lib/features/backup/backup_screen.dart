@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/backup/backup_crypto.dart';
 import '../../core/backup/backup_file.dart';
 import '../../core/platform/native_bridge.dart';
@@ -40,6 +41,8 @@ class BackupSettingsTile extends ConsumerWidget {
     final locale = ref.watch(appLocaleProvider).languageCode;
     final now = ref.watch(clockProvider)();
     final last = ref.watch(lastBackupAtProvider).value;
+    // A license without backups: no way into the page.
+    if (!featureOn(Feature.backup)) return const SizedBox.shrink();
     return ListTile(
       key: const ValueKey('setting-backup'),
       leading: const Icon(Icons.backup_outlined),
@@ -71,7 +74,8 @@ class BackupReminderBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    if (ref.watch(backupReminderProvider).value != true) {
+    if (!featureOn(Feature.backup) ||
+        ref.watch(backupReminderProvider).value != true) {
       return const SizedBox.shrink();
     }
     final never = ref.watch(lastBackupAtProvider).value == null;

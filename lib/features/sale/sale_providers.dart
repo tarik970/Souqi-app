@@ -17,9 +17,14 @@ import '../vouchers/voucher_providers.dart';
 /// truth: the invoice settings (edited there, or by the sale screen's
 /// "secondary total" shortcut).
 final extraTotalCurrenciesProvider = FutureProvider<List<String>>(
-  (ref) => ref.watch(
-    invoiceSettingsProvider.selectAsync((settings) => settings.extraCurrencies),
-  ),
+  (ref) async {
+    // One currency only: no "≈" totals in others.
+    if (!featureOn(Feature.multiCurrency)) return const <String>[];
+    return ref.watch(
+      invoiceSettingsProvider
+          .selectAsync((settings) => settings.extraCurrencies),
+    );
+  },
 );
 
 /// Currency table + base code + extra display currencies, everything the cart
@@ -33,9 +38,16 @@ final currencyContextProvider = FutureProvider<CurrencyContext>((ref) async {
 
 /// Active currencies that can be picked as the invoice currency: the base
 /// currency plus every active currency whose rate has been entered.
+///
+/// Without the multi-currency feature that is the base currency alone —
+/// and with one currency to offer, every picker that reads this list (the
+/// invoice currency, the price currency of a typed item, the currency of a
+/// payment) is simply not shown. A product priced in another currency
+/// before still sells: the conversion needs no picker.
 final sellableCurrenciesProvider = Provider<List<Currency>>((ref) {
   final ctx = ref.watch(currencyContextProvider).value;
   if (ctx == null) return const [];
+  if (!featureOn(Feature.multiCurrency)) return [ctx.base];
   return [
     for (final c in ctx.byCode.values)
       if (c.isActive && ctx.hasUsableRate(c.code)) c,
@@ -89,7 +101,7 @@ class CartNotifier extends Notifier<Cart> {
   }
 
   void setDiscount(Discount? discount) =>
-      state = state.withDiscount(discountEnabled ? discount : null);
+      state = state.withDiscount(featureOn(Feature.discount) ? discount : null);
 
   void setInvoiceCurrency(String? code) =>
       state = state.withInvoiceCurrency(code);
@@ -112,7 +124,7 @@ class SaleCustomerNotifier extends Notifier<SaleCustomer?> {
   SaleCustomer? build() => null;
 
   void attach(SaleCustomer customer) =>
-      state = customersEnabled ? customer : null;
+      state = featureOn(Feature.customers) ? customer : null;
 
   void clear() => state = null;
 }
@@ -126,7 +138,7 @@ final saleCustomerProvider =
 /// marked "requires customer account" and no account is attached. Null when
 /// the sale may be saved as far as accounts are concerned.
 final accountBlockerProvider = Provider<CartLine?>((ref) {
-  if (!accountsEnabled) return null;
+  if (!featureOn(Feature.accounts)) return null;
   if (ref.watch(saleCustomerProvider)?.hasAccount ?? false) return null;
   return ref.watch(cartProvider).linesRequiringAccount.firstOrNull;
 });
@@ -157,7 +169,7 @@ class CodeStockShortage {
 /// whatever gets past this is stopped by the save itself, in its
 /// transaction.
 final codeStockShortageProvider = Provider<CodeStockShortage?>((ref) {
-  if (!voucherStockEnabled) return null;
+  if (!featureOn(Feature.vouchers)) return null;
   final cart = ref.watch(cartProvider);
   final wanted = cart.codeStockQuantities;
   if (wanted.isEmpty) return null;
@@ -200,8 +212,8 @@ CartLine cartLineForProduct(
       // seller changes the price ("remember last price").
       listPriceMinor: product.priceMinor,
       listCurrencyCode: product.currencyCode,
-      requiresAccount: accountsEnabled && product.requiresAccount,
-      codeStock: voucherStockEnabled &&
+      requiresAccount: featureOn(Feature.accounts) && product.requiresAccount,
+      codeStock: featureOn(Feature.vouchers) &&
           product.kind == ProductKind.service &&
           product.soldFromCodeStock,
     );

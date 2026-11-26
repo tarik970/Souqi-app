@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../config/features.dart';
 import '../../../core/platform/native_bridge.dart';
 import '../../../core/platform/report_platform.dart';
-import '../../../core/providers.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../invoice/invoice_providers.dart';
 import '../debt_providers.dart';
@@ -26,7 +26,7 @@ Future<void> handleReportLaunch(
   ReportLaunchAction action,
 ) async {
   final container = ProviderScope.containerOf(context, listen: false);
-  if (!container.read(debtFeatureProvider)) return;
+  if (!featureOn(Feature.debt)) return;
   final messenger = ScaffoldMessenger.maybeOf(context);
   final l10n = AppLocalizations.of(context);
   void say(String text) => messenger

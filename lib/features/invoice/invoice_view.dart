@@ -124,15 +124,15 @@ class InvoiceView extends StatelessWidget {
               ),
           ],
         ),
-      if (customersEnabled && s.showCustomerName && customerName.isNotEmpty)
+      if (featureOn(Feature.customers) && s.showCustomerName && customerName.isNotEmpty)
         PaperPair(label: l10n.invoiceCustomerLabel, gap: gap, value: Text(customerName)),
-      if (customersEnabled && s.showCustomerPhone && customerPhone.isNotEmpty)
+      if (featureOn(Feature.customers) && s.showCustomerPhone && customerPhone.isNotEmpty)
         PaperPair(
           label: l10n.invoicePhoneLabel,
           gap: gap,
           value: Text(customerPhone, textDirection: TextDirection.ltr),
         ),
-      if (accountsEnabled && s.showAccountNumber && accountNumber.isNotEmpty)
+      if (featureOn(Feature.accounts) && s.showAccountNumber && accountNumber.isNotEmpty)
         PaperPair(
           label: l10n.invoiceAccountLabel,
           gap: gap,
@@ -217,7 +217,7 @@ class InvoiceView extends StatelessWidget {
                       bold: bold,
                     ),
                   rule,
-                  if (discountEnabled && invoice.discountMinor != 0) ...[
+                  if (featureOn(Feature.discount) && invoice.discountMinor != 0) ...[
                     PaperPair(
                       label: l10n.subtotalLabel,
                       gap: gap,
@@ -278,7 +278,7 @@ class InvoiceView extends StatelessWidget {
                       ],
                     ),
                   ..._debtLines(l10n, money, gap: gap, bold: bold),
-                  if (voucherStockEnabled)
+                  if (featureOn(Feature.vouchers))
                     for (final code in codes) ...[
                       rule,
                       InvoiceCodeBlock(
@@ -297,6 +297,17 @@ class InvoiceView extends StatelessWidget {
                       padding: EdgeInsets.only(top: gap),
                       child: Text(
                         l10n.poweredByFooter,
+                        textAlign: TextAlign.center,
+                        style: small,
+                      ),
+                    ),
+                  // An invoice made on the trial says so, in small print.
+                  if (s.trialNotice)
+                    Padding(
+                      padding: EdgeInsets.only(top: gap),
+                      child: Text(
+                        l10n.invoiceTrialLine,
+                        key: const ValueKey('invoice-trial-line'),
                         textAlign: TextAlign.center,
                         style: small,
                       ),
@@ -370,7 +381,7 @@ extension on InvoiceView {
             ),
           ),
       ],
-      if (customersEnabled && prev != null && next != null) ...[
+      if (featureOn(Feature.customers) && prev != null && next != null) ...[
         if (s.showPreviousBalance && prev != 0)
           PaperPair(
             label: l10n.previousBalanceLabel,

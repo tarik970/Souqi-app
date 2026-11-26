@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/platform/native_bridge.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../license/license_gate.dart';
 import 'invoice_providers.dart';
 import 'invoice_settings_screen.dart';
 
@@ -21,6 +22,7 @@ String outputFailureMessage(
       l10n.errorPrinterUnreachable(printerName ?? ''),
     OutputFailure.printerWriteFailed => l10n.errorPrinterWrite,
     OutputFailure.storagePermissionDenied => l10n.errorStoragePermission,
+    OutputFailure.licenseRequired => l10n.licenseNeededPrint,
     OutputFailure.unknown => l10n.errorOutputUnknown(error.detail ?? ''),
   };
 }
@@ -49,6 +51,10 @@ void showOutputError(
       SnackBarAction(
         label: l10n.openAppSettings,
         onPressed: bridge.openAppSettings,
+      ),
+    OutputFailure.licenseRequired => SnackBarAction(
+        label: l10n.licenseActivate,
+        onPressed: () => openLicenseScreen(navigator.context),
       ),
     OutputFailure.noPrinterSelected when offerInvoiceSettings => SnackBarAction(
         label: l10n.choosePrinter,

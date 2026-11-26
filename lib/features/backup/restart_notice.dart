@@ -4,8 +4,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 
-/// Says, once, over the first screen of a start that followed a restore,
-/// how it went — the screen that started the restore is gone by then.
+/// Says, once, over the first screen of a start that followed a restore —
+/// or an activation — how it went: the screen that started it is gone by
+/// then.
 class RestartNoticeListener extends ConsumerStatefulWidget {
   const RestartNoticeListener({
     super.key,
@@ -49,13 +50,29 @@ class RestartNoticeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final restored = notice == AppRestartNotice.restored;
+    final (icon, title, text) = switch (notice) {
+      AppRestartNotice.restored => (
+          Icons.check_circle_outline,
+          l10n.restoreDoneTitle,
+          l10n.restoreDoneText,
+        ),
+      AppRestartNotice.restoreFailed => (
+          Icons.error_outline,
+          l10n.restoreFailedTitle,
+          l10n.restoreFailedText,
+        ),
+      AppRestartNotice.activated => (
+          Icons.verified_outlined,
+          l10n.licenseActivatedTitle,
+          l10n.licenseActivatedText,
+        ),
+    };
     return AlertDialog(
       key: const ValueKey('restart-notice'),
-      icon: Icon(restored ? Icons.check_circle_outline : Icons.error_outline),
-      title: Text(restored ? l10n.restoreDoneTitle : l10n.restoreFailedTitle),
+      icon: Icon(icon),
+      title: Text(title),
       scrollable: true,
-      content: Text(restored ? l10n.restoreDoneText : l10n.restoreFailedText),
+      content: Text(text),
       actions: [
         FilledButton(
           key: const ValueKey('restart-notice-ok'),

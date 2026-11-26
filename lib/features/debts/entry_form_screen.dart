@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/licensing/license_status.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../customers/customers_providers.dart';
 import '../security/pin_dialogs.dart';
 import 'debt_providers.dart';
+import '../license/license_gate.dart';
+import '../license/license_providers.dart';
 import 'debt_widgets.dart';
 
 /// What a [LedgerEntryFormScreen] adds to the account.
@@ -160,6 +163,14 @@ class _LedgerEntryFormScreenState
     final base = ref.watch(baseCurrencyProvider).value;
     final decimals = base?.decimalPlaces ?? 0;
     final today = DateTime.now();
+
+    // Without a license the ledger is read-only: no new entry.
+    if (!ref.watch(licenseProvider).canRecordDebt) {
+      return LicenseLockedScaffold(
+        title: _title(l10n),
+        action: LicensedAction.recordDebt,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(_title(l10n))),

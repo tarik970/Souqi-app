@@ -179,6 +179,7 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.backupAutoOn => l10n.auditBackupAutoOn,
       AuditAction.backupAutoOff => l10n.auditBackupAutoOff,
       AuditAction.backupPasswordChange => l10n.auditBackupPasswordChange,
+      AuditAction.licenseActivate => l10n.auditLicenseActivate,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -213,6 +214,7 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
         Icons.backup_outlined,
       AuditAction.backupRestore => Icons.settings_backup_restore,
       AuditAction.backupPasswordChange => Icons.password,
+      AuditAction.licenseActivate => Icons.verified_outlined,
       null => Icons.info_outline,
     };
 
@@ -245,6 +247,8 @@ class _AuditTile extends ConsumerWidget {
     final facts = <String>[
       if (entry.productName != null) entry.productName!,
       if (details['customer'] is String) details['customer'] as String,
+      // An activation: the shop the license was issued to.
+      if (details['shop'] is String) details['shop'] as String,
       if (details['amount'] is int) amount(details['amount']),
       if (details['receipt_no'] is int)
         l10n.receiptNoLabel(number(details['receipt_no'])),

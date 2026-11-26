@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
+import '../../core/licensing/license_status.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/security/code_cipher.dart';
@@ -23,6 +24,8 @@ import '../customers/customer_picker_screen.dart';
 import '../customers/customers_providers.dart';
 import '../debts/debt_providers.dart';
 import '../invoice/invoice_providers.dart';
+import '../license/license_gate.dart';
+import '../license/license_providers.dart';
 import '../products/products_providers.dart';
 import '../settings/storage_providers.dart';
 import '../stats/stats_providers.dart';
@@ -202,7 +205,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
           content: Text(l10n.codeNotFound(code)),
-          action: barcodeEnabled
+          action: featureOn(Feature.barcode)
               ? SnackBarAction(
                   key: const ValueKey('code-not-found-new'),
                   label: l10n.newProductWithBarcode,
@@ -390,7 +393,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final locale = _locale;
     String number(int value) =>
         formatMinor(value, decimals: 0, locale: locale);
-    var customer = customersEnabled ? ref.read(saleCustomerProvider) : null;
+    var customer = featureOn(Feature.customers) ? ref.read(saleCustomerProvider) : null;
     // The button is already disabled for this; the check is repeated here
     // because Save is also what a hardware keyboard's Enter can reach.
     final blocker = ref.read(accountBlockerProvider);
@@ -421,9 +424,9 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     // goes onto the customer's account — a customer who can be picked in
     // the sheet. With the ledger off there is no payment at all.
     SalePayment? payment;
-    if (ref.read(debtFeatureProvider) && !askPayment) {
+    if (featureOn(Feature.debt) && !askPayment) {
       payment = SalePayment(paidMinor: totals.totalMinor);
-    } else if (ref.read(debtFeatureProvider)) {
+    } else if (featureOn(Feature.debt)) {
       final choice = await showModalBottomSheet<PaymentChoice>(
         context: context,
         isScrollControlled: true,
@@ -447,7 +450,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       // the prices the seller changed — and, for a renewal, the account's
       // last-renewal and next-due dates. The customer and the account go
       // onto the invoice as snapshots beside the links to the live records.
-      final hasAccount = accountsEnabled && (customer?.hasAccount ?? false);
+      final hasAccount = featureOn(Feature.accounts) && (customer?.hasAccount ?? false);
       final saved = await container.read(invoiceRepositoryProvider).save(
             Invoice.fromCart(
               cart: cart,
@@ -483,7 +486,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       // A new debt, a credit balance used.
       if (payment != null && customer != null) refreshDebtData(container);
       // Card codes left the stock with this sale.
-      if (voucherStockEnabled) refreshVoucherData(container);
+      if (featureOn(Feature.vouchers)) refreshVoucherData(container);
       if (!mounted) return;
       navigator.pushReplacement(MaterialPageRoute(
         builder: (_) => SaleInvoiceScreen(
@@ -530,6 +533,11 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       );
     } on InvalidSalePaymentException {
       messenger.showSnackBar(SnackBar(content: Text(l10n.partialInvalid)));
+    } on LicenseRequiredException catch (e) {
+      // The trial ran out, or the license expired, since this screen was
+      // built: the repository refused, and nothing was saved. The cart
+      // stays as it is.
+      if (mounted) await showLicenseNeeded(context, e.action);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -544,7 +552,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final query = ref.watch(saleSearchProvider).trim();
     final sellable = ref.watch(sellableCurrenciesProvider);
     final allCurrencies = ref.watch(currenciesProvider).value ?? const [];
-    final customer = customersEnabled ? ref.watch(saleCustomerProvider) : null;
+    final customer = featureOn(Feature.customers) ? ref.watch(saleCustomerProvider) : null;
     final accountBlocker = ref.watch(accountBlockerProvider);
     final codeShortage = ref.watch(codeStockShortageProvider);
 
@@ -563,11 +571,21 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     // screen.
     final typing = MediaQuery.viewInsetsOf(context).bottom > 0;
 
+    // NOT LICENSED (the trial is over, the license expired): there is no
+    // selling. Every way into a sale ends here — the home tile, a renewal,
+    // "New sale" — so this is where it is said, with the way to activate.
+    if (!ref.watch(licenseProvider).canSell) {
+      return LicenseLockedScaffold(
+        title: l10n.navSale,
+        action: LicensedAction.sell,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.navSale),
         actions: [
-          if (barcodeEnabled)
+          if (featureOn(Feature.barcode))
             IconButton(
               key: const ValueKey('sale-scan'),
               tooltip: l10n.scanBarcodeTitle,
@@ -580,10 +598,11 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                 onTap: _addQuickItem,
                 child: Text(l10n.quickItemTitle),
               ),
-              PopupMenuItem<void>(
-                onTap: _pickSecondaryTotals,
-                child: Text(l10n.secondaryTotalTitle),
-              ),
+              if (featureOn(Feature.multiCurrency))
+                PopupMenuItem<void>(
+                  onTap: _pickSecondaryTotals,
+                  child: Text(l10n.secondaryTotalTitle),
+                ),
               if (cart.isNotEmpty)
                 PopupMenuItem<void>(
                   onTap: _confirmClear,
@@ -667,7 +686,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
               },
               onDiscount: _editDiscount,
               onSave: _save,
-              onCredit: ref.watch(debtFeatureProvider)
+              onCredit: featureOn(Feature.debt)
                   ? () => _save(askPayment: true)
                   : null,
               showCashReceived:
@@ -771,7 +790,7 @@ class _FavoritesBar extends ConsumerWidget {
         itemBuilder: (context, index) {
           final product = favorites[index];
           final currency = currencies?.lookup(product.currencyCode);
-          final isCard = voucherStockEnabled &&
+          final isCard = featureOn(Feature.vouchers) &&
               product.kind == ProductKind.service &&
               product.soldFromCodeStock;
           final have = stock?[product.id] ?? 0;
@@ -995,7 +1014,7 @@ class _SearchResults extends ConsumerWidget {
             }
             final product = products[index - offset];
             final currency = ctx?.lookup(product.currencyCode);
-            final isCard = voucherStockEnabled &&
+            final isCard = featureOn(Feature.vouchers) &&
                 product.kind == ProductKind.service &&
                 product.soldFromCodeStock;
             final have = stock?[product.id] ?? 0;
@@ -1379,7 +1398,7 @@ class _TotalsPanel extends ConsumerWidget {
                 spacing: 8,
                 children: [
                   // Optional on every sale, goods included.
-                  if (customersEnabled)
+                  if (featureOn(Feature.customers))
                     _CustomerChip(
                       customer: customer,
                       onTap: onPickCustomer,
@@ -1467,7 +1486,7 @@ class _TotalsPanel extends ConsumerWidget {
                   ],
                 ),
               ],
-              if (discountEnabled && totals.isNotEmpty)
+              if (featureOn(Feature.discount) && totals.isNotEmpty)
                 Row(
                   children: [
                     // Flexible: at a large system font the discount button's
@@ -1720,7 +1739,7 @@ class _CustomerChip extends StatelessWidget {
     }
     final label = [
       customer.name,
-      if (accountsEnabled && customer.accountNumber != null)
+      if (featureOn(Feature.accounts) && customer.accountNumber != null)
         ltrIsolate(customer.accountNumber!),
     ].join(' · ');
     return InputChip(

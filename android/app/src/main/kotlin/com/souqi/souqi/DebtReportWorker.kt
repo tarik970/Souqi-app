@@ -37,6 +37,7 @@ class DebtReportWorker(context: Context, params: WorkerParameters) :
         val reported = AtomicBoolean(false)
         var engine: FlutterEngine? = null
         var channel: ReportChannel? = null
+        var license: LicenseChannel? = null
 
         main.post {
             try {
@@ -48,6 +49,8 @@ class DebtReportWorker(context: Context, params: WorkerParameters) :
                     reported.set(true)
                     done.countDown()
                 }
+                // The job checks the license before it writes anything.
+                license = LicenseChannel(context, created.dartExecutor.binaryMessenger)
                 created.dartExecutor.executeDartEntrypoint(
                     DartExecutor.DartEntrypoint(
                         loader.findAppBundlePath(),
@@ -70,6 +73,7 @@ class DebtReportWorker(context: Context, params: WorkerParameters) :
         main.post {
             try {
                 channel?.dispose()
+                license?.dispose()
                 engine?.destroy()
             } finally {
                 teardown.countDown()

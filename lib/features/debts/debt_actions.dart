@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/licensing/license_status.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/debt.dart';
@@ -9,6 +10,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../archive/invoice_detail_screen.dart';
 import '../customers/contact_actions.dart';
 import '../invoice/invoice_providers.dart';
+import '../license/license_gate.dart';
 import '../security/pin_dialogs.dart';
 import 'debt_providers.dart';
 import 'debt_text.dart';
@@ -158,6 +160,8 @@ Future<bool> reverseEntryFlow(BuildContext context, DebtEntry entry) async {
   final container = ProviderScope.containerOf(context, listen: false);
   final locale = container.read(appLocaleProvider).languageCode;
   final money = container.read(baseMoneyProvider);
+  // A reversal is a new ledger entry: not without a license.
+  if (!licenseAllows(context, LicensedAction.recordDebt)) return false;
   final reason = await showDialog<String>(
     context: context,
     builder: (_) => ClosesWithDebtSession(

@@ -80,7 +80,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   /// "Sold from code stock" is offered for SERVICE/CARD products only, and
   /// only while the feature is on.
   bool get _offersCodeStock =>
-      voucherStockEnabled && _kind == ProductKind.service;
+      featureOn(Feature.vouchers) && _kind == ProductKind.service;
 
   /// The threshold field: empty = no warning. Null when it is not a whole
   /// number of cards.
@@ -154,10 +154,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       requiresAccount: _requiresAccount,
       // With the feature off the form shows neither field and leaves both
       // as they were.
-      soldFromCodeStock: voucherStockEnabled
+      soldFromCodeStock: featureOn(Feature.vouchers)
           ? _offersCodeStock && _codeStock
           : _initial?.soldFromCodeStock ?? false,
-      lowStockThreshold: voucherStockEnabled
+      lowStockThreshold: featureOn(Feature.vouchers)
           ? (_offersCodeStock && _codeStock
               ? _parseThreshold(_threshold.text).$2
               : null)
@@ -213,8 +213,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         decimals: currency.decimalPlaces,
       );
     }
-    final activeCurrencies =
-        currencies.values.where((c) => c.isActive || c.code == currency.code);
+    // Without the multi-currency feature a product is priced in the base
+    // currency. One that already has another currency keeps it until it
+    // is moved to the base here (the only other choice then offered).
+    final activeCurrencies = [
+      for (final c in currencies.values)
+        if (featureOn(Feature.multiCurrency)
+            ? c.isActive || c.code == currency.code
+            : c.code == baseCode || c.code == currency.code)
+          c,
+    ];
 
     return Form(
       key: _formKey,
@@ -237,7 +245,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             textInputAction: TextInputAction.next,
           ),
-          if (barcodeEnabled) ...[
+          if (featureOn(Feature.barcode)) ...[
             const SizedBox(height: 12),
             TextFormField(
               key: const ValueKey('product-barcode'),
@@ -313,20 +321,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: DropdownButtonFormField<String>(
-                  initialValue: currency.code,
-                  decoration:
-                      InputDecoration(labelText: l10n.productCurrency),
-                  items: [
-                    for (final c in activeCurrencies)
-                      DropdownMenuItem(value: c.code, child: Text(c.code)),
-                  ],
-                  onChanged: (v) => setState(() => _currencyCode = v),
+              if (activeCurrencies.length > 1) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: currency.code,
+                    decoration:
+                        InputDecoration(labelText: l10n.productCurrency),
+                    items: [
+                      for (final c in activeCurrencies)
+                        DropdownMenuItem(value: c.code, child: Text(c.code)),
+                    ],
+                    onChanged: (v) => setState(() => _currencyCode = v),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -337,7 +347,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           ),
           // Without the accounts feature there would be no way to attach an
           // account, so the switch that demands one is not offered.
-          if (accountsEnabled && _kind == ProductKind.service)
+          if (featureOn(Feature.accounts) && _kind == ProductKind.service)
             SwitchListTile(
               key: const ValueKey('product-requires-account'),
               title: Text(l10n.requiresAccount),

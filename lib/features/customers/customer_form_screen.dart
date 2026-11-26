@@ -58,7 +58,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   Customer? get _initial => widget.customer;
 
-  bool get _withAccount => _initial == null && accountsEnabled;
+  bool get _withAccount => _initial == null && featureOn(Feature.accounts);
 
   @override
   void initState() {
@@ -108,7 +108,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     final accountNumber = _withAccount ? _accountNumber.text.trim() : '';
     final provider = _provider.text.trim();
     // Debt ledger: both optional, both already checked by their validators.
-    final debtOn = ref.read(debtFeatureProvider);
+    final debtOn = featureOn(Feature.debt);
     final base = await ref.read(baseCurrencyProvider.future);
     if (!mounted) return;
     final creditLimit = _creditLimit.text.trim().isEmpty
@@ -181,7 +181,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final debtOn = ref.watch(debtFeatureProvider);
+    final debtOn = featureOn(Feature.debt);
     final base = ref.watch(baseCurrencyProvider).value;
     final shopDueDays = ref.watch(debtDefaultDueDaysProvider).value ?? 30;
 

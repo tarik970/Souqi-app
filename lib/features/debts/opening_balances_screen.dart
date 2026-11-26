@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/money_format.dart';
+import '../../core/licensing/license_status.dart';
 import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
 import '../../domain/models/customer.dart';
@@ -9,6 +10,8 @@ import '../../domain/models/debt.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../customers/customers_providers.dart';
 import 'debt_providers.dart';
+import '../license/license_gate.dart';
+import '../license/license_providers.dart';
 import 'debt_widgets.dart';
 
 /// Existing customers matching what is being typed into the name field —
@@ -148,6 +151,14 @@ class _OpeningBalancesScreenState extends ConsumerState<OpeningBalancesScreen> {
         ? null
         : ref.watch(accountSummaryProvider(picked.id!)).value;
     final today = DateTime.now();
+
+    // Without a license the ledger is read-only: no opening balances.
+    if (!ref.watch(licenseProvider).canRecordDebt) {
+      return LicenseLockedScaffold(
+        title: l10n.openingBalancesTitle,
+        action: LicensedAction.recordDebt,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.openingBalancesTitle)),

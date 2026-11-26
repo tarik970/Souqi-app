@@ -73,7 +73,7 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
     Invoice invoice,
   ) async {
     final id = invoice.id;
-    if (!voucherStockEnabled || id == null) return const [];
+    if (!featureOn(Feature.vouchers) || id == null) return const [];
     final codes = await container.read(invoiceCodesProvider(id).future);
     return [
       for (final code in codes)
@@ -182,7 +182,7 @@ class _InvoiceActionsState extends ConsumerState<InvoiceActions> {
   /// The customer's number in international form, or null when the invoice
   /// has no usable phone.
   String? _customerPhone(InvoiceSettings? settings) {
-    if (!customersEnabled) return null;
+    if (!featureOn(Feature.customers)) return null;
     final raw = _invoice.customerPhone;
     if (raw == null || raw.trim().isEmpty) return null;
     return toInternationalPhone(

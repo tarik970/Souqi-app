@@ -2076,5 +2076,116 @@
     "placeholders": {
       "reason": {"type": "String"}
     }
+  },
+
+  "licenseTitle": "Activation",
+  "licenseStatusLicensed": "Activated",
+  "licenseStatusTrial": "Trial version",
+  "licenseStatusUnlicensed": "Not activated",
+  "licenseShopLine": "Licensed to: {shop}",
+  "@licenseShopLine": {
+    "placeholders": {
+      "shop": {"type": "String"}
+    }
+  },
+  "licenseExpiresLine": "Valid until {date}",
+  "@licenseExpiresLine": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "licenseLifetime": "Lifetime license",
+  "licenseIdLine": "License no. {id}",
+  "@licenseIdLine": {
+    "placeholders": {
+      "id": {"type": "String"}
+    }
+  },
+  "licenseFeaturesLabel": "Included",
+  "licenseFeatureDebt": "Debt ledger",
+  "licenseFeatureCustomers": "Customers",
+  "licenseFeatureAccounts": "Cards & renewals",
+  "licenseFeatureVouchers": "Card code stock",
+  "licenseFeatureBarcode": "Barcodes",
+  "licenseFeatureDiscount": "Discounts",
+  "licenseFeatureMultiCurrency": "Multiple currencies",
+  "licenseFeatureDailyReport": "Daily debt report",
+  "licenseFeatureBackup": "Backup & restore",
+  "licenseTrialLeft": "Left in the trial: {days} days or {invoices} invoices, whichever ends first. Every feature is on.",
+  "@licenseTrialLeft": {
+    "placeholders": {
+      "days": {"type": "String"},
+      "invoices": {"type": "String"}
+    }
+  },
+  "licenseReasonTrialDays": "The 7-day trial has ended.",
+  "licenseReasonTrialInvoices": "The 30 invoices of the trial are used up.",
+  "licenseReasonExpired": "The license expired on {date}.",
+  "@licenseReasonExpired": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "licenseReasonWrongDevice": "The activation stored with this data belongs to another phone. This phone needs an activation code of its own.",
+  "licenseReasonModified": "This copy of Souqi was modified and is not the original app. Install the original app to sell again.",
+  "licenseReasonUnsealed": "This build has no signing fingerprint yet (developer: fill in expectedSigningCertSha256). Only debug builds run without it.",
+  "licenseLockedNote": "Selling, printing and new debt entries are locked. Your data is safe: the archive, the customers' balances, backups and the daily report keep working.",
+  "licenseRequestTitle": "Request code",
+  "licenseRequestHint": "Send this code to the developer to receive the activation code of this phone.",
+  "licenseRequestUnavailable": "This phone could not be identified. Close the app, open it again and retry.",
+  "licenseRequestMessage": "Souqi — activation request\nRequest code: {code}",
+  "@licenseRequestMessage": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "licenseCopy": "Copy",
+  "licenseCopied": "Request code copied",
+  "licenseShareFailed": "Could not open WhatsApp or the share menu. Copy the code instead.",
+  "licenseEnterTitle": "Activation code",
+  "licenseEnterHint": "Paste the code you received, or scan its QR code. Spaces, dashes and line breaks do not matter.",
+  "licensePaste": "Paste",
+  "licenseScan": "Scan QR",
+  "licenseActivate": "Activate",
+  "licenseActivatedFor": "Activated for {shop}",
+  "@licenseActivatedFor": {
+    "placeholders": {
+      "shop": {"type": "String"}
+    }
+  },
+  "licenseErrorNotConfigured": "This build cannot accept activation codes yet (it has no public key).",
+  "licenseErrorMalformed": "This is not a complete activation code. Paste the whole code.",
+  "licenseErrorPinReset": "This is a PIN reset code, not an activation code. Enter it under \"Forgot PIN?\".",
+  "licenseErrorNewer": "This code needs a newer version of Souqi.",
+  "licenseErrorSignature": "This code is not valid. Make sure it was copied completely.",
+  "licenseErrorWrongDevice": "This code was issued for another phone. Send the request code shown above.",
+  "licenseErrorExpired": "This code has already expired.",
+  "licenseErrorOlder": "A newer activation is already in place on this phone.",
+  "licenseBrowse": "Browse my data (read-only)",
+  "licenseClockWarning": "The phone's date went back. Set the correct date and time. Until then the trial and the license are counted from the latest date this phone has shown.",
+  "licenseBannerTrial": "Trial version — {days} days / {invoices} invoices left",
+  "@licenseBannerTrial": {
+    "placeholders": {
+      "days": {"type": "String"},
+      "invoices": {"type": "String"}
+    }
+  },
+  "licenseBannerLocked": "Not activated — selling is locked",
+  "licenseNeededTitle": "Activation needed",
+  "licenseNeededSell": "Selling is locked until Souqi is activated.",
+  "licenseNeededPrint": "Printing and sharing are locked until Souqi is activated.",
+  "licenseNeededDebt": "New debts and payments are locked until Souqi is activated. Balances stay readable.",
+  "licenseActivatedTitle": "Souqi is activated",
+  "licenseActivatedText": "Thank you. Everything your license includes is now on.",
+  "invoiceTrialLine": "Trial version",
+  "shopNameFromLicense": "From your activation. It cannot be changed here.",
+  "auditLicenseActivate": "Souqi activated",
+  "recoveryRequestIntro": "Lost the recovery code too? Send this phone's request code to the developer and enter the reset code you receive:",
+
+  "licenseBannerEnding": "The license ends in {days} days. Ask the developer for a new activation code.",
+  "@licenseBannerEnding": {
+    "placeholders": {
+      "days": {"type": "String"}
+    }
   }
 }

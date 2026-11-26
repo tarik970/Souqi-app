@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/customer.dart';
@@ -111,7 +112,7 @@ class SaleInvoiceScreen extends ConsumerWidget {
                     ),
                   ),
                   // What went onto the customer's account, when anything did.
-                  if (ref.watch(debtFeatureProvider) && invoice.hasDebtLines)
+                  if (featureOn(Feature.debt) && invoice.hasDebtLines)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(

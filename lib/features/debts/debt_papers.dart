@@ -176,6 +176,16 @@ class _Paper extends StatelessWidget {
                         style: style.small,
                       ),
                     ),
+                  // A paper made on the trial says so, like an invoice.
+                  if (s.trialNotice)
+                    Padding(
+                      padding: EdgeInsets.only(top: style.gap),
+                      child: Text(
+                        l10n.invoiceTrialLine,
+                        textAlign: TextAlign.center,
+                        style: style.small,
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
@@ -247,25 +248,28 @@ class _BulkPriceScreenState extends ConsumerState<BulkPriceScreen> {
                     value: PriceChangeScope.all,
                     title: Text(l10n.bulkScopeAll),
                   ),
-                  RadioListTile<PriceChangeScope>(
-                    key: const ValueKey('bulk-scope-currency'),
-                    value: PriceChangeScope.currency,
-                    title: Text(l10n.bulkScopeCurrency),
-                    subtitle: _scope == PriceChangeScope.currency &&
-                            currencyChoices.isNotEmpty
-                        ? DropdownButton<String>(
-                            key: const ValueKey('bulk-currency'),
-                            value: currencyChoices.contains(_currency)
-                                ? _currency
-                                : currencyChoices.first,
-                            items: [
-                              for (final code in currencyChoices)
-                                DropdownMenuItem(value: code, child: Text(code)),
-                            ],
-                            onChanged: (v) => _changed(() => _currency = v),
-                          )
-                        : null,
-                  ),
+                  // "Products priced in one currency" is a choice only
+                  // where there can be more than one.
+                  if (featureOn(Feature.multiCurrency))
+                    RadioListTile<PriceChangeScope>(
+                      key: const ValueKey('bulk-scope-currency'),
+                      value: PriceChangeScope.currency,
+                      title: Text(l10n.bulkScopeCurrency),
+                      subtitle: _scope == PriceChangeScope.currency &&
+                              currencyChoices.isNotEmpty
+                          ? DropdownButton<String>(
+                              key: const ValueKey('bulk-currency'),
+                              value: currencyChoices.contains(_currency)
+                                  ? _currency
+                                  : currencyChoices.first,
+                              items: [
+                                for (final code in currencyChoices)
+                                  DropdownMenuItem(value: code, child: Text(code)),
+                              ],
+                              onChanged: (v) => _changed(() => _currency = v),
+                            )
+                          : null,
+                    ),
                   RadioListTile<PriceChangeScope>(
                     key: const ValueKey('bulk-scope-selected'),
                     value: PriceChangeScope.selected,

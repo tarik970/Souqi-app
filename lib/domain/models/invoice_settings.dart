@@ -85,6 +85,7 @@ class InvoiceSettings {
     this.outputMode = OutputMode.print,
     this.shareWidthMm,
     this.defaultCountryCode = '963',
+    this.trialNotice = false,
   });
 
   // Paper and printer.
@@ -255,6 +256,11 @@ class InvoiceSettings {
   /// Width the SHARED image is laid out for. Null = same as the paper.
   final double? shareWidthMm;
   final String defaultCountryCode;
+
+  /// Print the small "trial version" line. NOT a stored setting: it is set
+  /// for rendering while the app runs on its trial (`LicenseStatus.isTrial`)
+  /// and is in neither [fromMap] nor [toMap].
+  final bool trialNotice;
 
   static const double paper80 = 80;
   static const double paper58 = 58;
@@ -513,6 +519,7 @@ class InvoiceSettings {
     OutputMode? outputMode,
     double? Function()? shareWidthMm,
     String? defaultCountryCode,
+    bool? trialNotice,
   }) {
     return InvoiceSettings(
       paperWidthMm: paperWidthMm ?? this.paperWidthMm,
@@ -559,6 +566,7 @@ class InvoiceSettings {
       outputMode: outputMode ?? this.outputMode,
       shareWidthMm: shareWidthMm != null ? shareWidthMm() : this.shareWidthMm,
       defaultCountryCode: defaultCountryCode ?? this.defaultCountryCode,
+      trialNotice: trialNotice ?? this.trialNotice,
     );
   }
 }

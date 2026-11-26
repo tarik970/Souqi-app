@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../../config/features.dart';
 import '../../../core/platform/report_platform.dart';
 import '../../../core/providers.dart';
 import '../../backup/auto_backup.dart';
@@ -98,11 +99,13 @@ final dailyReportJobProvider = Provider<DailyReportJob>((ref) {
     platform: ref.watch(reportPlatformProvider),
     stagingDir: ref.watch(reportStagingDirProvider),
     loadFonts: ref.watch(reportFontsProvider),
-    featureOn: ref.watch(debtFeatureProvider),
+    featureOn: featureOn(Feature.dailyReport),
     clock: ref.watch(clockProvider),
     // Read only when the daily backup is on: the rest of the job needs no
     // Keystore and no second database connection.
     backupOutput: (stored) async {
+      // A license without backups makes none, by hand or by night.
+      if (!featureOn(Feature.backup)) return null;
       if (!AutoBackupSettings.fromMap(stored).enabled) return null;
       return autoBackupOutput(
         stored,
@@ -123,9 +126,10 @@ Future<({int minuteOfDay, DateTime? enabledAt})?> dailyJobPlan(
 ) async {
   final report = await container.read(debtReportSettingsProvider.future);
   final backup = await container.read(autoBackupSettingsProvider.future);
-  final reportOn = container.read(debtFeatureProvider) && report.enabled;
-  final backupOn =
-      backup.enabled && await container.read(autoBackupHasKeyProvider.future);
+  final reportOn = featureOn(Feature.dailyReport) && report.enabled;
+  final backupOn = featureOn(Feature.backup) &&
+      backup.enabled &&
+      await container.read(autoBackupHasKeyProvider.future);
   if (!reportOn && !backupOn) return null;
   final since = [
     if (reportOn) report.enabledAt,

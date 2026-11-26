@@ -153,7 +153,7 @@ class _CustomerTile extends StatelessWidget {
     final customer = entry.customer;
     final details = [
       if (customer.hasPhone) ltrIsolate(customer.phone!),
-      if (accountsEnabled && entry.accountCount > 0)
+      if (featureOn(Feature.accounts) && entry.accountCount > 0)
         l10n.accountsCount(entry.accountCount),
     ].join(' · ');
 

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/exchange.dart';
 import '../../core/money/money_format.dart';
+import '../../core/licensing/license_status.dart';
 import '../../core/providers.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/debt.dart';
@@ -11,6 +12,8 @@ import '../customers/customers_providers.dart';
 import '../sale/sale_providers.dart';
 import 'debt_providers.dart';
 import 'debt_text.dart';
+import '../license/license_gate.dart';
+import '../license/license_providers.dart';
 import 'debt_widgets.dart';
 import 'receipt_screen.dart';
 
@@ -153,6 +156,14 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     final value = _baseValue(currency, base);
     final balance = summary?.balanceBaseMinor;
     String label(Currency c) => c.symbol.isEmpty ? c.code : c.symbol;
+
+    // Without a license the ledger is read-only: no new payment.
+    if (!ref.watch(licenseProvider).canRecordDebt) {
+      return LicenseLockedScaffold(
+        title: l10n.recordPayment,
+        action: LicensedAction.recordDebt,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.recordPayment)),

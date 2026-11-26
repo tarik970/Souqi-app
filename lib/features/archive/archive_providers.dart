@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/features.dart';
 import '../../core/providers.dart';
 import '../../core/utils/date_ranges.dart';
 import '../../data/repositories/archive_repository.dart';
@@ -153,7 +154,7 @@ final deleteSummaryProvider =
 /// accounts"). Counted for the same criteria as [deleteSummaryProvider];
 /// zero while the debt ledger is off.
 final deleteDebtCountProvider = FutureProvider.family<int, ArchiveFilter>(
-  (ref, filter) => ref.watch(debtFeatureProvider)
+  (ref, filter) => featureOn(Feature.debt)
       ? ref.watch(archiveRepositoryProvider).countCarryingDebt(filter)
       : Future.value(0),
 );

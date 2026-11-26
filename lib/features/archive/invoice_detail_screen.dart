@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/invoice.dart';
@@ -75,7 +76,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
     final container = ProviderScope.containerOf(context, listen: false);
     // A debt is never deleted with its invoice: the dialog says so when
     // this invoice carries one.
-    final carriesDebt = container.read(debtFeatureProvider) &&
+    final carriesDebt = featureOn(Feature.debt) &&
         await container
             .read(archiveRepositoryProvider)
             .invoiceCarriesDebt(invoice.id!);

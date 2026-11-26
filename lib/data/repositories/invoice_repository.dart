@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../../core/licensing/license_status.dart';
 import '../../core/security/code_cipher.dart';
 import '../../domain/models/debt.dart';
 import '../../domain/models/invoice.dart';
@@ -18,15 +19,21 @@ import 'voucher_repository.dart';
 /// sale and the renewal dates of the attached account either all land or
 /// none do.
 class InvoiceRepository {
-  InvoiceRepository(this._db, {this.codeCipher});
+  InvoiceRepository(this._db, {this.codeCipher, this.guard});
 
   final Database _db;
 
   /// Set when prepaid card codes are sold from stock (the
-  /// `voucherStockEnabled` flag): saving an invoice then takes the codes of
+  /// vouchers feature): saving an invoice then takes the codes of
   /// its card lines in the same transaction. Null = the feature is off and
   /// such a product sells like any other service.
   final CodeCipher? codeCipher;
+
+  /// The license check of a sale (phase 5b). Asked BEFORE anything is
+  /// written: without a valid license or a running trial, [save] throws
+  /// [LicenseRequiredException] and saves nothing. Null = no licensing (a
+  /// repository built by a test).
+  final LicenseGuard? guard;
 
   static const _counters = CounterRepository();
 
@@ -54,7 +61,10 @@ class InvoiceRepository {
     if (draft.items.isEmpty) {
       throw ArgumentError.value(draft, 'draft', 'an invoice needs items');
     }
-    return _db.transaction((txn) async {
+    // The license, checked here and not only on the screens: every way of
+    // saving an invoice comes through this method.
+    await guard?.ensureCanSell();
+    final saved = await _db.transaction((txn) async {
       final products = ProductRepository(txn);
       // Before anything is written: the checks that can refuse the sale.
       final ledger = payment == null
@@ -124,6 +134,9 @@ class InvoiceRepository {
       }
       return draft.copyWith(id: id, invoiceNo: invoiceNo, items: saved);
     });
+    // One invoice fewer in a trial.
+    await guard?.saleSaved();
+    return saved;
   }
 
   /// The product a typed item belongs to: the existing product with the same

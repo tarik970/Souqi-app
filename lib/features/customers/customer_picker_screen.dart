@@ -22,12 +22,12 @@ List<NewCustomerPrefill> newCustomerOptions(String typed) {
   final text = typed.trim();
   if (text.isEmpty) return const [NewCustomerPrefill.name];
   if (looksLikePhone(text)) {
-    return const [
+    return [
       NewCustomerPrefill.phone,
-      if (accountsEnabled) NewCustomerPrefill.accountNumber,
+      if (featureOn(Feature.accounts)) NewCustomerPrefill.accountNumber,
     ];
   }
-  final codeLike = accountsEnabled &&
+  final codeLike = featureOn(Feature.accounts) &&
       !text.contains(RegExp(r'\s')) &&
       normalizeDigits(text).contains(RegExp('[0-9]'));
   return [

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:souqi/config/features.dart';
 import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/core/printing/png_encoder.dart';
@@ -626,11 +627,12 @@ void main() {
           'updated_at': 0,
         });
       }
+      addTearDown(FeatureGate.reset);
       for (final on in [true, false]) {
+        FeatureGate.applyWithout([if (!on) Feature.debt]);
         final container = ProviderContainer(
           overrides: [
             databaseProvider.overrideWithValue(database),
-            debtFeatureProvider.overrideWithValue(on),
           ],
         );
         final settings =

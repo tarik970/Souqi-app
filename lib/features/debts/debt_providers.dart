@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
@@ -53,7 +54,7 @@ final baseMoneyProvider = Provider<BaseMoney>((ref) {
 /// auto-disposed): it is the one expensive read of the ledger, and it is
 /// thrown away exactly when the ledger changes ([refreshDebtData]).
 final debtorsProvider = FutureProvider<DebtorsSnapshot>((ref) {
-  if (!ref.watch(debtFeatureProvider)) {
+  if (!featureOn(Feature.debt)) {
     return DebtorsSnapshot.empty(DateTime.now());
   }
   return ref.watch(debtRepositoryProvider).debtors(now: ref.watch(clockProvider)());

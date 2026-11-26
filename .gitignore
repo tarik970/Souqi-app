@@ -35,6 +35,12 @@ migrate_working_dir/
 
 # Symbolication related
 app.*.symbols
+# Written by tool/build_release.ps1 (--split-debug-info). Not in the
+# repository, but KEEP them somewhere safe with every released APK.
+/symbols/
+
+# Licensing: the developer's private key never belongs in this repository.
+*.key
 
 # Obfuscation related
 app.*.map.json

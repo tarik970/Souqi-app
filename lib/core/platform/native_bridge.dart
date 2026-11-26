@@ -20,6 +20,10 @@ enum OutputFailure {
   printerUnreachable,
   printerWriteFailed,
   storagePermissionDenied,
+
+  /// The license does not allow printing or sharing (phase 5b): the trial
+  /// is over, or the license expired.
+  licenseRequired,
   unknown,
 }
 
@@ -167,6 +171,12 @@ abstract class NativeBridge {
     required String internationalPhone,
     String? text,
   });
+
+  /// Hands [text] to another app to send: to [package] (WhatsApp or WhatsApp
+  /// Business — it then asks which chat) or, without one, to the system
+  /// share sheet. Nothing is sent by the app itself. Returns false when
+  /// nothing could be opened.
+  Future<bool> shareText(String text, {String? package});
 
   /// Opens the phone's dialer on [phone] (the number as the shop typed it).
   /// The seller presses Call there; the app needs no call permission.
@@ -347,6 +357,11 @@ class MethodChannelNativeBridge implements NativeBridge {
         'phone': internationalPhone,
         'text': text,
       }) ??
+      false;
+
+  @override
+  Future<bool> shareText(String text, {String? package}) async =>
+      await _invoke<bool>('shareText', {'text': text, 'package': package}) ??
       false;
 
   @override

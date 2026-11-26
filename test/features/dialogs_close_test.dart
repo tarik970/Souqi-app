@@ -60,7 +60,10 @@ import 'package:souqi/features/debts/report/debt_report_settings_screen.dart';
 import 'package:souqi/core/backup/backup_crypto.dart';
 import 'package:souqi/core/backup/backup_file.dart';
 import 'package:souqi/features/backup/backup_dialogs.dart';
+import 'package:souqi/core/licensing/license_status.dart';
 import 'package:souqi/features/backup/backup_screen.dart';
+import 'package:souqi/features/license/license_gate.dart';
+import 'package:souqi/features/license/license_screen.dart';
 import 'package:souqi/features/products/bulk_price_screen.dart';
 import 'package:souqi/features/sale/new_barcode_item_dialog.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
@@ -1524,6 +1527,28 @@ void main() {
           )),
       open: openHost,
       shown: find.byKey(const ValueKey('backup-destination-sheet')),
+    ),
+    // ---- Licensing (phase 5b) ---------------------------------------------
+    Closable(
+      'activation-needed dialog',
+      home: host(
+        (context) => showLicenseNeeded(context, LicensedAction.sell),
+      ),
+      open: openHost,
+      shown: find.byKey(const ValueKey('license-needed')),
+      button: cancel,
+    ),
+    Closable(
+      'activation screen, from the settings',
+      home: const SettingsScreen(),
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('setting-license')));
+        await animated(tester);
+      },
+      shown: find.byType(LicenseScreen),
+      isPage: true,
+      after: (tester) async =>
+          expect(find.byType(SettingsScreen), findsOneWidget),
     ),
   ];
 

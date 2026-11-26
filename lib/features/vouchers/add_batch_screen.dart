@@ -270,7 +270,7 @@ class _AddBatchScreenState extends ConsumerState<AddBatchScreen> {
                 label: Text(l10n.loadMethodFile),
               ),
               // The camera is part of the barcode feature.
-              if (barcodeEnabled)
+              if (featureOn(Feature.barcode))
                 ButtonSegment(
                   value: LoadMethod.scan,
                   label: Text(l10n.loadMethodScan),

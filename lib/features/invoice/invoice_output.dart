@@ -16,6 +16,7 @@ import '../../core/printing/png_encoder.dart';
 import '../../core/printing/print_job.dart';
 import '../../core/printing/raster.dart';
 import '../../core/printing/widget_capture.dart';
+import '../../core/licensing/license_status.dart';
 import '../../core/providers.dart';
 import '../../domain/models/invoice.dart';
 import '../../domain/models/invoice_settings.dart';
@@ -42,6 +43,20 @@ final outputDirectoryProvider = Provider<Future<Directory> Function()>(
     return Directory(p.join(cache.path, 'share')).create(recursive: true);
   },
 );
+
+/// THE LICENSE CHECK OF EVERY PAPER (phase 5b): an invoice, a receipt or a
+/// statement is printed or shared only with a valid license or on the
+/// trial. Asked here, where the bytes are made — not only on the buttons —
+/// and the service verifies the stored activation code again each time.
+/// What stays open: the printer tests, the PIN recovery slip, and looking
+/// at an invoice on the screen.
+Future<void> ensureLicensedOutput(Ref ref) async {
+  try {
+    await ref.read(licenseServiceProvider)?.ensureCanPrint();
+  } on LicenseRequiredException {
+    throw const OutputException(OutputFailure.licenseRequired);
+  }
+}
 
 /// Turns an [Invoice] into paper, a picture or a PDF.
 ///
@@ -72,7 +87,7 @@ class InvoiceOutput {
   /// (the settings preview) and when the feature is off.
   Future<List<InvoiceCode>> codesOf(Invoice invoice) async {
     final id = invoice.id;
-    if (!voucherStockEnabled || id == null) return const [];
+    if (!featureOn(Feature.vouchers) || id == null) return const [];
     return _ref.read(voucherRepositoryProvider).printableCodes(id);
   }
 
@@ -225,6 +240,7 @@ class InvoiceOutput {
   // ---- Printing --------------------------------------------------------
 
   Future<void> printInvoice(Invoice invoice, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final address = c.settings.printerAddress;
     if (address == null || address.isEmpty) {
@@ -436,6 +452,7 @@ class InvoiceOutput {
       );
 
   Future<void> shareImage(Invoice invoice, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pngFile(invoice, c, copy: copy);
     await _bridge.shareFile(
@@ -446,6 +463,7 @@ class InvoiceOutput {
   }
 
   Future<void> sharePdfFile(Invoice invoice, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pdfFile(invoice, c, copy: copy);
     await _bridge.shareFile(
@@ -464,6 +482,7 @@ class InvoiceOutput {
     required String internationalPhone,
     bool copy = false,
   }) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pngFile(invoice, c, copy: copy);
     try {
@@ -481,6 +500,7 @@ class InvoiceOutput {
 
   /// Saves the image to Downloads/Souqi; returns the path to show the user.
   Future<String> saveImage(Invoice invoice, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pngFile(invoice, c, copy: copy);
     return _bridge.saveToDownloads(
@@ -491,6 +511,7 @@ class InvoiceOutput {
   }
 
   Future<String> savePdf(Invoice invoice, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pdfFile(invoice, c, copy: copy);
     return _bridge.saveToDownloads(

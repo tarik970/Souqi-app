@@ -50,7 +50,13 @@ import java.util.concurrent.Executors
  *    the report folder, the battery-optimization exemption and the
  *    notification permission (its files, schedule and notification are on
  *    the "souqi/report" channel, [ReportChannel], which the background
- *    worker uses too), and the taps on its notification.
+ *    worker uses too), and the taps on its notification,
+ *  - handing a text (the activation request code) to WhatsApp or the share
+ *    sheet.
+ *
+ * Licensing's own questions — who this device is, who signed this APK — are
+ * on the "souqi/license" channel ([LicenseChannel]), registered here and in
+ * the background worker.
  *
  * Nothing here uses the network.
  */
@@ -74,6 +80,7 @@ class MainActivity : FlutterActivity() {
     private var pendingAnyFile: MethodChannel.Result? = null
 
     private var reportChannel: ReportChannel? = null
+    private var licenseChannel: LicenseChannel? = null
 
     /** Created on the first beep and kept: creating one per beep is slow. */
     private var tone: ToneGenerator? = null
@@ -88,12 +95,16 @@ class MainActivity : FlutterActivity() {
         reportChannel?.dispose()
         reportChannel = ReportChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
             .also { ReportChannel.appChannel = it }
+        licenseChannel?.dispose()
+        licenseChannel = LicenseChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         if (ReportChannel.appChannel === reportChannel) ReportChannel.appChannel = null
         reportChannel?.dispose()
         reportChannel = null
+        licenseChannel?.dispose()
+        licenseChannel = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
@@ -151,6 +162,9 @@ class MainActivity : FlutterActivity() {
             "sendToWhatsApp" -> sendToWhatsApp(call, result)
             "openWhatsAppChat" -> openWhatsAppChat(call, result)
             "dial" -> dial(call, result)
+            "shareText" -> result.success(
+                shareText(call.argument<String>("text"), call.argument<String>("package")),
+            )
             "saveToDownloads" -> saveToDownloads(call, result)
             "pickTextFile" -> pickTextFile(result)
             "pickFile" -> pickFile(result)
@@ -375,6 +389,30 @@ class MainActivity : FlutterActivity() {
             }
         }
         result.success(false)
+    }
+
+    /**
+     * Hands a plain text to another app: to WhatsApp (or WhatsApp Business)
+     * when [target] names it — WhatsApp then asks which chat — or to the
+     * system share sheet when it is null. Souqi sends nothing itself.
+     * False when nothing could be opened.
+     */
+    private fun shareText(text: String?, target: String?): Boolean {
+        if (text.isNullOrEmpty()) return false
+        if (target != null && target !in WHATSAPP_PACKAGES) return false
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            if (target != null) setPackage(target)
+        }
+        return try {
+            startActivity(if (target != null) send else Intent.createChooser(send, null))
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        } catch (_: SecurityException) {
+            false
+        }
     }
 
     // ---- Phone ---------------------------------------------------------

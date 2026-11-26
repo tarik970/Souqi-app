@@ -200,6 +200,25 @@ abstract final class SettingsKeys {
   /// date in the job status instead.
   static const backupLastAt = 'backup_last_at';
 
+  // Licensing (phase 5b). Neither key has a default: absent = none. Both are
+  // COPIES — the Keystore holds the same (`LicenseStore`) — kept here so a
+  // Keystore that loses its entries does not lose the activation.
+  /// The activation code of THIS device. It is signed for one device hash,
+  /// so a copy on another phone is worth nothing — and it never travels: a
+  /// backup leaves it out and a restore keeps the phone's own
+  /// ([deviceBoundKeys]).
+  static const licenseCode = 'license_code';
+
+  /// JSON: when the trial began (and the invoice counter then), the latest
+  /// time ever seen (the clock guard), the newest license ever activated and
+  /// the PIN reset codes already used. This one DOES travel with a backup:
+  /// a trial that is used up stays used up after a restore.
+  static const licenseState = 'license_state';
+
+  /// Settings that belong to the DEVICE, not to the shop's data: a backup
+  /// does not carry them and a restore does not replace them.
+  static const List<String> deviceBoundKeys = [licenseCode];
+
   /// Defaults applied when a key is missing from the table.
   static const Map<String, String> defaults = {
     baseCurrencyCode: 'SYP',

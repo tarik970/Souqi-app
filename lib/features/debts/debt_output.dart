@@ -150,6 +150,7 @@ class LedgerPaperOutput {
   }
 
   Future<void> print(LedgerPaper paper, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final address = c.settings.printerAddress;
     if (address == null || address.isEmpty) {
@@ -193,6 +194,7 @@ class LedgerPaperOutput {
       );
 
   Future<void> shareImage(LedgerPaper paper, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pngFile(paper, c, copy);
     await _bridge.shareFile(
@@ -203,6 +205,7 @@ class LedgerPaperOutput {
   }
 
   Future<void> sharePdfFile(LedgerPaper paper, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pdfFile(paper, c, copy);
     await _bridge.shareFile(
@@ -221,6 +224,7 @@ class LedgerPaperOutput {
     required String internationalPhone,
     bool copy = false,
   }) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pngFile(paper, c, copy);
     try {
@@ -237,6 +241,7 @@ class LedgerPaperOutput {
   }
 
   Future<String> saveImage(LedgerPaper paper, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pngFile(paper, c, copy);
     return _bridge.saveToDownloads(
@@ -247,6 +252,7 @@ class LedgerPaperOutput {
   }
 
   Future<String> savePdf(LedgerPaper paper, {bool copy = false}) async {
+    await ensureLicensedOutput(_ref);
     final c = await _context();
     final file = await _pdfFile(paper, c, copy);
     return _bridge.saveToDownloads(

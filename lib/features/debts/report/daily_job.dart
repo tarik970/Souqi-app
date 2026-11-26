@@ -191,7 +191,8 @@ class DailyReportJob {
   final Future<Directory> Function() stagingDir;
   final Future<ReportFonts> Function() loadFonts;
 
-  /// The debt ledger is on (`debtFeatureProvider`; phase 5b: and licensed).
+  /// The daily debt report may be made: `featureOn(Feature.dailyReport)` —
+  /// in the build, in the license, and the ledger with it.
   final bool featureOn;
   final DateTime Function() clock;
   final List<DailyOutput> Function(

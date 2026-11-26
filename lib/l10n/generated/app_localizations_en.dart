@@ -3840,4 +3840,229 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupNoticeFailedText(String reason) {
     return '$reason. Open Settings → Backup & restore to make one by hand.';
   }
+
+  @override
+  String get licenseTitle => 'Activation';
+
+  @override
+  String get licenseStatusLicensed => 'Activated';
+
+  @override
+  String get licenseStatusTrial => 'Trial version';
+
+  @override
+  String get licenseStatusUnlicensed => 'Not activated';
+
+  @override
+  String licenseShopLine(String shop) {
+    return 'Licensed to: $shop';
+  }
+
+  @override
+  String licenseExpiresLine(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get licenseLifetime => 'Lifetime license';
+
+  @override
+  String licenseIdLine(String id) {
+    return 'License no. $id';
+  }
+
+  @override
+  String get licenseFeaturesLabel => 'Included';
+
+  @override
+  String get licenseFeatureDebt => 'Debt ledger';
+
+  @override
+  String get licenseFeatureCustomers => 'Customers';
+
+  @override
+  String get licenseFeatureAccounts => 'Cards & renewals';
+
+  @override
+  String get licenseFeatureVouchers => 'Card code stock';
+
+  @override
+  String get licenseFeatureBarcode => 'Barcodes';
+
+  @override
+  String get licenseFeatureDiscount => 'Discounts';
+
+  @override
+  String get licenseFeatureMultiCurrency => 'Multiple currencies';
+
+  @override
+  String get licenseFeatureDailyReport => 'Daily debt report';
+
+  @override
+  String get licenseFeatureBackup => 'Backup & restore';
+
+  @override
+  String licenseTrialLeft(String days, String invoices) {
+    return 'Left in the trial: $days days or $invoices invoices, whichever ends first. Every feature is on.';
+  }
+
+  @override
+  String get licenseReasonTrialDays => 'The 7-day trial has ended.';
+
+  @override
+  String get licenseReasonTrialInvoices =>
+      'The 30 invoices of the trial are used up.';
+
+  @override
+  String licenseReasonExpired(String date) {
+    return 'The license expired on $date.';
+  }
+
+  @override
+  String get licenseReasonWrongDevice =>
+      'The activation stored with this data belongs to another phone. This phone needs an activation code of its own.';
+
+  @override
+  String get licenseReasonModified =>
+      'This copy of Souqi was modified and is not the original app. Install the original app to sell again.';
+
+  @override
+  String get licenseReasonUnsealed =>
+      'This build has no signing fingerprint yet (developer: fill in expectedSigningCertSha256). Only debug builds run without it.';
+
+  @override
+  String get licenseLockedNote =>
+      'Selling, printing and new debt entries are locked. Your data is safe: the archive, the customers\' balances, backups and the daily report keep working.';
+
+  @override
+  String get licenseRequestTitle => 'Request code';
+
+  @override
+  String get licenseRequestHint =>
+      'Send this code to the developer to receive the activation code of this phone.';
+
+  @override
+  String get licenseRequestUnavailable =>
+      'This phone could not be identified. Close the app, open it again and retry.';
+
+  @override
+  String licenseRequestMessage(String code) {
+    return 'Souqi — activation request\nRequest code: $code';
+  }
+
+  @override
+  String get licenseCopy => 'Copy';
+
+  @override
+  String get licenseCopied => 'Request code copied';
+
+  @override
+  String get licenseShareFailed =>
+      'Could not open WhatsApp or the share menu. Copy the code instead.';
+
+  @override
+  String get licenseEnterTitle => 'Activation code';
+
+  @override
+  String get licenseEnterHint =>
+      'Paste the code you received, or scan its QR code. Spaces, dashes and line breaks do not matter.';
+
+  @override
+  String get licensePaste => 'Paste';
+
+  @override
+  String get licenseScan => 'Scan QR';
+
+  @override
+  String get licenseActivate => 'Activate';
+
+  @override
+  String licenseActivatedFor(String shop) {
+    return 'Activated for $shop';
+  }
+
+  @override
+  String get licenseErrorNotConfigured =>
+      'This build cannot accept activation codes yet (it has no public key).';
+
+  @override
+  String get licenseErrorMalformed =>
+      'This is not a complete activation code. Paste the whole code.';
+
+  @override
+  String get licenseErrorPinReset =>
+      'This is a PIN reset code, not an activation code. Enter it under \"Forgot PIN?\".';
+
+  @override
+  String get licenseErrorNewer => 'This code needs a newer version of Souqi.';
+
+  @override
+  String get licenseErrorSignature =>
+      'This code is not valid. Make sure it was copied completely.';
+
+  @override
+  String get licenseErrorWrongDevice =>
+      'This code was issued for another phone. Send the request code shown above.';
+
+  @override
+  String get licenseErrorExpired => 'This code has already expired.';
+
+  @override
+  String get licenseErrorOlder =>
+      'A newer activation is already in place on this phone.';
+
+  @override
+  String get licenseBrowse => 'Browse my data (read-only)';
+
+  @override
+  String get licenseClockWarning =>
+      'The phone\'s date went back. Set the correct date and time. Until then the trial and the license are counted from the latest date this phone has shown.';
+
+  @override
+  String licenseBannerTrial(String days, String invoices) {
+    return 'Trial version — $days days / $invoices invoices left';
+  }
+
+  @override
+  String get licenseBannerLocked => 'Not activated — selling is locked';
+
+  @override
+  String get licenseNeededTitle => 'Activation needed';
+
+  @override
+  String get licenseNeededSell => 'Selling is locked until Souqi is activated.';
+
+  @override
+  String get licenseNeededPrint =>
+      'Printing and sharing are locked until Souqi is activated.';
+
+  @override
+  String get licenseNeededDebt =>
+      'New debts and payments are locked until Souqi is activated. Balances stay readable.';
+
+  @override
+  String get licenseActivatedTitle => 'Souqi is activated';
+
+  @override
+  String get licenseActivatedText =>
+      'Thank you. Everything your license includes is now on.';
+
+  @override
+  String get invoiceTrialLine => 'Trial version';
+
+  @override
+  String get shopNameFromLicense =>
+      'From your activation. It cannot be changed here.';
+
+  @override
+  String get auditLicenseActivate => 'Souqi activated';
+
+  @override
+  String get recoveryRequestIntro =>
+      'Lost the recovery code too? Send this phone\'s request code to the developer and enter the reset code you receive:';
+
+  @override
+  String licenseBannerEnding(String days) {
+    return 'The license ends in $days days. Ask the developer for a new activation code.';
+  }
 }

@@ -10,6 +10,8 @@ import '../currencies/currencies_screen.dart';
 import '../debts/debt_settings.dart';
 import '../debts/report/debt_report_settings_screen.dart';
 import '../invoice/invoice_settings_screen.dart';
+import '../license/license_providers.dart';
+import '../license/license_screen.dart';
 import '../sale/sale_providers.dart';
 import '../security/pin_session.dart';
 import '../security/security_settings.dart';
@@ -24,6 +26,36 @@ final shopTypeProvider = FutureProvider<String>(
         SettingsKeys.shopType,
       ),
 );
+
+/// Settings → "Activation": what the license of this phone is, and the way
+/// to the activation screen (the request code, entering a code).
+class LicenseSettingsTile extends ConsumerWidget {
+  const LicenseSettingsTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final status = ref.watch(licenseProvider);
+    final shop = status.shopName;
+    final state = status.isLicensed
+        ? l10n.licenseStatusLicensed
+        : status.isTrial
+            ? l10n.licenseStatusTrial
+            : l10n.licenseStatusUnlicensed;
+    return ListTile(
+      key: const ValueKey('setting-license'),
+      leading: Icon(
+        status.isLicensed ? Icons.verified_outlined : Icons.vpn_key_outlined,
+      ),
+      title: Text(l10n.licenseTitle),
+      subtitle: Text(shop == null ? state : '$state · $shop'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const LicenseScreen()),
+      ),
+    );
+  }
+}
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -42,6 +74,8 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           // "No backup in the last 7 days": first thing on the page.
           const BackupReminderBanner(),
+          const LicenseSettingsTile(),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.setupLanguage),
@@ -160,14 +194,15 @@ class SettingsScreen extends ConsumerWidget {
               MaterialPageRoute(builder: (_) => const InvoiceSettingsScreen()),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.currency_exchange),
-            title: Text(l10n.settingsCurrencies),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CurrenciesScreen()),
+          if (featureOn(Feature.multiCurrency))
+            ListTile(
+              leading: const Icon(Icons.currency_exchange),
+              title: Text(l10n.settingsCurrencies),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CurrenciesScreen()),
+              ),
             ),
-          ),
           ListTile(
             leading: const Icon(Icons.straighten),
             title: Text(l10n.unitsTitle),
@@ -188,7 +223,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const RetentionTile(),
           const Divider(),
-          if (customersEnabled && accountsEnabled) ...[
+          if (featureOn(Feature.customers) && featureOn(Feature.accounts)) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
@@ -216,18 +251,20 @@ class SettingsScreen extends ConsumerWidget {
           const AuditLogTile(),
           const PinAutoLockTile(),
           const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Text(
-              l10n.backupSection,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+          if (featureOn(Feature.backup)) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                l10n.backupSection,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
             ),
-          ),
-          const BackupSettingsTile(),
-          const Divider(),
-          if (ref.watch(debtFeatureProvider)) ...[
+            const BackupSettingsTile(),
+            const Divider(),
+          ],
+          if (featureOn(Feature.debt)) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(

@@ -182,7 +182,7 @@ class _Report extends ConsumerWidget {
         ),
         // Cards sold: counted from the codes themselves, so the figures
         // are still here after the invoices of the period were deleted.
-        if (voucherStockEnabled && report.cardSales.isNotEmpty)
+        if (featureOn(Feature.vouchers) && report.cardSales.isNotEmpty)
           _RowsCard(
             keyName: 'stats-cards',
             title: l10n.statsCardsSold,
@@ -224,7 +224,7 @@ class _Report extends ConsumerWidget {
           ),
           // Renewals and customers: only when the feature is on AND the
           // period has any — a grocery shop's statistics stay as they were.
-          if (accountsEnabled && report.renewals.count > 0)
+          if (featureOn(Feature.accounts) && report.renewals.count > 0)
             _RowsCard(
               keyName: 'stats-renewals',
               title: l10n.statsRenewals,
@@ -236,7 +236,7 @@ class _Report extends ConsumerWidget {
                 ),
               ],
             ),
-          if (accountsEnabled && report.topPackages.isNotEmpty)
+          if (featureOn(Feature.accounts) && report.topPackages.isNotEmpty)
             _RowsCard(
               keyName: 'stats-top-packages',
               title: l10n.statsTopPackages,
@@ -249,7 +249,7 @@ class _Report extends ConsumerWidget {
                   ),
               ],
             ),
-          if (customersEnabled && report.topCustomers.isNotEmpty)
+          if (featureOn(Feature.customers) && report.topCustomers.isNotEmpty)
             _RowsCard(
               keyName: 'stats-top-customers',
               title: l10n.statsTopCustomers,

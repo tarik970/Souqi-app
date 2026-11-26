@@ -27,18 +27,19 @@ class PinLocked extends PinCheck {
   final DateTime until;
 }
 
-/// PHASE 5b HOOK — a PIN reset authorised by the developer.
+/// A PIN reset authorised by the developer.
 ///
 /// For the shop that lost both its PIN and its recovery code: the developer
 /// issues a "PIN reset" code, signed with the licensing PRIVATE key and bound
-/// to this device; the app checks it with the licensing PUBLIC key. Phase 5b
-/// implements this interface (signature, device binding, single use, expiry)
-/// and overrides `signedPinResetProvider`; until then there is no
-/// implementation and the app offers the recovery code only.
+/// to this device; the app checks it with the licensing PUBLIC key. The
+/// implementation is licensing's (`LicenseService.pinReset`: the signature,
+/// the device, single use, 48 hours), reached through
+/// `signedPinResetProvider`. Without a license service in scope there is
+/// none, and the app offers the recovery code only.
 ///
-/// Everything else is already in place: the "Forgot PIN?" dialog hands any
-/// text that is not shaped like a recovery code to [verify], and
-/// [PinRepository.resetWithSignedCode] sets the new PIN.
+/// The "Forgot PIN?" dialog hands any text that is not shaped like a
+/// recovery code to [verify], and [PinRepository.resetWithSignedCode] sets
+/// the new PIN.
 abstract class SignedPinReset {
   /// Whether [code] is a valid, unused reset code for THIS device.
   Future<bool> verify(String code);
@@ -253,9 +254,10 @@ class PinRepository {
     return set(newPin);
   }
 
-  /// PHASE 5b HOOK: replaces the PIN on the strength of a developer-signed
-  /// reset [code], verified by [authority]. Returns the new recovery code,
-  /// or null when the authority refuses the code.
+  /// Replaces the PIN on the strength of a developer-signed reset [code],
+  /// verified by [authority] — and used up by it once the new PIN is saved.
+  /// Returns the new recovery code, or null when the authority refuses the
+  /// code.
   Future<String?> resetWithSignedCode({
     required String code,
     required String newPin,
