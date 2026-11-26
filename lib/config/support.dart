@@ -10,7 +10,7 @@ library;
 /// in. Until they are, [developerWhatsAppNumber] is empty and WhatsApp opens
 /// for the shop to choose the chat itself — exactly as with no number at
 /// all. Replace the X's with the real digits; nothing else has to change.
-const String developerWhatsApp = '+963XXXXXXXXX';
+const String developerWhatsApp = '+963962080317';
 
 /// [developerWhatsApp] in the form WhatsApp takes — international, digits
 /// only ("9639XXXXXXXX") — or '' when it is not a usable number: empty,
