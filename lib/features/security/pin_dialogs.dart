@@ -49,6 +49,17 @@ Future<bool> requirePin(BuildContext context, {String? reason}) async {
   return ok == true;
 }
 
+/// The PIN when one is set; with none, nothing is asked (and none is forced
+/// on the shop) — for actions that must not be done by just anyone holding
+/// an unlocked phone, but are not card codes: bulk price changes, backups.
+Future<bool> requirePinIfSet(BuildContext context, {String? reason}) async {
+  final pins =
+      ProviderScope.containerOf(context, listen: false).read(pinRepositoryProvider);
+  if (!await pins.isSet()) return true;
+  if (!context.mounted) return false;
+  return requirePin(context, reason: reason);
+}
+
 /// Makes sure a PIN exists before the first card code is loaded, so that
 /// codes never sit in stock unprotected. Does not ask for an existing PIN.
 Future<bool> ensurePinIsSet(BuildContext context, {String? reason}) async {

@@ -5760,6 +5760,780 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{reason}. Open Settings → Debts → Daily debt report to try again.'**
   String debtReportNoticeFailedText(String reason);
+
+  /// No description provided for @auditPriceBulkChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices changed in bulk'**
+  String get auditPriceBulkChange;
+
+  /// No description provided for @auditPriceBulkUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulk price change undone'**
+  String get auditPriceBulkUndo;
+
+  /// No description provided for @auditBackupCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup created'**
+  String get auditBackupCreate;
+
+  /// No description provided for @auditBackupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get auditBackupRestore;
+
+  /// No description provided for @auditBackupAutoOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily backup turned on'**
+  String get auditBackupAutoOn;
+
+  /// No description provided for @auditBackupAutoOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily backup turned off'**
+  String get auditBackupAutoOff;
+
+  /// No description provided for @auditBackupPasswordChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily backup password changed'**
+  String get auditBackupPasswordChange;
+
+  /// No description provided for @auditDetailProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} products'**
+  String auditDetailProducts(String count);
+
+  /// No description provided for @auditDetailSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left alone'**
+  String auditDetailSkipped(String count);
+
+  /// No description provided for @auditDetailBackupDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup of {date}'**
+  String auditDetailBackupDate(String date);
+
+  /// No description provided for @auditDetailInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices'**
+  String auditDetailInvoices(String count);
+
+  /// No description provided for @productBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode (optional)'**
+  String get productBarcode;
+
+  /// No description provided for @productBarcodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type it, scan it with the camera, or use a barcode scanner'**
+  String get productBarcodeHint;
+
+  /// No description provided for @productBarcodeTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Another product already has this barcode'**
+  String get productBarcodeTaken;
+
+  /// No description provided for @scanBarcodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan barcode'**
+  String get scanBarcodeTitle;
+
+  /// No description provided for @scanBarcodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold the barcode in front of the camera'**
+  String get scanBarcodeHint;
+
+  /// No description provided for @newProductWithBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'New product with this barcode'**
+  String get newProductWithBarcode;
+
+  /// No description provided for @barcodeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No product has the barcode {code}. What is it called?'**
+  String barcodeUnknown(String code);
+
+  /// No description provided for @bulkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change prices'**
+  String get bulkTitle;
+
+  /// No description provided for @bulkWhich.
+  ///
+  /// In en, this message translates to:
+  /// **'Which products'**
+  String get bulkWhich;
+
+  /// No description provided for @bulkScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All products'**
+  String get bulkScopeAll;
+
+  /// No description provided for @bulkScopeCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Products priced in one currency'**
+  String get bulkScopeCurrency;
+
+  /// No description provided for @bulkScopeSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Products I choose'**
+  String get bulkScopeSelected;
+
+  /// No description provided for @bulkChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} chosen'**
+  String bulkChosen(String count);
+
+  /// No description provided for @bulkChooseFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the products first'**
+  String get bulkChooseFirst;
+
+  /// No description provided for @bulkSelectAllShown.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick all shown'**
+  String get bulkSelectAllShown;
+
+  /// No description provided for @bulkSelectNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Untick all'**
+  String get bulkSelectNone;
+
+  /// No description provided for @bulkRaise.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise'**
+  String get bulkRaise;
+
+  /// No description provided for @bulkLower.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower'**
+  String get bulkLower;
+
+  /// No description provided for @bulkPercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'By how much (percent)'**
+  String get bulkPercentLabel;
+
+  /// No description provided for @bulkPercentInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a percentage, e.g. 10 or 7.5 (lowering: less than 100)'**
+  String get bulkPercentInvalid;
+
+  /// No description provided for @bulkRounding.
+  ///
+  /// In en, this message translates to:
+  /// **'Round the new prices'**
+  String get bulkRounding;
+
+  /// No description provided for @bulkRoundNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No rounding'**
+  String get bulkRoundNone;
+
+  /// No description provided for @bulkRoundNearest.
+  ///
+  /// In en, this message translates to:
+  /// **'To the nearest {step}'**
+  String bulkRoundNearest(String step);
+
+  /// No description provided for @bulkRoundingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In the smallest unit of each product\'s own currency: for SYP, to the nearest 500 pounds; for USD, to the nearest 500 cents (5.00).'**
+  String get bulkRoundingHint;
+
+  /// No description provided for @bulkPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get bulkPreview;
+
+  /// No description provided for @bulkPreviewCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{changing} of {total} prices change'**
+  String bulkPreviewCount(String changing, String total);
+
+  /// No description provided for @bulkApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to {count} products'**
+  String bulkApply(String count);
+
+  /// No description provided for @bulkApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'New prices saved for {count} products'**
+  String bulkApplied(String count);
+
+  /// No description provided for @bulkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The prices could not be changed. Nothing was changed.'**
+  String get bulkFailed;
+
+  /// No description provided for @bulkUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get bulkUndo;
+
+  /// No description provided for @bulkLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last change: {percent} on {count} products'**
+  String bulkLast(String percent, String count);
+
+  /// No description provided for @bulkUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'The old prices are back for {count} products'**
+  String bulkUndone(String count);
+
+  /// No description provided for @bulkUndoneSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'The old prices are back for {restored} products; {skipped} were changed again since and were left as they are'**
+  String bulkUndoneSkipped(String restored, String skipped);
+
+  /// No description provided for @pinReasonBulkPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to change many prices at once.'**
+  String get pinReasonBulkPrice;
+
+  /// No description provided for @pinReasonBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to back up or change the backup settings.'**
+  String get pinReasonBackup;
+
+  /// No description provided for @pinReasonBackupPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to change the daily backup password.'**
+  String get pinReasonBackupPassword;
+
+  /// No description provided for @pinReasonRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to replace all data with the backup.'**
+  String get pinReasonRestore;
+
+  /// No description provided for @backupSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupSection;
+
+  /// No description provided for @backupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get backupTitle;
+
+  /// No description provided for @backupNever.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup yet'**
+  String get backupNever;
+
+  /// No description provided for @backupLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last backup: {when}'**
+  String backupLast(String when);
+
+  /// No description provided for @backupReminderNever.
+  ///
+  /// In en, this message translates to:
+  /// **'This shop has never been backed up'**
+  String get backupReminderNever;
+
+  /// No description provided for @backupReminderOld.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup in the last 7 days'**
+  String get backupReminderOld;
+
+  /// No description provided for @backupReminderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If the phone is lost, broken or reset, everything in it is gone. Make a backup and keep it off the phone.'**
+  String get backupReminderHint;
+
+  /// No description provided for @backupCreateSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a backup'**
+  String get backupCreateSection;
+
+  /// No description provided for @backupCreateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One .souqi file with everything: invoices, products, customers, debts, card codes, settings and the logo. Card codes can only be opened with the backup password.'**
+  String get backupCreateHint;
+
+  /// No description provided for @backupCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create backup'**
+  String get backupCreateButton;
+
+  /// No description provided for @backupCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password'**
+  String get backupCreateTitle;
+
+  /// No description provided for @backupCreateIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password for this backup. It is needed to restore it, on this phone or another one.'**
+  String get backupCreateIntro;
+
+  /// No description provided for @backupPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password'**
+  String get backupPasswordLabel;
+
+  /// No description provided for @backupPasswordAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'The same password again'**
+  String get backupPasswordAgain;
+
+  /// No description provided for @backupPasswordMin.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {count} characters'**
+  String backupPasswordMin(int count);
+
+  /// No description provided for @backupPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The password needs at least {count} characters'**
+  String backupPasswordTooShort(int count);
+
+  /// No description provided for @backupPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passwords are not the same'**
+  String get backupPasswordMismatch;
+
+  /// No description provided for @backupPasswordWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'If you forget this password, the card codes in the backup can NEVER be restored — nobody can recover it. Write it down and keep it away from the phone.'**
+  String get backupPasswordWarning;
+
+  /// No description provided for @backupPasswordShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the password'**
+  String get backupPasswordShow;
+
+  /// No description provided for @backupPasswordHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the password'**
+  String get backupPasswordHide;
+
+  /// No description provided for @backupPasswordOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get backupPasswordOk;
+
+  /// No description provided for @backupWhereTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should the backup go?'**
+  String get backupWhereTitle;
+
+  /// No description provided for @backupToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get backupToShare;
+
+  /// No description provided for @backupToShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp, Telegram, e-mail, Google Drive…'**
+  String get backupToShareHint;
+
+  /// No description provided for @backupToPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to phone'**
+  String get backupToPhone;
+
+  /// No description provided for @backupToPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Download/Souqi/Backups'**
+  String get backupToPhoneHint;
+
+  /// No description provided for @backupToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'The daily report folder'**
+  String get backupToFolder;
+
+  /// No description provided for @backupCreating.
+  ///
+  /// In en, this message translates to:
+  /// **'Making the backup…'**
+  String get backupCreating;
+
+  /// No description provided for @backupCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup could not be made. Nothing was changed.'**
+  String get backupCreateFailed;
+
+  /// No description provided for @backupSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved to {where}'**
+  String backupSavedTo(String where);
+
+  /// No description provided for @backupSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup file could not be saved there'**
+  String get backupSaveFailed;
+
+  /// No description provided for @backupStorageDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving needs the storage permission'**
+  String get backupStorageDenied;
+
+  /// No description provided for @backupFolderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The folder is not available (its permission was removed, or the card or drive is out). Choose it again, or save to the phone.'**
+  String get backupFolderUnavailable;
+
+  /// No description provided for @backupPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the password…'**
+  String get backupPreparing;
+
+  /// No description provided for @backupKeystoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone\'s secure storage did not answer. Try again.'**
+  String get backupKeystoreFailed;
+
+  /// No description provided for @restoreSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restoreSection;
+
+  /// No description provided for @restoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces ALL data on this phone with a backup file — from this phone or another one. The current data is kept until the restore has fully worked.'**
+  String get restoreHint;
+
+  /// No description provided for @restoreButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from a backup file'**
+  String get restoreButton;
+
+  /// No description provided for @restoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this backup?'**
+  String get restoreTitle;
+
+  /// No description provided for @restoreChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the file…'**
+  String get restoreChecking;
+
+  /// No description provided for @restorePickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be opened'**
+  String get restorePickFailed;
+
+  /// No description provided for @restoreNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get restoreNext;
+
+  /// No description provided for @restoreCorruptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a usable backup'**
+  String get restoreCorruptTitle;
+
+  /// No description provided for @restoreCorruptText.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is not a Souqi backup, or it is damaged (cut short while copying, for example). Nothing was changed.'**
+  String get restoreCorruptText;
+
+  /// No description provided for @restoreTamperedText.
+  ///
+  /// In en, this message translates to:
+  /// **'The password is right, but the file was changed after the backup was made. It is not restored. Nothing was changed.'**
+  String get restoreTamperedText;
+
+  /// No description provided for @restoreNewerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup from a newer version'**
+  String get restoreNewerTitle;
+
+  /// No description provided for @restoreNewerText.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was made by a newer version of Souqi ({version}). Update the app on this phone first, then restore it. Nothing was changed.'**
+  String restoreNewerText(String version);
+
+  /// No description provided for @backupWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password. Nothing was changed — try again.'**
+  String get backupWrongPassword;
+
+  /// No description provided for @backupInfoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Made on {date}'**
+  String backupInfoDate(String date);
+
+  /// No description provided for @backupInfoApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App version {version}'**
+  String backupInfoApp(String version);
+
+  /// No description provided for @backupInfoInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices: {count}'**
+  String backupInfoInvoices(String count);
+
+  /// No description provided for @backupInfoCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers: {count}'**
+  String backupInfoCustomers(String count);
+
+  /// No description provided for @backupInfoProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products: {count}'**
+  String backupInfoProducts(String count);
+
+  /// No description provided for @backupInfoCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Card codes: {count}'**
+  String backupInfoCodes(String count);
+
+  /// No description provided for @backupInfoDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt entries: {count}'**
+  String backupInfoDebts(String count);
+
+  /// No description provided for @restoreConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all data?'**
+  String get restoreConfirmTitle;
+
+  /// No description provided for @restoreConfirmWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything on this phone now — every invoice, product, customer, debt, card code and setting — is replaced by the backup. This cannot be undone.'**
+  String get restoreConfirmWarning;
+
+  /// No description provided for @restoreConfirmCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand: the current data on this phone will be replaced'**
+  String get restoreConfirmCheck;
+
+  /// No description provided for @restoreConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all data'**
+  String get restoreConfirmButton;
+
+  /// No description provided for @restoreRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring… Do not close the app.'**
+  String get restoreRunning;
+
+  /// No description provided for @restoreBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The daily report or backup is being made right now. Try again in a minute.'**
+  String get restoreBusy;
+
+  /// No description provided for @restoreDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get restoreDoneTitle;
+
+  /// No description provided for @restoreDoneText.
+  ///
+  /// In en, this message translates to:
+  /// **'The shop\'s data is now the backup\'s. The PIN is the one of the backup. On a different phone: choose the daily report folder again, set the daily backup password again, and choose the printer again.'**
+  String get restoreDoneText;
+
+  /// No description provided for @restoreFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The restore did not work'**
+  String get restoreFailedTitle;
+
+  /// No description provided for @restoreFailedText.
+  ///
+  /// In en, this message translates to:
+  /// **'The data on this phone was kept as it was. Nothing was changed.'**
+  String get restoreFailedText;
+
+  /// No description provided for @backupAutoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily automatic backup'**
+  String get backupAutoTitle;
+
+  /// No description provided for @backupAutoIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day, together with the daily report: one backup file in the same folder, protected by its own password.'**
+  String get backupAutoIntro;
+
+  /// No description provided for @backupAutoLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last daily backup: {when}'**
+  String backupAutoLast(String when);
+
+  /// No description provided for @backupAutoNoKey.
+  ///
+  /// In en, this message translates to:
+  /// **'The password for daily backups is not set on this phone, so none are made.'**
+  String get backupAutoNoKey;
+
+  /// No description provided for @backupAutoSetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the daily backup password'**
+  String get backupAutoSetPassword;
+
+  /// No description provided for @backupAutoChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the daily backup password'**
+  String get backupAutoChangePassword;
+
+  /// No description provided for @backupAutoPasswordIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Set once; the daily backups use it without asking. Only a key made from it is kept, in the phone\'s secure storage — never the password itself.'**
+  String get backupAutoPasswordIntro;
+
+  /// No description provided for @backupAutoPasswordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. The next daily backup uses it; older backups keep their old password.'**
+  String get backupAutoPasswordChanged;
+
+  /// No description provided for @backupAutoSharedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The same time as the daily debt report: one run makes both.'**
+  String get backupAutoSharedHint;
+
+  /// No description provided for @backupAutoOnPhoneWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The backups stay on this phone and are lost with it. Choose an SD card, a USB drive or a cloud folder.'**
+  String get backupAutoOnPhoneWarning;
+
+  /// No description provided for @backupAutoKeepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep how many daily backups'**
+  String get backupAutoKeepLabel;
+
+  /// No description provided for @backupAutoKeepHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Older daily backups are deleted from the folder. Backups made by hand are never deleted.'**
+  String get backupAutoKeepHint;
+
+  /// No description provided for @backupNoticeFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily backup saved to Downloads'**
+  String get backupNoticeFallback;
+
+  /// No description provided for @backupNoticeFallbackText.
+  ///
+  /// In en, this message translates to:
+  /// **'The chosen folder is not available. The backup was saved to {location} instead. Choose the folder again in Settings → Backup & restore.'**
+  String backupNoticeFallbackText(String location);
+
+  /// No description provided for @backupNoticeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily backup failed'**
+  String get backupNoticeFailed;
+
+  /// No description provided for @backupNoticeFailedText.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason}. Open Settings → Backup & restore to make one by hand.'**
+  String backupNoticeFailedText(String reason);
 }
 
 class _AppLocalizationsDelegate

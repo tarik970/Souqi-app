@@ -3374,4 +3374,478 @@ class AppLocalizationsAr extends AppLocalizations {
   String debtReportNoticeFailedText(String reason) {
     return '$reason. افتح الإعدادات ← الديون ← تقرير الديون اليومي لإعادة المحاولة.';
   }
+
+  @override
+  String get auditPriceBulkChange => 'تغيير جماعي للأسعار';
+
+  @override
+  String get auditPriceBulkUndo => 'التراجع عن تغيير جماعي للأسعار';
+
+  @override
+  String get auditBackupCreate => 'إنشاء نسخة احتياطية';
+
+  @override
+  String get auditBackupRestore => 'استعادة نسخة احتياطية';
+
+  @override
+  String get auditBackupAutoOn => 'تشغيل النسخ الاحتياطي اليومي';
+
+  @override
+  String get auditBackupAutoOff => 'إيقاف النسخ الاحتياطي اليومي';
+
+  @override
+  String get auditBackupPasswordChange =>
+      'تغيير كلمة سر النسخ الاحتياطي اليومي';
+
+  @override
+  String auditDetailProducts(String count) {
+    return '$count منتج';
+  }
+
+  @override
+  String auditDetailSkipped(String count) {
+    return 'تُرك $count كما هو';
+  }
+
+  @override
+  String auditDetailBackupDate(String date) {
+    return 'نسخة $date';
+  }
+
+  @override
+  String auditDetailInvoices(String count) {
+    return '$count فاتورة';
+  }
+
+  @override
+  String get productBarcode => 'الباركود (اختياري)';
+
+  @override
+  String get productBarcodeHint =>
+      'اكتبه، أو امسحه بالكاميرا، أو استخدم قارئ باركود';
+
+  @override
+  String get productBarcodeTaken => 'هذا الباركود موجود على منتج آخر';
+
+  @override
+  String get scanBarcodeTitle => 'مسح الباركود';
+
+  @override
+  String get scanBarcodeHint => 'وجّه الكاميرا إلى الباركود';
+
+  @override
+  String get newProductWithBarcode => 'منتج جديد بهذا الباركود';
+
+  @override
+  String barcodeUnknown(String code) {
+    return 'لا يوجد منتج بالباركود $code. ما اسمه؟';
+  }
+
+  @override
+  String get bulkTitle => 'تغيير الأسعار';
+
+  @override
+  String get bulkWhich => 'أي المنتجات';
+
+  @override
+  String get bulkScopeAll => 'كل المنتجات';
+
+  @override
+  String get bulkScopeCurrency => 'المنتجات المسعّرة بعملة واحدة';
+
+  @override
+  String get bulkScopeSelected => 'منتجات أختارها';
+
+  @override
+  String bulkChosen(String count) {
+    return '$count مختار';
+  }
+
+  @override
+  String get bulkChooseFirst => 'اختر المنتجات أولاً';
+
+  @override
+  String get bulkSelectAllShown => 'تحديد كل المعروض';
+
+  @override
+  String get bulkSelectNone => 'إلغاء التحديد';
+
+  @override
+  String get bulkRaise => 'رفع';
+
+  @override
+  String get bulkLower => 'تخفيض';
+
+  @override
+  String get bulkPercentLabel => 'بكم (نسبة مئوية)';
+
+  @override
+  String get bulkPercentInvalid =>
+      'أدخل نسبة، مثل 10 أو 7.5 (للتخفيض: أقل من 100)';
+
+  @override
+  String get bulkRounding => 'تقريب الأسعار الجديدة';
+
+  @override
+  String get bulkRoundNone => 'بلا تقريب';
+
+  @override
+  String bulkRoundNearest(String step) {
+    return 'لأقرب $step';
+  }
+
+  @override
+  String get bulkRoundingHint =>
+      'بأصغر وحدة من عملة كل منتج: لليرة السورية لأقرب 500 ليرة، وللدولار لأقرب 500 سنت (5.00).';
+
+  @override
+  String get bulkPreview => 'معاينة';
+
+  @override
+  String bulkPreviewCount(String changing, String total) {
+    return 'يتغير $changing من $total سعر';
+  }
+
+  @override
+  String bulkApply(String count) {
+    return 'تطبيق على $count منتج';
+  }
+
+  @override
+  String bulkApplied(String count) {
+    return 'حُفظت الأسعار الجديدة لـ $count منتج';
+  }
+
+  @override
+  String get bulkFailed => 'تعذّر تغيير الأسعار. لم يتغير شيء.';
+
+  @override
+  String get bulkUndo => 'تراجع';
+
+  @override
+  String bulkLast(String percent, String count) {
+    return 'آخر تغيير: $percent على $count منتج';
+  }
+
+  @override
+  String bulkUndone(String count) {
+    return 'عادت الأسعار القديمة لـ $count منتج';
+  }
+
+  @override
+  String bulkUndoneSkipped(String restored, String skipped) {
+    return 'عادت الأسعار القديمة لـ $restored منتج؛ و$skipped تغيّرت أسعارها بعد ذلك فتُركت كما هي';
+  }
+
+  @override
+  String get pinReasonBulkPrice =>
+      'أدخل رمز PIN لتغيير أسعار كثيرة دفعة واحدة.';
+
+  @override
+  String get pinReasonBackup =>
+      'أدخل رمز PIN للنسخ الاحتياطي أو لتغيير إعداداته.';
+
+  @override
+  String get pinReasonBackupPassword =>
+      'أدخل رمز PIN لتغيير كلمة سر النسخ الاحتياطي اليومي.';
+
+  @override
+  String get pinReasonRestore =>
+      'أدخل رمز PIN لاستبدال كل البيانات بالنسخة الاحتياطية.';
+
+  @override
+  String get backupSection => 'النسخ الاحتياطي';
+
+  @override
+  String get backupTitle => 'النسخ الاحتياطي والاستعادة';
+
+  @override
+  String get backupNever => 'لا توجد نسخة احتياطية بعد';
+
+  @override
+  String backupLast(String when) {
+    return 'آخر نسخة احتياطية: $when';
+  }
+
+  @override
+  String get backupReminderNever => 'لم يُنسخ هذا المتجر احتياطياً أبداً';
+
+  @override
+  String get backupReminderOld => 'لا توجد نسخة احتياطية منذ 7 أيام';
+
+  @override
+  String get backupReminderHint =>
+      'إذا ضاع الهاتف أو تعطّل أو أُعيد ضبطه ضاع كل ما فيه. اصنع نسخة احتياطية واحفظها خارج الهاتف.';
+
+  @override
+  String get backupCreateSection => 'عمل نسخة احتياطية';
+
+  @override
+  String get backupCreateHint =>
+      'ملف ‎.souqi واحد فيه كل شيء: الفواتير والمنتجات والزبائن والديون وأكواد البطاقات والإعدادات والشعار. لا تُفتح أكواد البطاقات إلا بكلمة سر النسخة.';
+
+  @override
+  String get backupCreateButton => 'إنشاء نسخة احتياطية';
+
+  @override
+  String get backupCreateTitle => 'كلمة سر النسخة الاحتياطية';
+
+  @override
+  String get backupCreateIntro =>
+      'اختر كلمة سر لهذه النسخة. ستحتاجها لاستعادتها، على هذا الهاتف أو على غيره.';
+
+  @override
+  String get backupPasswordLabel => 'كلمة سر النسخة الاحتياطية';
+
+  @override
+  String get backupPasswordAgain => 'كلمة السر نفسها مرة أخرى';
+
+  @override
+  String backupPasswordMin(int count) {
+    return '$count أحرف على الأقل';
+  }
+
+  @override
+  String backupPasswordTooShort(int count) {
+    return 'يجب أن تكون كلمة السر $count أحرف على الأقل';
+  }
+
+  @override
+  String get backupPasswordMismatch => 'كلمتا السر غير متطابقتين';
+
+  @override
+  String get backupPasswordWarning =>
+      'إذا نسيت كلمة السر هذه فلن يمكن استعادة أكواد البطاقات من النسخة أبداً، ولا أحد يستطيع استرجاعها. اكتبها واحفظها بعيداً عن الهاتف.';
+
+  @override
+  String get backupPasswordShow => 'إظهار كلمة السر';
+
+  @override
+  String get backupPasswordHide => 'إخفاء كلمة السر';
+
+  @override
+  String get backupPasswordOk => 'متابعة';
+
+  @override
+  String get backupWhereTitle => 'أين تُحفظ النسخة الاحتياطية؟';
+
+  @override
+  String get backupToShare => 'مشاركة';
+
+  @override
+  String get backupToShareHint => 'واتساب، تيليغرام، البريد، Google Drive…';
+
+  @override
+  String get backupToPhone => 'حفظ في الهاتف';
+
+  @override
+  String get backupToPhoneHint => 'Download/Souqi/Backups';
+
+  @override
+  String get backupToFolder => 'مجلد التقرير اليومي';
+
+  @override
+  String get backupCreating => 'جارٍ إنشاء النسخة الاحتياطية…';
+
+  @override
+  String get backupCreateFailed =>
+      'تعذّر إنشاء النسخة الاحتياطية. لم يتغير شيء.';
+
+  @override
+  String backupSavedTo(String where) {
+    return 'حُفظت النسخة في $where';
+  }
+
+  @override
+  String get backupSaveFailed => 'تعذّر حفظ ملف النسخة هناك';
+
+  @override
+  String get backupStorageDenied => 'الحفظ يحتاج إذن التخزين';
+
+  @override
+  String get backupFolderUnavailable =>
+      'المجلد غير متاح (أُزيل إذنه، أو البطاقة أو الفلاشة غير موجودة). اختره من جديد، أو احفظ في الهاتف.';
+
+  @override
+  String get backupPreparing => 'جارٍ تجهيز كلمة السر…';
+
+  @override
+  String get backupKeystoreFailed =>
+      'لم تستجب الذاكرة الآمنة في الهاتف. حاول مرة أخرى.';
+
+  @override
+  String get restoreSection => 'الاستعادة';
+
+  @override
+  String get restoreHint =>
+      'تستبدل كل البيانات على هذا الهاتف بملف نسخة احتياطية — من هذا الهاتف أو من غيره. تبقى البيانات الحالية حتى تنجح الاستعادة كاملة.';
+
+  @override
+  String get restoreButton => 'استعادة من ملف نسخة احتياطية';
+
+  @override
+  String get restoreTitle => 'استعادة هذه النسخة؟';
+
+  @override
+  String get restoreChecking => 'جارٍ فحص الملف…';
+
+  @override
+  String get restorePickFailed => 'تعذّر فتح الملف';
+
+  @override
+  String get restoreNext => 'التالي';
+
+  @override
+  String get restoreCorruptTitle => 'ليست نسخة صالحة';
+
+  @override
+  String get restoreCorruptText =>
+      'هذا الملف ليس نسخة احتياطية من سوقي، أو أنه تالف (انقطع أثناء النسخ مثلاً). لم يتغير شيء.';
+
+  @override
+  String get restoreTamperedText =>
+      'كلمة السر صحيحة، لكن الملف عُدّل بعد إنشاء النسخة، فلن يُستعاد. لم يتغير شيء.';
+
+  @override
+  String get restoreNewerTitle => 'نسخة من إصدار أحدث';
+
+  @override
+  String restoreNewerText(String version) {
+    return 'صُنعت هذه النسخة بإصدار أحدث من سوقي ($version). حدّث التطبيق على هذا الهاتف أولاً ثم استعدها. لم يتغير شيء.';
+  }
+
+  @override
+  String get backupWrongPassword =>
+      'كلمة السر خاطئة. لم يتغير شيء — حاول مرة أخرى.';
+
+  @override
+  String backupInfoDate(String date) {
+    return 'صُنعت في $date';
+  }
+
+  @override
+  String backupInfoApp(String version) {
+    return 'إصدار التطبيق $version';
+  }
+
+  @override
+  String backupInfoInvoices(String count) {
+    return 'الفواتير: $count';
+  }
+
+  @override
+  String backupInfoCustomers(String count) {
+    return 'الزبائن: $count';
+  }
+
+  @override
+  String backupInfoProducts(String count) {
+    return 'المنتجات: $count';
+  }
+
+  @override
+  String backupInfoCodes(String count) {
+    return 'أكواد البطاقات: $count';
+  }
+
+  @override
+  String backupInfoDebts(String count) {
+    return 'قيود الديون: $count';
+  }
+
+  @override
+  String get restoreConfirmTitle => 'استبدال كل البيانات؟';
+
+  @override
+  String get restoreConfirmWarning =>
+      'كل ما على هذا الهاتف الآن — كل فاتورة ومنتج وزبون ودين وكود بطاقة وإعداد — سيُستبدل بما في النسخة. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get restoreConfirmCheck =>
+      'فهمت: ستُستبدل البيانات الحالية على هذا الهاتف';
+
+  @override
+  String get restoreConfirmButton => 'استبدال كل البيانات';
+
+  @override
+  String get restoreRunning => 'جارٍ الاستعادة… لا تغلق التطبيق.';
+
+  @override
+  String get restoreBusy =>
+      'يجري الآن إنشاء التقرير أو النسخة اليومية. حاول بعد دقيقة.';
+
+  @override
+  String get restoreDoneTitle => 'تمت استعادة النسخة';
+
+  @override
+  String get restoreDoneText =>
+      'أصبحت بيانات المتجر هي بيانات النسخة، ورمز PIN هو رمز النسخة. على هاتف آخر: اختر مجلد التقرير اليومي من جديد، وعيّن كلمة سر النسخ اليومي من جديد، واختر الطابعة من جديد.';
+
+  @override
+  String get restoreFailedTitle => 'لم تنجح الاستعادة';
+
+  @override
+  String get restoreFailedText =>
+      'بقيت البيانات على هذا الهاتف كما كانت. لم يتغير شيء.';
+
+  @override
+  String get backupAutoTitle => 'نسخ احتياطي يومي تلقائي';
+
+  @override
+  String get backupAutoIntro =>
+      'كل يوم مع التقرير اليومي: ملف نسخة واحد في المجلد نفسه، محمي بكلمة سر خاصة به.';
+
+  @override
+  String backupAutoLast(String when) {
+    return 'آخر نسخة يومية: $when';
+  }
+
+  @override
+  String get backupAutoNoKey =>
+      'كلمة سر النسخ اليومي غير معيّنة على هذا الهاتف، لذلك لا تُصنع نسخ.';
+
+  @override
+  String get backupAutoSetPassword => 'تعيين كلمة سر النسخ اليومي';
+
+  @override
+  String get backupAutoChangePassword => 'تغيير كلمة سر النسخ اليومي';
+
+  @override
+  String get backupAutoPasswordIntro =>
+      'تُعيَّن مرة واحدة وتستخدمها النسخ اليومية دون سؤال. لا يُحفظ إلا مفتاح مشتق منها في الذاكرة الآمنة للهاتف — وليس كلمة السر نفسها.';
+
+  @override
+  String get backupAutoPasswordChanged =>
+      'تغيّرت كلمة السر. تستخدمها النسخة اليومية القادمة؛ النسخ الأقدم تبقى بكلمة سرها القديمة.';
+
+  @override
+  String get backupAutoSharedHint =>
+      'الوقت نفسه لتقرير الديون اليومي: تشغيل واحد يصنع الاثنين.';
+
+  @override
+  String get backupAutoOnPhoneWarning =>
+      'تبقى النسخ على هذا الهاتف وتضيع معه. اختر بطاقة ذاكرة أو فلاشة أو مجلداً سحابياً.';
+
+  @override
+  String get backupAutoKeepLabel => 'عدد النسخ اليومية المحفوظة';
+
+  @override
+  String get backupAutoKeepHint =>
+      'تُحذف النسخ اليومية الأقدم من المجلد. النسخ المصنوعة يدوياً لا تُحذف أبداً.';
+
+  @override
+  String get backupNoticeFallback => 'حُفظت النسخة اليومية في التنزيلات';
+
+  @override
+  String backupNoticeFallbackText(String location) {
+    return 'المجلد المختار غير متاح. حُفظت النسخة في $location بدلاً منه. اختر المجلد من جديد في الإعدادات ← النسخ الاحتياطي والاستعادة.';
+  }
+
+  @override
+  String get backupNoticeFailed => 'فشلت النسخة الاحتياطية اليومية';
+
+  @override
+  String backupNoticeFailedText(String reason) {
+    return '$reason. افتح الإعدادات ← النسخ الاحتياطي والاستعادة لعمل نسخة يدوياً.';
+  }
 }

@@ -172,6 +172,13 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.debtReportOn => l10n.auditDebtReportOn,
       AuditAction.debtReportOff => l10n.auditDebtReportOff,
       AuditAction.debtReportFolder => l10n.auditDebtReportFolder,
+      AuditAction.priceBulkChange => l10n.auditPriceBulkChange,
+      AuditAction.priceBulkUndo => l10n.auditPriceBulkUndo,
+      AuditAction.backupCreate => l10n.auditBackupCreate,
+      AuditAction.backupRestore => l10n.auditBackupRestore,
+      AuditAction.backupAutoOn => l10n.auditBackupAutoOn,
+      AuditAction.backupAutoOff => l10n.auditBackupAutoOff,
+      AuditAction.backupPasswordChange => l10n.auditBackupPasswordChange,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -198,6 +205,14 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
       AuditAction.debtReportOn || AuditAction.debtReportOff =>
         Icons.summarize_outlined,
       AuditAction.debtReportFolder => Icons.folder_outlined,
+      AuditAction.priceBulkChange => Icons.price_change_outlined,
+      AuditAction.priceBulkUndo => Icons.undo,
+      AuditAction.backupCreate ||
+      AuditAction.backupAutoOn ||
+      AuditAction.backupAutoOff =>
+        Icons.backup_outlined,
+      AuditAction.backupRestore => Icons.settings_backup_restore,
+      AuditAction.backupPasswordChange => Icons.password,
       null => Icons.info_outline,
     };
 
@@ -247,6 +262,22 @@ class _AuditTile extends ConsumerWidget {
         l10n.invoiceNoLabel(number(details['invoice_no'])),
       if (details['folder'] is String)
         l10n.auditDetailFolder(details['folder'] as String),
+      // Bulk price changes and backups.
+      if (details['percent'] is String) ltrIsolate(details['percent'] as String),
+      if (details['products'] is int)
+        l10n.auditDetailProducts(number(details['products'])),
+      if (details['skipped'] is int)
+        l10n.auditDetailSkipped(number(details['skipped'])),
+      if (details['backup_at'] is int)
+        l10n.auditDetailBackupDate(DateFormat.yMd(locale).add_jm().format(
+              DateTime.fromMillisecondsSinceEpoch(
+                details['backup_at'] as int,
+                isUtc: true,
+              ).toLocal(),
+            )),
+      if (details['invoices'] is int)
+        l10n.auditDetailInvoices(number(details['invoices'])),
+      if (details['file'] is String) ltrIsolate(details['file'] as String),
       if (details['reason'] is String &&
           (details['reason'] as String).isNotEmpty)
         l10n.auditDetailReason(details['reason'] as String),

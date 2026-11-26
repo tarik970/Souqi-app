@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'core/money/money_format.dart';
 import 'core/providers.dart';
+import 'features/backup/restart_notice.dart';
 import 'features/debts/report/report_launch.dart';
 import 'features/debts/report/report_providers.dart';
 import 'features/home/home_screen.dart';
@@ -110,7 +111,11 @@ class SouqiApp extends ConsumerWidget {
           navigatorKey: navigatorKey,
           // Like the housekeeping: only the real app has an Android side.
           enabled: ref.watch(housekeepingOnStartProvider),
-          child: _Housekeeping(child: child ?? const SizedBox.shrink()),
+          // After a restore the app starts over; this says how it went.
+          child: RestartNoticeListener(
+            navigatorKey: navigatorKey,
+            child: _Housekeeping(child: child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
       home: setupDone ? const HomeScreen() : const SetupScreen(),

@@ -29,6 +29,10 @@ abstract class SecretKeyStore {
   Future<String?> read(String name);
 
   Future<void> write(String name, String value);
+
+  /// Removes [name]. Only a restore (which replaces the whole shop, keys
+  /// included) and the backup password's own entry ever delete anything.
+  Future<void> delete(String name);
 }
 
 class InMemoryKeyStore implements SecretKeyStore {
@@ -39,6 +43,9 @@ class InMemoryKeyStore implements SecretKeyStore {
 
   @override
   Future<void> write(String name, String value) async => values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => values.remove(name);
 }
 
 /// A stored code could not be decrypted: the bytes were damaged, or — the

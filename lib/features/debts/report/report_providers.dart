@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/platform/report_platform.dart';
 import '../../../core/providers.dart';
+import '../../backup/auto_backup.dart';
+import '../../backup/backup_providers.dart';
 import '../../customers/customers_providers.dart';
 import 'daily_job.dart';
 import 'debt_report_pdf.dart';
@@ -90,16 +92,69 @@ final reportNotificationsAllowedProvider =
 });
 
 /// The job as the app runs it (catch-up, "Create report now").
-final dailyReportJobProvider = Provider<DailyReportJob>(
-  (ref) => DailyReportJob(
+final dailyReportJobProvider = Provider<DailyReportJob>((ref) {
+  return DailyReportJob(
     db: ref.watch(databaseProvider).db,
     platform: ref.watch(reportPlatformProvider),
     stagingDir: ref.watch(reportStagingDirProvider),
     loadFonts: ref.watch(reportFontsProvider),
     featureOn: ref.watch(debtFeatureProvider),
     clock: ref.watch(clockProvider),
-  ),
-);
+    // Read only when the daily backup is on: the rest of the job needs no
+    // Keystore and no second database connection.
+    backupOutput: (stored) async {
+      if (!AutoBackupSettings.fromMap(stored).enabled) return null;
+      return autoBackupOutput(
+        stored,
+        keys: ref.read(secretKeyStoreProvider),
+        factory: ref.read(databaseFactoryProvider),
+        workDir: ref.read(backupWorkDirProvider),
+        appVersion: ref.read(appVersionProvider),
+      );
+    },
+  );
+});
+
+/// What the daily job has to make, as far as on/off goes: the debt report
+/// (with the ledger on) and/or the automatic backup (with its password set
+/// on this phone). Null = nothing: no run should be planned.
+Future<({int minuteOfDay, DateTime? enabledAt})?> dailyJobPlan(
+  ProviderContainer container,
+) async {
+  final report = await container.read(debtReportSettingsProvider.future);
+  final backup = await container.read(autoBackupSettingsProvider.future);
+  final reportOn = container.read(debtFeatureProvider) && report.enabled;
+  final backupOn =
+      backup.enabled && await container.read(autoBackupHasKeyProvider.future);
+  if (!reportOn && !backupOn) return null;
+  final since = [
+    if (reportOn) report.enabledAt,
+    if (backupOn) backup.enabledAt,
+  ];
+  // Owed from the EARLIEST of the outputs that are on; one that never said
+  // when it was turned on owes from always.
+  DateTime? enabledAt;
+  if (!since.contains(null)) {
+    enabledAt = since.cast<DateTime>().reduce((a, b) => a.isBefore(b) ? a : b);
+  }
+  return (minuteOfDay: report.minuteOfDay, enabledAt: enabledAt);
+}
+
+/// Plans the daily run again — or drops it when nothing is on any more —
+/// after the report or the backup was turned on or off, or the time moved.
+Future<void> replanDailyJob(ProviderContainer container) async {
+  final platform = container.read(reportPlatformProvider);
+  final plan = await dailyJobPlan(container);
+  try {
+    if (plan == null) {
+      await platform.cancelSchedule();
+    } else {
+      await platform.schedule(plan.minuteOfDay, replace: true);
+    }
+  } on Object {
+    // Not on Android (or a test): nothing to plan.
+  }
+}
 
 /// True while the app itself is making a report.
 class ReportRunningNotifier extends Notifier<bool> {
@@ -131,11 +186,13 @@ Future<DailyJobResult> runDebtReport(
 /// keeps it across reboots and updates; this re-plans it after a time-zone
 /// change or anything else that lost it), then the CATCH-UP RULE — a
 /// report that was due and not made is made now.
+///
+/// The daily backup (phase 5) is part of the same run: the job is planned
+/// while EITHER the report or the backup is on.
 Future<void> debtReportOnAppStart(ProviderContainer container) async {
-  if (!container.read(debtFeatureProvider)) return;
-  final settings = await container.read(debtReportSettingsProvider.future);
+  final plan = await dailyJobPlan(container);
   final platform = container.read(reportPlatformProvider);
-  if (!settings.enabled) {
+  if (plan == null) {
     // A plan left over from before (a restored database that has it off):
     // the worker would wake every day for nothing.
     try {
@@ -146,16 +203,16 @@ Future<void> debtReportOnAppStart(ProviderContainer container) async {
     return;
   }
   try {
-    await platform.schedule(settings.minuteOfDay);
+    await platform.schedule(plan.minuteOfDay);
   } on Object {
     // Not on Android (or a test): nothing to plan.
   }
   final status = await container.read(debtReportStatusProvider.future);
   final due = needsCatchUp(
     now: container.read(clockProvider)(),
-    minuteOfDay: settings.minuteOfDay,
+    minuteOfDay: plan.minuteOfDay,
     lastSuccessAt: status.lastSuccessAt,
-    enabledAt: settings.enabledAt,
+    enabledAt: plan.enabledAt,
     lastAttemptAt: status.lastAttemptAt,
   );
   if (!due) return;

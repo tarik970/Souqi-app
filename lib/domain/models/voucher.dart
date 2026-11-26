@@ -325,7 +325,21 @@ enum AuditAction {
   debtReportOff('DEBT_REPORT_OFF'),
 
   /// The folder the daily debt report is written to was changed.
-  debtReportFolder('DEBT_REPORT_FOLDER');
+  debtReportFolder('DEBT_REPORT_FOLDER'),
+
+  /// Many saved prices changed by one percentage (phase 5), and its undo.
+  priceBulkChange('PRICE_BULK_CHANGE'),
+  priceBulkUndo('PRICE_BULK_UNDO'),
+
+  /// A backup file made (everything, card-code keys included, behind the
+  /// backup password) and a backup restored over the shop's data.
+  backupCreate('BACKUP_CREATE'),
+  backupRestore('BACKUP_RESTORE'),
+
+  /// The daily automatic backup turned on or off, and its password changed.
+  backupAutoOn('BACKUP_AUTO_ON'),
+  backupAutoOff('BACKUP_AUTO_OFF'),
+  backupPasswordChange('BACKUP_PASSWORD_CHANGE');
 
   const AuditAction(this.db);
 

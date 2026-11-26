@@ -7,6 +7,7 @@ import 'migrations/migration_v2.dart';
 import 'migrations/migration_v3.dart';
 import 'migrations/migration_v4.dart';
 import 'migrations/migration_v5.dart';
+import 'migrations/migration_v6.dart';
 
 /// Owns the sqflite [Database]: opening, PRAGMAs and versioned migrations.
 class AppDatabase {
@@ -28,9 +29,14 @@ class AppDatabase {
     MigrationV3(),
     MigrationV4(),
     MigrationV5(),
+    MigrationV6(),
   ];
 
   static int get schemaVersion => migrations.last.version;
+
+  /// Where the app's database file is on the phone.
+  static Future<String> defaultPath({DatabaseFactory? factory}) async =>
+      p.join(await (factory ?? databaseFactory).getDatabasesPath(), fileName);
 
   /// Opens (and creates/upgrades) the database.
   ///
@@ -63,10 +69,45 @@ class AppDatabase {
             }
           }
         },
+        // A database written by a NEWER version of the app (a restored
+        // backup, or an older build installed over a newer one). Without
+        // this sqflite would quietly stamp it with the older version number
+        // and run old code on a schema it does not know.
+        onDowngrade: (db, oldVersion, newVersion) =>
+            throw NewerDatabaseException(oldVersion, newVersion),
       ),
     );
     return AppDatabase._(db, dbPath);
   }
 
+  /// The schema version stored in the database file at [path], read without
+  /// opening it as the app's database (no migration runs). 0 for an empty
+  /// or new file.
+  static Future<int> fileVersion(String path, {DatabaseFactory? factory}) async {
+    final f = factory ?? databaseFactory;
+    final db = await f.openDatabase(
+      path,
+      options: OpenDatabaseOptions(readOnly: true, singleInstance: false),
+    );
+    try {
+      final rows = await db.rawQuery('PRAGMA user_version');
+      return (rows.first.values.first as int?) ?? 0;
+    } finally {
+      await db.close();
+    }
+  }
+
   Future<void> close() => db.close();
+}
+
+/// The database is from a newer version of the app than this one.
+class NewerDatabaseException implements Exception {
+  const NewerDatabaseException(this.fileVersion, this.appVersion);
+
+  final int fileVersion;
+  final int appVersion;
+
+  @override
+  String toString() =>
+      'NewerDatabaseException(file: $fileVersion, app: $appVersion)';
 }

@@ -3366,4 +3366,478 @@ class AppLocalizationsEn extends AppLocalizations {
   String debtReportNoticeFailedText(String reason) {
     return '$reason. Open Settings → Debts → Daily debt report to try again.';
   }
+
+  @override
+  String get auditPriceBulkChange => 'Prices changed in bulk';
+
+  @override
+  String get auditPriceBulkUndo => 'Bulk price change undone';
+
+  @override
+  String get auditBackupCreate => 'Backup created';
+
+  @override
+  String get auditBackupRestore => 'Backup restored';
+
+  @override
+  String get auditBackupAutoOn => 'Daily backup turned on';
+
+  @override
+  String get auditBackupAutoOff => 'Daily backup turned off';
+
+  @override
+  String get auditBackupPasswordChange => 'Daily backup password changed';
+
+  @override
+  String auditDetailProducts(String count) {
+    return '$count products';
+  }
+
+  @override
+  String auditDetailSkipped(String count) {
+    return '$count left alone';
+  }
+
+  @override
+  String auditDetailBackupDate(String date) {
+    return 'Backup of $date';
+  }
+
+  @override
+  String auditDetailInvoices(String count) {
+    return '$count invoices';
+  }
+
+  @override
+  String get productBarcode => 'Barcode (optional)';
+
+  @override
+  String get productBarcodeHint =>
+      'Type it, scan it with the camera, or use a barcode scanner';
+
+  @override
+  String get productBarcodeTaken => 'Another product already has this barcode';
+
+  @override
+  String get scanBarcodeTitle => 'Scan barcode';
+
+  @override
+  String get scanBarcodeHint => 'Hold the barcode in front of the camera';
+
+  @override
+  String get newProductWithBarcode => 'New product with this barcode';
+
+  @override
+  String barcodeUnknown(String code) {
+    return 'No product has the barcode $code. What is it called?';
+  }
+
+  @override
+  String get bulkTitle => 'Change prices';
+
+  @override
+  String get bulkWhich => 'Which products';
+
+  @override
+  String get bulkScopeAll => 'All products';
+
+  @override
+  String get bulkScopeCurrency => 'Products priced in one currency';
+
+  @override
+  String get bulkScopeSelected => 'Products I choose';
+
+  @override
+  String bulkChosen(String count) {
+    return '$count chosen';
+  }
+
+  @override
+  String get bulkChooseFirst => 'Choose the products first';
+
+  @override
+  String get bulkSelectAllShown => 'Tick all shown';
+
+  @override
+  String get bulkSelectNone => 'Untick all';
+
+  @override
+  String get bulkRaise => 'Raise';
+
+  @override
+  String get bulkLower => 'Lower';
+
+  @override
+  String get bulkPercentLabel => 'By how much (percent)';
+
+  @override
+  String get bulkPercentInvalid =>
+      'Enter a percentage, e.g. 10 or 7.5 (lowering: less than 100)';
+
+  @override
+  String get bulkRounding => 'Round the new prices';
+
+  @override
+  String get bulkRoundNone => 'No rounding';
+
+  @override
+  String bulkRoundNearest(String step) {
+    return 'To the nearest $step';
+  }
+
+  @override
+  String get bulkRoundingHint =>
+      'In the smallest unit of each product\'s own currency: for SYP, to the nearest 500 pounds; for USD, to the nearest 500 cents (5.00).';
+
+  @override
+  String get bulkPreview => 'Preview';
+
+  @override
+  String bulkPreviewCount(String changing, String total) {
+    return '$changing of $total prices change';
+  }
+
+  @override
+  String bulkApply(String count) {
+    return 'Apply to $count products';
+  }
+
+  @override
+  String bulkApplied(String count) {
+    return 'New prices saved for $count products';
+  }
+
+  @override
+  String get bulkFailed =>
+      'The prices could not be changed. Nothing was changed.';
+
+  @override
+  String get bulkUndo => 'Undo';
+
+  @override
+  String bulkLast(String percent, String count) {
+    return 'Last change: $percent on $count products';
+  }
+
+  @override
+  String bulkUndone(String count) {
+    return 'The old prices are back for $count products';
+  }
+
+  @override
+  String bulkUndoneSkipped(String restored, String skipped) {
+    return 'The old prices are back for $restored products; $skipped were changed again since and were left as they are';
+  }
+
+  @override
+  String get pinReasonBulkPrice =>
+      'Enter the PIN to change many prices at once.';
+
+  @override
+  String get pinReasonBackup =>
+      'Enter the PIN to back up or change the backup settings.';
+
+  @override
+  String get pinReasonBackupPassword =>
+      'Enter the PIN to change the daily backup password.';
+
+  @override
+  String get pinReasonRestore =>
+      'Enter the PIN to replace all data with the backup.';
+
+  @override
+  String get backupSection => 'Backup';
+
+  @override
+  String get backupTitle => 'Backup & restore';
+
+  @override
+  String get backupNever => 'No backup yet';
+
+  @override
+  String backupLast(String when) {
+    return 'Last backup: $when';
+  }
+
+  @override
+  String get backupReminderNever => 'This shop has never been backed up';
+
+  @override
+  String get backupReminderOld => 'No backup in the last 7 days';
+
+  @override
+  String get backupReminderHint =>
+      'If the phone is lost, broken or reset, everything in it is gone. Make a backup and keep it off the phone.';
+
+  @override
+  String get backupCreateSection => 'Make a backup';
+
+  @override
+  String get backupCreateHint =>
+      'One .souqi file with everything: invoices, products, customers, debts, card codes, settings and the logo. Card codes can only be opened with the backup password.';
+
+  @override
+  String get backupCreateButton => 'Create backup';
+
+  @override
+  String get backupCreateTitle => 'Backup password';
+
+  @override
+  String get backupCreateIntro =>
+      'Choose a password for this backup. It is needed to restore it, on this phone or another one.';
+
+  @override
+  String get backupPasswordLabel => 'Backup password';
+
+  @override
+  String get backupPasswordAgain => 'The same password again';
+
+  @override
+  String backupPasswordMin(int count) {
+    return 'At least $count characters';
+  }
+
+  @override
+  String backupPasswordTooShort(int count) {
+    return 'The password needs at least $count characters';
+  }
+
+  @override
+  String get backupPasswordMismatch => 'The two passwords are not the same';
+
+  @override
+  String get backupPasswordWarning =>
+      'If you forget this password, the card codes in the backup can NEVER be restored — nobody can recover it. Write it down and keep it away from the phone.';
+
+  @override
+  String get backupPasswordShow => 'Show the password';
+
+  @override
+  String get backupPasswordHide => 'Hide the password';
+
+  @override
+  String get backupPasswordOk => 'Continue';
+
+  @override
+  String get backupWhereTitle => 'Where should the backup go?';
+
+  @override
+  String get backupToShare => 'Share';
+
+  @override
+  String get backupToShareHint => 'WhatsApp, Telegram, e-mail, Google Drive…';
+
+  @override
+  String get backupToPhone => 'Save to phone';
+
+  @override
+  String get backupToPhoneHint => 'Download/Souqi/Backups';
+
+  @override
+  String get backupToFolder => 'The daily report folder';
+
+  @override
+  String get backupCreating => 'Making the backup…';
+
+  @override
+  String get backupCreateFailed =>
+      'The backup could not be made. Nothing was changed.';
+
+  @override
+  String backupSavedTo(String where) {
+    return 'Backup saved to $where';
+  }
+
+  @override
+  String get backupSaveFailed => 'The backup file could not be saved there';
+
+  @override
+  String get backupStorageDenied => 'Saving needs the storage permission';
+
+  @override
+  String get backupFolderUnavailable =>
+      'The folder is not available (its permission was removed, or the card or drive is out). Choose it again, or save to the phone.';
+
+  @override
+  String get backupPreparing => 'Preparing the password…';
+
+  @override
+  String get backupKeystoreFailed =>
+      'The phone\'s secure storage did not answer. Try again.';
+
+  @override
+  String get restoreSection => 'Restore';
+
+  @override
+  String get restoreHint =>
+      'Replaces ALL data on this phone with a backup file — from this phone or another one. The current data is kept until the restore has fully worked.';
+
+  @override
+  String get restoreButton => 'Restore from a backup file';
+
+  @override
+  String get restoreTitle => 'Restore this backup?';
+
+  @override
+  String get restoreChecking => 'Checking the file…';
+
+  @override
+  String get restorePickFailed => 'The file could not be opened';
+
+  @override
+  String get restoreNext => 'Next';
+
+  @override
+  String get restoreCorruptTitle => 'Not a usable backup';
+
+  @override
+  String get restoreCorruptText =>
+      'This file is not a Souqi backup, or it is damaged (cut short while copying, for example). Nothing was changed.';
+
+  @override
+  String get restoreTamperedText =>
+      'The password is right, but the file was changed after the backup was made. It is not restored. Nothing was changed.';
+
+  @override
+  String get restoreNewerTitle => 'Backup from a newer version';
+
+  @override
+  String restoreNewerText(String version) {
+    return 'This backup was made by a newer version of Souqi ($version). Update the app on this phone first, then restore it. Nothing was changed.';
+  }
+
+  @override
+  String get backupWrongPassword =>
+      'Wrong password. Nothing was changed — try again.';
+
+  @override
+  String backupInfoDate(String date) {
+    return 'Made on $date';
+  }
+
+  @override
+  String backupInfoApp(String version) {
+    return 'App version $version';
+  }
+
+  @override
+  String backupInfoInvoices(String count) {
+    return 'Invoices: $count';
+  }
+
+  @override
+  String backupInfoCustomers(String count) {
+    return 'Customers: $count';
+  }
+
+  @override
+  String backupInfoProducts(String count) {
+    return 'Products: $count';
+  }
+
+  @override
+  String backupInfoCodes(String count) {
+    return 'Card codes: $count';
+  }
+
+  @override
+  String backupInfoDebts(String count) {
+    return 'Debt entries: $count';
+  }
+
+  @override
+  String get restoreConfirmTitle => 'Replace all data?';
+
+  @override
+  String get restoreConfirmWarning =>
+      'Everything on this phone now — every invoice, product, customer, debt, card code and setting — is replaced by the backup. This cannot be undone.';
+
+  @override
+  String get restoreConfirmCheck =>
+      'I understand: the current data on this phone will be replaced';
+
+  @override
+  String get restoreConfirmButton => 'Replace all data';
+
+  @override
+  String get restoreRunning => 'Restoring… Do not close the app.';
+
+  @override
+  String get restoreBusy =>
+      'The daily report or backup is being made right now. Try again in a minute.';
+
+  @override
+  String get restoreDoneTitle => 'Backup restored';
+
+  @override
+  String get restoreDoneText =>
+      'The shop\'s data is now the backup\'s. The PIN is the one of the backup. On a different phone: choose the daily report folder again, set the daily backup password again, and choose the printer again.';
+
+  @override
+  String get restoreFailedTitle => 'The restore did not work';
+
+  @override
+  String get restoreFailedText =>
+      'The data on this phone was kept as it was. Nothing was changed.';
+
+  @override
+  String get backupAutoTitle => 'Daily automatic backup';
+
+  @override
+  String get backupAutoIntro =>
+      'Every day, together with the daily report: one backup file in the same folder, protected by its own password.';
+
+  @override
+  String backupAutoLast(String when) {
+    return 'Last daily backup: $when';
+  }
+
+  @override
+  String get backupAutoNoKey =>
+      'The password for daily backups is not set on this phone, so none are made.';
+
+  @override
+  String get backupAutoSetPassword => 'Set the daily backup password';
+
+  @override
+  String get backupAutoChangePassword => 'Change the daily backup password';
+
+  @override
+  String get backupAutoPasswordIntro =>
+      'Set once; the daily backups use it without asking. Only a key made from it is kept, in the phone\'s secure storage — never the password itself.';
+
+  @override
+  String get backupAutoPasswordChanged =>
+      'Password changed. The next daily backup uses it; older backups keep their old password.';
+
+  @override
+  String get backupAutoSharedHint =>
+      'The same time as the daily debt report: one run makes both.';
+
+  @override
+  String get backupAutoOnPhoneWarning =>
+      'The backups stay on this phone and are lost with it. Choose an SD card, a USB drive or a cloud folder.';
+
+  @override
+  String get backupAutoKeepLabel => 'Keep how many daily backups';
+
+  @override
+  String get backupAutoKeepHint =>
+      'Older daily backups are deleted from the folder. Backups made by hand are never deleted.';
+
+  @override
+  String get backupNoticeFallback => 'Daily backup saved to Downloads';
+
+  @override
+  String backupNoticeFallbackText(String location) {
+    return 'The chosen folder is not available. The backup was saved to $location instead. Choose the folder again in Settings → Backup & restore.';
+  }
+
+  @override
+  String get backupNoticeFailed => 'Daily backup failed';
+
+  @override
+  String backupNoticeFailedText(String reason) {
+    return '$reason. Open Settings → Backup & restore to make one by hand.';
+  }
 }

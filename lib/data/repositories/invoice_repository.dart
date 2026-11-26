@@ -135,10 +135,13 @@ class InvoiceRepository {
     ProductRepository products,
     InvoiceItem item,
   ) async {
+    final barcode = item.newProductBarcode;
     final existing = await products.findByName(item.productName);
     if (existing != null) {
       // Selling it again with "save" on means the shop wants it back.
       if (!existing.isActive) await products.setActive(existing.id!, true);
+      // Started from its barcode: the product learns it (if it had none).
+      if (barcode != null) await products.adoptBarcode(existing.id!, barcode);
       if (item.updateProductPrice) {
         await products.updatePriceFromSale(
           existing.id!,
@@ -164,6 +167,10 @@ class InvoiceRepository {
     }
     return products.insert(Product(
       name: item.productName,
+      // One barcode, one product: never a second product on the same one.
+      barcode: barcode != null && !await products.isBarcodeTaken(barcode)
+          ? barcode
+          : null,
       kind: item.kind,
       unitId: unitId,
       priceMinor: item.origUnitPriceMinor,

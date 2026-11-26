@@ -205,14 +205,10 @@ class _DebtReportSettingsScreenState
     final l10n = AppLocalizations.of(context);
     final container = _container;
     final bridge = container.read(nativeBridgeProvider);
-    final platform = container.read(reportPlatformProvider);
     if (!on) {
       await _save(s.copyWith(enabled: false));
-      try {
-        await platform.cancelSchedule();
-      } on Object {
-        // Nothing planned on this platform.
-      }
+      // The daily backup may still need the run.
+      await replanDailyJob(container);
       await _log(AuditAction.debtReportOff);
       return;
     }
@@ -235,11 +231,7 @@ class _DebtReportSettingsScreenState
       enabledAt: container.read(clockProvider)(),
     );
     await _save(next);
-    try {
-      await platform.schedule(next.minuteOfDay, replace: true);
-    } on Object {
-      // Not on Android.
-    }
+    await replanDailyJob(container);
     await _log(AuditAction.debtReportOn, folder: _folderLabel(l10n, next));
     container.invalidate(reportNotificationsAllowedProvider);
     final exempt = await container.read(batteryExemptProvider.future);
@@ -273,15 +265,8 @@ class _DebtReportSettingsScreenState
     final minute = picked.hour * 60 + picked.minute;
     final container = _container;
     await _save(s.copyWith(minuteOfDay: minute));
-    if (!s.enabled) return;
-    try {
-      await container.read(reportPlatformProvider).schedule(
-            minute,
-            replace: true,
-          );
-    } on Object {
-      // Not on Android.
-    }
+    // The same time for the daily backup: one run makes both.
+    await replanDailyJob(container);
   }
 
   Future<void> _toggleFormat(

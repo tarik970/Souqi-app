@@ -184,6 +184,22 @@ abstract final class SettingsKeys {
   /// catch-up rule owes no report from before it.
   static const debtReportEnabledAt = 'debt_report_enabled_at';
 
+  // Backup (phase 5). The daily automatic backup is a second output of the
+  // daily job above: same time, same folder, its own on/off and keep-N. Its
+  // PASSWORD is not here — only a key derived from it, in the Keystore
+  // (`autoBackupKeyName`): a backup must never carry what opens it.
+  static const backupAutoEnabled = 'backup_auto_enabled';
+  static const backupAutoKeepDays = 'backup_auto_keep_days';
+
+  /// Epoch milliseconds; like [debtReportEnabledAt] for the catch-up rule.
+  static const backupAutoEnabledAt = 'backup_auto_enabled_at';
+
+  /// Epoch milliseconds of the last backup made in the app (by hand) or
+  /// restored — for the "no backup for 7 days" reminder. The daily backup,
+  /// made by the background engine that only reads the database, keeps its
+  /// date in the job status instead.
+  static const backupLastAt = 'backup_last_at';
+
   /// Defaults applied when a key is missing from the table.
   static const Map<String, String> defaults = {
     baseCurrencyCode: 'SYP',
@@ -268,5 +284,9 @@ abstract final class SettingsKeys {
     debtReportKeepDays: '30',
     debtReportNotify: '1',
     debtReportEnabledAt: '0',
+    backupAutoEnabled: '0',
+    backupAutoKeepDays: '7',
+    backupAutoEnabledAt: '0',
+    backupLastAt: '0',
   };
 }

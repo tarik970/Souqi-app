@@ -1804,5 +1804,277 @@
     "placeholders": {
       "reason": {"type": "String"}
     }
+  },
+  "auditPriceBulkChange": "Prices changed in bulk",
+  "auditPriceBulkUndo": "Bulk price change undone",
+  "auditBackupCreate": "Backup created",
+  "auditBackupRestore": "Backup restored",
+  "auditBackupAutoOn": "Daily backup turned on",
+  "auditBackupAutoOff": "Daily backup turned off",
+  "auditBackupPasswordChange": "Daily backup password changed",
+  "auditDetailProducts": "{count} products",
+  "@auditDetailProducts": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "auditDetailSkipped": "{count} left alone",
+  "@auditDetailSkipped": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "auditDetailBackupDate": "Backup of {date}",
+  "@auditDetailBackupDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "auditDetailInvoices": "{count} invoices",
+  "@auditDetailInvoices": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "productBarcode": "Barcode (optional)",
+  "productBarcodeHint": "Type it, scan it with the camera, or use a barcode scanner",
+  "productBarcodeTaken": "Another product already has this barcode",
+  "scanBarcodeTitle": "Scan barcode",
+  "scanBarcodeHint": "Hold the barcode in front of the camera",
+  "newProductWithBarcode": "New product with this barcode",
+  "barcodeUnknown": "No product has the barcode {code}. What is it called?",
+  "@barcodeUnknown": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "bulkTitle": "Change prices",
+  "bulkWhich": "Which products",
+  "bulkScopeAll": "All products",
+  "bulkScopeCurrency": "Products priced in one currency",
+  "bulkScopeSelected": "Products I choose",
+  "bulkChosen": "{count} chosen",
+  "@bulkChosen": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "bulkChooseFirst": "Choose the products first",
+  "bulkSelectAllShown": "Tick all shown",
+  "bulkSelectNone": "Untick all",
+  "bulkRaise": "Raise",
+  "bulkLower": "Lower",
+  "bulkPercentLabel": "By how much (percent)",
+  "bulkPercentInvalid": "Enter a percentage, e.g. 10 or 7.5 (lowering: less than 100)",
+  "bulkRounding": "Round the new prices",
+  "bulkRoundNone": "No rounding",
+  "bulkRoundNearest": "To the nearest {step}",
+  "@bulkRoundNearest": {
+    "placeholders": {
+      "step": {"type": "String"}
+    }
+  },
+  "bulkRoundingHint": "In the smallest unit of each product's own currency: for SYP, to the nearest 500 pounds; for USD, to the nearest 500 cents (5.00).",
+  "bulkPreview": "Preview",
+  "bulkPreviewCount": "{changing} of {total} prices change",
+  "@bulkPreviewCount": {
+    "placeholders": {
+      "changing": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "bulkApply": "Apply to {count} products",
+  "@bulkApply": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "bulkApplied": "New prices saved for {count} products",
+  "@bulkApplied": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "bulkFailed": "The prices could not be changed. Nothing was changed.",
+  "bulkUndo": "Undo",
+  "bulkLast": "Last change: {percent} on {count} products",
+  "@bulkLast": {
+    "placeholders": {
+      "percent": {"type": "String"},
+      "count": {"type": "String"}
+    }
+  },
+  "bulkUndone": "The old prices are back for {count} products",
+  "@bulkUndone": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "bulkUndoneSkipped": "The old prices are back for {restored} products; {skipped} were changed again since and were left as they are",
+  "@bulkUndoneSkipped": {
+    "placeholders": {
+      "restored": {"type": "String"},
+      "skipped": {"type": "String"}
+    }
+  },
+  "pinReasonBulkPrice": "Enter the PIN to change many prices at once.",
+  "pinReasonBackup": "Enter the PIN to back up or change the backup settings.",
+  "pinReasonBackupPassword": "Enter the PIN to change the daily backup password.",
+  "pinReasonRestore": "Enter the PIN to replace all data with the backup.",
+  "backupSection": "Backup",
+  "backupTitle": "Backup & restore",
+  "backupNever": "No backup yet",
+  "backupLast": "Last backup: {when}",
+  "@backupLast": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "backupReminderNever": "This shop has never been backed up",
+  "backupReminderOld": "No backup in the last 7 days",
+  "backupReminderHint": "If the phone is lost, broken or reset, everything in it is gone. Make a backup and keep it off the phone.",
+  "backupCreateSection": "Make a backup",
+  "backupCreateHint": "One .souqi file with everything: invoices, products, customers, debts, card codes, settings and the logo. Card codes can only be opened with the backup password.",
+  "backupCreateButton": "Create backup",
+  "backupCreateTitle": "Backup password",
+  "backupCreateIntro": "Choose a password for this backup. It is needed to restore it, on this phone or another one.",
+  "backupPasswordLabel": "Backup password",
+  "backupPasswordAgain": "The same password again",
+  "backupPasswordMin": "At least {count} characters",
+  "@backupPasswordMin": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "backupPasswordTooShort": "The password needs at least {count} characters",
+  "@backupPasswordTooShort": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "backupPasswordMismatch": "The two passwords are not the same",
+  "backupPasswordWarning": "If you forget this password, the card codes in the backup can NEVER be restored — nobody can recover it. Write it down and keep it away from the phone.",
+  "backupPasswordShow": "Show the password",
+  "backupPasswordHide": "Hide the password",
+  "backupPasswordOk": "Continue",
+  "backupWhereTitle": "Where should the backup go?",
+  "backupToShare": "Share",
+  "backupToShareHint": "WhatsApp, Telegram, e-mail, Google Drive…",
+  "backupToPhone": "Save to phone",
+  "backupToPhoneHint": "Download/Souqi/Backups",
+  "backupToFolder": "The daily report folder",
+  "backupCreating": "Making the backup…",
+  "backupCreateFailed": "The backup could not be made. Nothing was changed.",
+  "backupSavedTo": "Backup saved to {where}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "where": {"type": "String"}
+    }
+  },
+  "backupSaveFailed": "The backup file could not be saved there",
+  "backupStorageDenied": "Saving needs the storage permission",
+  "backupFolderUnavailable": "The folder is not available (its permission was removed, or the card or drive is out). Choose it again, or save to the phone.",
+  "backupPreparing": "Preparing the password…",
+  "backupKeystoreFailed": "The phone's secure storage did not answer. Try again.",
+  "restoreSection": "Restore",
+  "restoreHint": "Replaces ALL data on this phone with a backup file — from this phone or another one. The current data is kept until the restore has fully worked.",
+  "restoreButton": "Restore from a backup file",
+  "restoreTitle": "Restore this backup?",
+  "restoreChecking": "Checking the file…",
+  "restorePickFailed": "The file could not be opened",
+  "restoreNext": "Next",
+  "restoreCorruptTitle": "Not a usable backup",
+  "restoreCorruptText": "This file is not a Souqi backup, or it is damaged (cut short while copying, for example). Nothing was changed.",
+  "restoreTamperedText": "The password is right, but the file was changed after the backup was made. It is not restored. Nothing was changed.",
+  "restoreNewerTitle": "Backup from a newer version",
+  "restoreNewerText": "This backup was made by a newer version of Souqi ({version}). Update the app on this phone first, then restore it. Nothing was changed.",
+  "@restoreNewerText": {
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "backupWrongPassword": "Wrong password. Nothing was changed — try again.",
+  "backupInfoDate": "Made on {date}",
+  "@backupInfoDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "backupInfoApp": "App version {version}",
+  "@backupInfoApp": {
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "backupInfoInvoices": "Invoices: {count}",
+  "@backupInfoInvoices": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "backupInfoCustomers": "Customers: {count}",
+  "@backupInfoCustomers": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "backupInfoProducts": "Products: {count}",
+  "@backupInfoProducts": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "backupInfoCodes": "Card codes: {count}",
+  "@backupInfoCodes": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "backupInfoDebts": "Debt entries: {count}",
+  "@backupInfoDebts": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "restoreConfirmTitle": "Replace all data?",
+  "restoreConfirmWarning": "Everything on this phone now — every invoice, product, customer, debt, card code and setting — is replaced by the backup. This cannot be undone.",
+  "restoreConfirmCheck": "I understand: the current data on this phone will be replaced",
+  "restoreConfirmButton": "Replace all data",
+  "restoreRunning": "Restoring… Do not close the app.",
+  "restoreBusy": "The daily report or backup is being made right now. Try again in a minute.",
+  "restoreDoneTitle": "Backup restored",
+  "restoreDoneText": "The shop's data is now the backup's. The PIN is the one of the backup. On a different phone: choose the daily report folder again, set the daily backup password again, and choose the printer again.",
+  "restoreFailedTitle": "The restore did not work",
+  "restoreFailedText": "The data on this phone was kept as it was. Nothing was changed.",
+  "backupAutoTitle": "Daily automatic backup",
+  "backupAutoIntro": "Every day, together with the daily report: one backup file in the same folder, protected by its own password.",
+  "backupAutoLast": "Last daily backup: {when}",
+  "@backupAutoLast": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "backupAutoNoKey": "The password for daily backups is not set on this phone, so none are made.",
+  "backupAutoSetPassword": "Set the daily backup password",
+  "backupAutoChangePassword": "Change the daily backup password",
+  "backupAutoPasswordIntro": "Set once; the daily backups use it without asking. Only a key made from it is kept, in the phone's secure storage — never the password itself.",
+  "backupAutoPasswordChanged": "Password changed. The next daily backup uses it; older backups keep their old password.",
+  "backupAutoSharedHint": "The same time as the daily debt report: one run makes both.",
+  "backupAutoOnPhoneWarning": "The backups stay on this phone and are lost with it. Choose an SD card, a USB drive or a cloud folder.",
+  "backupAutoKeepLabel": "Keep how many daily backups",
+  "backupAutoKeepHint": "Older daily backups are deleted from the folder. Backups made by hand are never deleted.",
+  "backupNoticeFallback": "Daily backup saved to Downloads",
+  "backupNoticeFallbackText": "The chosen folder is not available. The backup was saved to {location} instead. Choose the folder again in Settings → Backup & restore.",
+  "@backupNoticeFallbackText": {
+    "placeholders": {
+      "location": {"type": "String"}
+    }
+  },
+  "backupNoticeFailed": "Daily backup failed",
+  "backupNoticeFailedText": "{reason}. Open Settings → Backup & restore to make one by hand.",
+  "@backupNoticeFailedText": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
   }
 }

@@ -74,6 +74,15 @@ class PickedTextFile {
   final String content;
 }
 
+/// Any file the user picked, copied into the app's own cache (the picker's
+/// permission does not last; the copy does).
+class PickedFile {
+  const PickedFile({required this.name, required this.path});
+
+  final String name;
+  final String path;
+}
+
 /// A folder the user chose in the system folder picker, with the permission
 /// to write to it kept across reboots.
 class PickedFolder {
@@ -164,13 +173,20 @@ abstract class NativeBridge {
   /// Returns false when the device has no dialer.
   Future<bool> dial(String phone);
 
-  /// Copies the file into Downloads/Souqi through MediaStore and returns the
-  /// path to show the user. Throws [OutputException].
+  /// Copies the file into Downloads/Souqi — or Downloads/[subfolder], e.g.
+  /// "Souqi/Backups" — through MediaStore and returns the path to show the
+  /// user. Throws [OutputException].
   Future<String> saveToDownloads({
     required String filePath,
     required String fileName,
     required String mimeType,
+    String? subfolder,
   });
+
+  /// Opens the system file picker for any file (a backup) and copies the
+  /// chosen one into the app's cache. Null when the user backs out. Throws
+  /// [OutputException] when it cannot be read.
+  Future<PickedFile?> pickFile();
 
   /// The system share sheet.
   Future<void> shareFile({
@@ -342,13 +358,23 @@ class MethodChannelNativeBridge implements NativeBridge {
     required String filePath,
     required String fileName,
     required String mimeType,
+    String? subfolder,
   }) async =>
       await _invoke<String>('saveToDownloads', {
         'path': filePath,
         'fileName': fileName,
         'mimeType': mimeType,
+        'subfolder': subfolder,
       }) ??
       fileName;
+
+  @override
+  Future<PickedFile?> pickFile() async {
+    final map = await _invoke<Map<Object?, Object?>>('pickFile');
+    final path = map?['path'] as String?;
+    if (map == null || path == null || path.isEmpty) return null;
+    return PickedFile(name: (map['name'] as String?) ?? '', path: path);
+  }
 
   @override
   Future<PickedTextFile?> pickTextFile() async {

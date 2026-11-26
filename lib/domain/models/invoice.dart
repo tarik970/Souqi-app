@@ -52,6 +52,7 @@ class InvoiceItem {
     this.saveAsProduct = false,
     this.unitId,
     this.updateProductPrice = false,
+    this.newProductBarcode,
   });
 
   final int? id;
@@ -77,6 +78,10 @@ class InvoiceItem {
   /// Set the product's saved price to [origUnitPriceMinor] on save, provided
   /// the product is priced in [origCurrencyCode].
   final bool updateProductPrice;
+
+  /// The barcode the product made from this line gets (an item started
+  /// from an unknown barcode).
+  final String? newProductBarcode;
 
   final String productName;
   final String? productCode;
@@ -338,6 +343,8 @@ class Invoice {
             lineTotalMinor: line.lineTotalMinor,
             saveAsProduct: line.line.createsProduct,
             unitId: line.line.unitId,
+            newProductBarcode:
+                line.line.createsProduct ? line.line.barcode : null,
             updateProductPrice: updateProductPrices &&
                 (line.line.hasPriceOverride ||
                     (line.line.createsProduct && line.line.unitPriceMinor > 0)),

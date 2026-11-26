@@ -70,6 +70,9 @@ class MainActivity : FlutterActivity() {
     /** The "pick a folder" call waiting for the folder picker to return. */
     private var pendingFolder: MethodChannel.Result? = null
 
+    /** The "pick any file" call (a backup to restore) waiting likewise. */
+    private var pendingAnyFile: MethodChannel.Result? = null
+
     private var reportChannel: ReportChannel? = null
 
     /** Created on the first beep and kept: creating one per beep is slow. */
@@ -150,6 +153,7 @@ class MainActivity : FlutterActivity() {
             "dial" -> dial(call, result)
             "saveToDownloads" -> saveToDownloads(call, result)
             "pickTextFile" -> pickTextFile(result)
+            "pickFile" -> pickFile(result)
             "beep" -> {
                 beep()
                 result.success(null)
@@ -400,6 +404,10 @@ class MainActivity : FlutterActivity() {
         val path = call.argument<String>("path")
         val name = call.argument<String>("fileName")
         val mime = call.argument<String>("mimeType") ?: "application/octet-stream"
+        // "Souqi/Backups" for a backup; only our own folders under Downloads.
+        val subfolder = call.argument<String>("subfolder")
+            ?.takeIf { it == FOLDER || it.startsWith("$FOLDER/") && !it.contains("..") }
+            ?: FOLDER
         if (path.isNullOrEmpty() || name.isNullOrEmpty()) {
             result.error(SAVE_FAILED, "missing path or file name", null)
             return
@@ -407,7 +415,7 @@ class MainActivity : FlutterActivity() {
         val save = {
             io.execute {
                 try {
-                    val shown = copyToDownloads(File(path), name, mime)
+                    val shown = copyToDownloads(File(path), name, mime, subfolder)
                     main.post { result.success(shown) }
                 } catch (e: Exception) {
                     main.post { result.error(SAVE_FAILED, e.message, null) }
@@ -429,15 +437,15 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** Copies [source] into Downloads/Souqi; returns the path to show. */
-    private fun copyToDownloads(source: File, name: String, mime: String): String {
+    /** Copies [source] into Downloads/[folderName]; returns the path to show. */
+    private fun copyToDownloads(source: File, name: String, mime: String, folderName: String = FOLDER): String {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, name)
                 put(MediaStore.MediaColumns.MIME_TYPE, mime)
                 put(
                     MediaStore.MediaColumns.RELATIVE_PATH,
-                    "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER",
+                    "${Environment.DIRECTORY_DOWNLOADS}/$folderName",
                 )
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
@@ -464,13 +472,13 @@ class MainActivity : FlutterActivity() {
                 null,
                 null,
             )?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
-            return "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/${shown ?: name}"
+            return "${Environment.DIRECTORY_DOWNLOADS}/$folderName/${shown ?: name}"
         }
 
         @Suppress("DEPRECATION")
         val downloads =
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val folder = File(downloads, FOLDER)
+        val folder = File(downloads, folderName)
         if (!folder.exists() && !folder.mkdirs()) {
             throw IOException("could not create ${folder.path}")
         }
@@ -485,7 +493,7 @@ class MainActivity : FlutterActivity() {
         }
         source.copyTo(target)
         MediaScannerConnection.scanFile(this, arrayOf(target.absolutePath), arrayOf(mime), null)
-        return "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/${target.name}"
+        return "${Environment.DIRECTORY_DOWNLOADS}/$folderName/${target.name}"
     }
 
     // ---- Card codes: file import and the scan beep ----------------------
@@ -524,6 +532,10 @@ class MainActivity : FlutterActivity() {
             onFolderPicked(resultCode, data)
             return
         }
+        if (requestCode == REQUEST_PICK_FILE) {
+            onFilePicked(resultCode, data)
+            return
+        }
         if (requestCode != REQUEST_PICK_TEXT) return
         val result = pendingPick ?: return
         pendingPick = null
@@ -535,6 +547,55 @@ class MainActivity : FlutterActivity() {
         io.execute {
             try {
                 val picked = mapOf("name" to displayName(uri), "content" to readText(uri))
+                main.post { result.success(picked) }
+            } catch (e: Exception) {
+                main.post { result.error(PICK_FAILED, e.message, null) }
+            }
+        }
+    }
+
+    /**
+     * Any file (a backup to restore): the system picker, then a copy into
+     * cache/picked/ — the picker's read permission ends with this activity,
+     * the restore takes longer. Replies {"name", "path"} or null.
+     */
+    private fun pickFile(result: MethodChannel.Result) {
+        pendingAnyFile?.success(null)
+        pendingAnyFile = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            // A .souqi file has no MIME type a phone knows: offer everything.
+            type = "*/*"
+        }
+        try {
+            @Suppress("DEPRECATION")
+            startActivityForResult(intent, REQUEST_PICK_FILE)
+        } catch (e: ActivityNotFoundException) {
+            pendingAnyFile = null
+            result.error(PICK_FAILED, e.message, null)
+        }
+    }
+
+    private fun onFilePicked(resultCode: Int, data: Intent?) {
+        val result = pendingAnyFile ?: return
+        pendingAnyFile = null
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) {
+            result.success(null)
+            return
+        }
+        io.execute {
+            try {
+                val name = displayName(uri)
+                val folder = File(cacheDir, "picked")
+                folder.deleteRecursively()
+                if (!folder.mkdirs()) throw IOException("could not create ${folder.path}")
+                // Never a path from the provider: a fixed name in our folder.
+                val target = File(folder, "picked-file")
+                val input = contentResolver.openInputStream(uri)
+                    ?: throw IOException("could not open the file")
+                input.use { stream -> target.outputStream().use { stream.copyTo(it) } }
+                val picked = mapOf("name" to name, "path" to target.absolutePath)
                 main.post { result.success(picked) }
             } catch (e: Exception) {
                 main.post { result.error(PICK_FAILED, e.message, null) }
@@ -739,6 +800,7 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_PERMISSIONS = 48731
         private const val REQUEST_PICK_TEXT = 48732
         private const val REQUEST_PICK_FOLDER = 48733
+        private const val REQUEST_PICK_FILE = 48734
 
         /** Far more than any card list: 100,000 codes are about 2 MB. */
         private const val MAX_TEXT_BYTES = 4 * 1024 * 1024

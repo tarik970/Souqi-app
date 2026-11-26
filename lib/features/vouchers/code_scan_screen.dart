@@ -54,14 +54,28 @@ class ScanCollector {
 /// scans is never thrown away by a slip of the thumb). The codes go straight
 /// back to the "load codes" page, which shows only their masked preview.
 class CodeScanScreen extends ConsumerStatefulWidget {
-  const CodeScanScreen({super.key, this.initial = const []});
+  const CodeScanScreen({super.key, this.initial = const []}) : single = false;
+
+  /// ONE product barcode (the product form, the sale screen): the first
+  /// value read pops it as a String. See [scanOneBarcode].
+  const CodeScanScreen.single({super.key})
+      : initial = const [],
+        single = true;
 
   /// Cards scanned in an earlier visit to this screen.
   final List<String> initial;
 
+  final bool single;
+
   @override
   ConsumerState<CodeScanScreen> createState() => _CodeScanScreenState();
 }
+
+/// Opens the camera for one barcode; null when the seller backs out.
+Future<String?> scanOneBarcode(BuildContext context) =>
+    Navigator.of(context).push(
+      MaterialPageRoute<String>(builder: (_) => const CodeScanScreen.single()),
+    );
 
 class _CodeScanScreenState extends ConsumerState<CodeScanScreen> {
   late final ScanCollector _collector = ScanCollector(widget.initial);
@@ -77,8 +91,23 @@ class _CodeScanScreenState extends ConsumerState<CodeScanScreen> {
     super.dispose();
   }
 
+  bool _done = false;
+
   void _onDetect(BarcodeCapture capture) {
     if (!mounted) return;
+    if (widget.single) {
+      if (_done) return;
+      for (final barcode in capture.barcodes) {
+        final value = barcode.rawValue?.trim() ?? '';
+        if (normalizeCode(value).isEmpty) continue;
+        _done = true;
+        ref.read(nativeBridgeProvider).beep();
+        HapticFeedback.mediumImpact();
+        Navigator.of(context).pop(value);
+        return;
+      }
+      return;
+    }
     var added = false;
     var duplicate = false;
     for (final barcode in capture.barcodes) {
@@ -110,6 +139,59 @@ class _CodeScanScreenState extends ConsumerState<CodeScanScreen> {
     final locale = ref.watch(appLocaleProvider).languageCode;
     final theme = Theme.of(context);
     final last = _collector.lastMasked;
+
+    if (widget.single) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.scanBarcodeTitle)),
+        body: Column(
+          children: [
+            Expanded(
+              child: MobileScanner(
+                controller: _controller,
+                onDetect: _onDetect,
+                errorBuilder: (context, error) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text(
+                      l10n.scanCameraError,
+                      key: const ValueKey('scan-error'),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Material(
+              elevation: 8,
+              color: theme.colorScheme.surface,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.scanBarcodeHint,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton(
+                        key: const ValueKey('scan-cancel'),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(l10n.cancel),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return PopScope<List<String>>(
       canPop: false,

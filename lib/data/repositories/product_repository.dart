@@ -212,6 +212,61 @@ class ProductRepository {
     return rows.isEmpty ? null : Product.fromMap(rows.first);
   }
 
+  /// A barcode as it is stored and looked up: [normalizeCode] (no spaces or
+  /// dashes, Western digits, upper case). Null for nothing at all.
+  static String? normalizeBarcode(String? barcode) {
+    if (barcode == null) return null;
+    final normalized = normalizeCode(barcode);
+    return normalized.isEmpty ? null : normalized;
+  }
+
+  /// The product carrying [barcode] — active or not, the active one first.
+  Future<Product?> findByBarcode(String barcode) async {
+    final normalized = normalizeBarcode(barcode);
+    if (normalized == null) return null;
+    final rows = await _db.query(
+      'products',
+      where: 'barcode = ?',
+      whereArgs: [normalized],
+      orderBy: 'is_active DESC, id ASC',
+      limit: 1,
+    );
+    return rows.isEmpty ? null : Product.fromMap(rows.first);
+  }
+
+  /// True when [barcode] is already on a different product (one barcode,
+  /// one product: a scan must never have to choose).
+  Future<bool> isBarcodeTaken(String barcode, {int? excludeId}) async {
+    final normalized = normalizeBarcode(barcode);
+    if (normalized == null) return false;
+    final rows = await _db.query(
+      'products',
+      columns: ['id'],
+      where: excludeId == null ? 'barcode = ?' : 'barcode = ? AND id != ?',
+      whereArgs: excludeId == null ? [normalized] : [normalized, excludeId],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
+  }
+
+  /// Gives a product the barcode it was first sold under, unless it has one
+  /// or another product does.
+  Future<void> adoptBarcode(int id, String barcode) async {
+    final normalized = normalizeBarcode(barcode);
+    if (normalized == null || await isBarcodeTaken(normalized, excludeId: id)) {
+      return;
+    }
+    await _db.update(
+      'products',
+      {
+        'barcode': normalized,
+        'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch,
+      },
+      where: 'id = ? AND barcode IS NULL',
+      whereArgs: [id],
+    );
+  }
+
   /// True when [code] is already used by a different product.
   Future<bool> isCodeTaken(String code, {int? excludeId}) async {
     final rows = await _db.query(
@@ -302,7 +357,7 @@ class ProductRepository {
       'name': p.name.trim(),
       'name_norm': normalizeName(p.name),
       'code': p.code,
-      'barcode': p.barcode,
+      'barcode': normalizeBarcode(p.barcode),
       'kind': p.kind.db,
       'unit_id': isService ? null : p.unitId,
       'price_minor': p.priceMinor,

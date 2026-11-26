@@ -197,10 +197,17 @@ class FakeNativeBridge implements NativeBridge {
     required String filePath,
     required String fileName,
     required String mimeType,
+    String? subfolder,
   }) async {
     saved.add((path: filePath, fileName: fileName, mimeType: mimeType));
-    return 'Download/Souqi/$fileName';
+    return 'Download/${subfolder ?? 'Souqi'}/$fileName';
   }
+
+  /// What the any-file picker returns (a backup); null = backed out.
+  PickedFile? anyFileToPick;
+
+  @override
+  Future<PickedFile?> pickFile() async => anyFileToPick;
 
   @override
   Future<void> shareFile({

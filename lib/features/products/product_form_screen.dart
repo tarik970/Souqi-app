@@ -10,6 +10,8 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../data/repositories/product_repository.dart';
+import '../vouchers/code_scan_screen.dart';
 import '../vouchers/product_stock_screen.dart';
 import '../vouchers/voucher_providers.dart';
 import 'products_providers.dart';
@@ -28,6 +30,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _code;
+  late final TextEditingController _barcode;
   late final TextEditingController _price;
   late final TextEditingController _threshold;
 
@@ -39,6 +42,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late bool _codeStock;
   late bool _active;
   String? _codeError;
+  String? _barcodeError;
   bool _saving = false;
 
   Product? get _initial => widget.product;
@@ -49,6 +53,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final p = _initial;
     _name = TextEditingController(text: p?.name ?? '');
     _code = TextEditingController(text: p?.code ?? '');
+    _barcode = TextEditingController(text: p?.barcode ?? '');
     _price = TextEditingController();
     _threshold = TextEditingController(
       text: p?.lowStockThreshold == null ? '' : '${p!.lowStockThreshold}',
@@ -66,6 +71,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void dispose() {
     _name.dispose();
     _code.dispose();
+    _barcode.dispose();
     _price.dispose();
     _threshold.dispose();
     super.dispose();
@@ -86,13 +92,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return (true, value);
   }
 
+  Future<void> _scanBarcode() async {
+    final scanned = await scanOneBarcode(context);
+    if (scanned == null || !mounted) return;
+    setState(() {
+      _barcode.text = scanned;
+      _barcodeError = null;
+    });
+  }
+
   Currency? _selectedCurrency(Map<String, Currency> currencies, String base) {
     return currencies[_currencyCode ?? _initial?.currencyCode ?? base];
   }
 
   Future<void> _save(Currency currency) async {
     final l10n = AppLocalizations.of(context);
-    setState(() => _codeError = null);
+    setState(() {
+      _codeError = null;
+      _barcodeError = null;
+    });
     if (!_formKey.currentState!.validate()) return;
 
     final priceMinor = parseAmountMinor(
@@ -112,6 +130,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       setState(() => _codeError = l10n.productCodeTaken);
       return;
     }
+    final barcode = ProductRepository.normalizeBarcode(_barcode.text);
+    if (barcode != null &&
+        await repo.isBarcodeTaken(barcode, excludeId: _initial?.id)) {
+      if (!mounted) return;
+      setState(() => _barcodeError = l10n.productBarcodeTaken);
+      return;
+    }
     if (!mounted) return;
 
     setState(() => _saving = true);
@@ -119,7 +144,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       id: _initial?.id,
       name: _name.text,
       code: code,
-      barcode: _initial?.barcode,
+      barcode: barcode,
       kind: _kind,
       unitId: _kind == ProductKind.goods ? _unitId : null,
       priceMinor: priceMinor,
@@ -212,6 +237,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             textInputAction: TextInputAction.next,
           ),
+          if (barcodeEnabled) ...[
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const ValueKey('product-barcode'),
+              controller: _barcode,
+              decoration: InputDecoration(
+                labelText: l10n.productBarcode,
+                helperText: l10n.productBarcodeHint,
+                errorText: _barcodeError,
+                suffixIcon: IconButton(
+                  key: const ValueKey('product-barcode-scan'),
+                  tooltip: l10n.scanBarcodeTitle,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: _scanBarcode,
+                ),
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+          ],
           const SizedBox(height: 16),
           Text(l10n.productKind,
               style: Theme.of(context).textTheme.titleSmall),

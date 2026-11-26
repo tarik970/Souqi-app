@@ -112,6 +112,10 @@ class ExternalActionBridge implements NativeBridge {
   @override
   Future<PickedTextFile?> pickTextFile() => _external(_inner.pickTextFile);
 
+  /// The file picker of a restore.
+  @override
+  Future<PickedFile?> pickFile() => _external(_inner.pickFile);
+
   // The daily debt report: the folder picker, the share sheet with both
   // files, a file manager on the folder, the battery-optimization dialog.
 
@@ -171,11 +175,13 @@ class ExternalActionBridge implements NativeBridge {
     required String filePath,
     required String fileName,
     required String mimeType,
+    String? subfolder,
   }) =>
       _inner.saveToDownloads(
         filePath: filePath,
         fileName: fileName,
         mimeType: mimeType,
+        subfolder: subfolder,
       );
 
   @override

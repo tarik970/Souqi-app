@@ -35,11 +35,17 @@ class StagedFile {
     required this.name,
     required this.path,
     required this.mimeType,
+    this.shareable = true,
   });
 
   final String name;
   final String path;
   final String mimeType;
+
+  /// Offered by the notification's "Share" (the report). False for the
+  /// backup: it is written to the folder and its staged copy then removed —
+  /// a whole shop is not something to hand over from a notification.
+  final bool shareable;
 }
 
 /// What every output is given.
@@ -66,11 +72,11 @@ class DailyJobContext {
 /// each output's OWN keep-N rule to its OWN files ([files]); files of
 /// another output are never touched.
 ///
-/// PHASE 5 adds the encrypted backup here: a `BackupOutput` whose [files]
-/// are e.g. `souqi-backup-YYYY-MM-DD.souqibak`, whose [keepDays] is its own
-/// setting, and whose [build] writes the encrypted file into
-/// [DailyJobContext.stagingDir]. It is listed in [dailyOutputs] — nothing
-/// else in the scheduler, the worker, the fallback or the status changes.
+/// The encrypted daily backup is the second one (`BackupOutput`,
+/// lib/features/backup/auto_backup.dart): `souqi-backup-YYYY-MM-DD.souqi`,
+/// its own keep-N, its own on/off. It reaches the job through
+/// [DailyReportJob.backupOutput] rather than [dailyOutputs], because it runs
+/// with the debt report off too.
 abstract class DailyOutput {
   String get id;
 
@@ -177,6 +183,7 @@ class DailyReportJob {
     required this.featureOn,
     this.clock = DateTime.now,
     this.outputsFor = dailyOutputs,
+    this.backupOutput,
   });
 
   final Database db;
@@ -192,28 +199,50 @@ class DailyReportJob {
     required Future<ReportFonts> Function() loadFonts,
   }) outputsFor;
 
-  Future<DailyJobResult> run(ReportTrigger trigger) async {
-    if (!featureOn) return const DailyJobResult.skipped();
+  /// The daily automatic backup (phase 5): its output for this run, or null
+  /// when it is off. It has its own on/off — it runs with the debt report
+  /// (and even the whole debt ledger) off — and is never part of "Create
+  /// report now".
+  final Future<DailyOutput?> Function(Map<String, String> stored)?
+      backupOutput;
+
+  /// [lockHeld]: the caller already holds the run lock (the background
+  /// engine takes it BEFORE it opens the database, so a restore in the app
+  /// cannot swap the file under it).
+  Future<DailyJobResult> run(
+    ReportTrigger trigger, {
+    bool lockHeld = false,
+  }) async {
     final stored = await SettingsRepository(db).getAll();
     final settings = DebtReportSettings.fromMap(stored);
-    if (trigger != ReportTrigger.manual && !settings.enabled) {
-      return const DailyJobResult.skipped();
+    final reportWanted =
+        featureOn && (trigger == ReportTrigger.manual || settings.enabled);
+    final backup = trigger == ReportTrigger.manual || backupOutput == null
+        ? null
+        : await backupOutput!(stored);
+    if (!reportWanted && backup == null) return const DailyJobResult.skipped();
+    if (!lockHeld && !await platform.tryBeginRun()) {
+      return const DailyJobResult.busy();
     }
-    if (!await platform.tryBeginRun()) return const DailyJobResult.busy();
     try {
-      return await _run(settings, stored);
+      return await _run(settings, stored, report: reportWanted, backup: backup);
     } finally {
-      await platform.endRun();
+      if (!lockHeld) await platform.endRun();
     }
   }
 
   Future<DailyJobResult> _run(
     DebtReportSettings settings,
-    Map<String, String> stored,
-  ) async {
+    Map<String, String> stored, {
+    required bool report,
+    required DailyOutput? backup,
+  }) async {
     final now = clock().toLocal();
     final previous = DebtReportStatus.fromJson(await platform.loadStatus());
-    final outputs = outputsFor(settings, loadFonts: loadFonts);
+    final outputs = [
+      if (report) ...outputsFor(settings, loadFonts: loadFonts),
+      ?backup,
+    ];
     final dir = await stagingDir();
     await dir.create(recursive: true);
 
@@ -283,6 +312,16 @@ class DailyReportJob {
           outcome: ReportOutcome.failed,
           problem: ReportProblem.writeFailed,
         );
+      }
+    }
+
+    // The staged copies nobody will share (the backup) go now.
+    for (final file in staged) {
+      if (file.shareable) continue;
+      try {
+        await File(file.path).delete();
+      } on FileSystemException {
+        // Swept with the staging folder next time.
       }
     }
 
@@ -386,6 +425,7 @@ class DailyReportJob {
   }) async {
     final written = outcome != ReportOutcome.failed;
     final report = outputs.whereType<DebtReportOutput>().firstOrNull?.data;
+    final backedUp = outputs.any((o) => o.id == 'backup');
     final status = written
         ? DebtReportStatus(
             lastAttemptAt: now,
@@ -394,9 +434,14 @@ class DailyReportJob {
             problem: problem,
             location: location,
             savedToFolderUri: destination?.treeUri,
-            files: [for (final f in staged) f.path],
+            files: [
+              for (final f in staged)
+                if (f.shareable) f.path,
+            ],
             debtors: report?.summary.debtorsCount,
             outstandingBaseMinor: report?.summary.totalOutstandingBaseMinor,
+            lastBackupAt: backedUp ? now : previous.lastBackupAt,
+            backupLocation: backedUp ? location : previous.backupLocation,
           )
         // A failure keeps what the last good report said, so "Share" and
         // "Open folder" still find it.
@@ -410,13 +455,17 @@ class DailyReportJob {
             files: previous.files,
             debtors: previous.debtors,
             outstandingBaseMinor: previous.outstandingBaseMinor,
+            lastBackupAt: previous.lastBackupAt,
+            backupLocation: previous.backupLocation,
           );
     try {
       await platform.saveStatus(status.toJson());
     } on Object {
       // The files are written; a lost status only means a catch-up run.
     }
-    final notice = _notice(stored, settings, status, report);
+    final notice = report == null && backedUp
+        ? _backupNotice(stored, status)
+        : _notice(stored, settings, status, report);
     if (notice != null) {
       try {
         await platform.showNotice(notice);
@@ -488,6 +537,45 @@ class DailyReportJob {
         );
       case null:
         return null;
+    }
+  }
+}
+
+extension on DailyReportJob {
+  /// A run that made only the backup (the debt report is off): nothing to
+  /// say when it worked; a fallback or a failure is said, like the report's.
+  ReportNotice? _backupNotice(
+    Map<String, String> stored,
+    DebtReportStatus status,
+  ) {
+    final language =
+        (stored[SettingsKeys.appLanguage] ?? 'ar') == 'en' ? 'en' : 'ar';
+    final l10n = lookupAppLocalizations(Locale(language));
+    final channel = l10n.debtReportChannelName;
+    switch (status.outcome) {
+      case ReportOutcome.ok:
+      case null:
+        return null;
+      case ReportOutcome.fallback:
+        return ReportNotice(
+          channelName: channel,
+          title: l10n.backupNoticeFallback,
+          text: l10n.backupNoticeFallbackText(status.location ?? ''),
+          publicTitle: l10n.backupNoticeFallback,
+          openFolderLabel: l10n.debtReportOpenFolder,
+        );
+      case ReportOutcome.failed:
+        final reason = reportProblemText(l10n, status.problem);
+        return ReportNotice(
+          channelName: channel,
+          title: l10n.backupNoticeFailed,
+          text: l10n.backupNoticeFailedText(
+            reason.isEmpty
+                ? reason
+                : reason[0].toUpperCase() + reason.substring(1),
+          ),
+          publicTitle: l10n.backupNoticeFailed,
+        );
     }
   }
 }

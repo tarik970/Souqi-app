@@ -202,7 +202,15 @@ class DebtReportStatus {
     this.files = const [],
     this.debtors,
     this.outstandingBaseMinor,
+    this.lastBackupAt,
+    this.backupLocation,
   });
+
+  /// The last run that wrote the daily BACKUP (phase 5), and where it went.
+  /// Kept here because the background engine that makes it may not write
+  /// the database; the "no backup for 7 days" reminder reads it.
+  final DateTime? lastBackupAt;
+  final String? backupLocation;
 
   final DateTime? lastAttemptAt;
 
@@ -242,6 +250,8 @@ class DebtReportStatus {
       ],
       debtors: json['debtors'] as int?,
       outstandingBaseMinor: json['outstanding'] as int?,
+      lastBackupAt: _date(json['backupAt']),
+      backupLocation: json['backupLocation'] as String?,
     );
   }
 
@@ -255,5 +265,7 @@ class DebtReportStatus {
         'files': files,
         'debtors': debtors,
         'outstanding': outstandingBaseMinor,
+        'backupAt': lastBackupAt?.toUtc().millisecondsSinceEpoch,
+        'backupLocation': backupLocation,
       };
 }

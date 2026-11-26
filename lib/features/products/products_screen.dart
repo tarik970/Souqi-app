@@ -10,6 +10,7 @@ import '../../domain/models/product.dart';
 import '../../domain/models/unit.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../vouchers/voucher_providers.dart';
+import 'bulk_price_screen.dart';
 import 'product_form_screen.dart';
 import 'products_providers.dart';
 
@@ -42,6 +43,15 @@ class ProductsScreen extends ConsumerWidget {
                 onTap: () => ref
                     .read(productsFilterProvider.notifier)
                     .setShowInactive(!filter.showInactive),
+              ),
+              PopupMenuItem<void>(
+                key: const ValueKey('products-bulk-price'),
+                child: Text(l10n.bulkTitle),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const BulkPriceScreen(),
+                  ),
+                ),
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../config/features.dart';
 import '../data/db/app_database.dart';
@@ -11,6 +12,7 @@ import '../data/repositories/customer_repository.dart';
 import '../data/repositories/debt_repository.dart';
 import '../data/repositories/invoice_repository.dart';
 import '../data/repositories/pin_repository.dart';
+import '../data/repositories/price_change_repository.dart';
 import '../data/repositories/product_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/stats_repository.dart';
@@ -28,12 +30,38 @@ final databaseProvider = Provider<AppDatabase>(
   (ref) => throw StateError('databaseProvider must be overridden in main()'),
 );
 
+/// What opens database files: sqflite on the phone; tests override it with
+/// sqflite_common_ffi. Backups use it for the snapshot and the restore.
+final databaseFactoryProvider = Provider<DatabaseFactory>(
+  (ref) => databaseFactory,
+);
+
+/// RESTARTS THE APP STATE on another database — after a restore: every
+/// provider, the cipher with its loaded keys and every screen are built
+/// again from scratch (see `SouqiRoot` in main.dart). The default does
+/// nothing (tests that pump a screen have no root to restart).
+final appRestartProvider = Provider<
+    Future<void> Function(AppDatabase db, AppRestartNotice? notice)>(
+  (ref) => (_, _) async {},
+);
+
+/// What the app says once it has started over (see [appRestartProvider]).
+enum AppRestartNotice { restored, restoreFailed }
+
+/// The notice of THIS start, shown once over the first screen; null on a
+/// normal start.
+final appStartNoticeProvider = Provider<AppRestartNotice?>((ref) => null);
+
 final settingsRepositoryProvider = Provider<SettingsRepository>(
   (ref) => SettingsRepository(ref.watch(databaseProvider).db),
 );
 
 final productRepositoryProvider = Provider<ProductRepository>(
   (ref) => ProductRepository(ref.watch(databaseProvider).db),
+);
+
+final priceChangeRepositoryProvider = Provider<PriceChangeRepository>(
+  (ref) => PriceChangeRepository(ref.watch(databaseProvider).db),
 );
 
 final unitRepositoryProvider = Provider<UnitRepository>(

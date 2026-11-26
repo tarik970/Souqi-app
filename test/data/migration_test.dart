@@ -9,7 +9,9 @@ import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/data/repositories/debt_repository.dart';
 import 'package:souqi/data/repositories/archive_repository.dart';
 import 'package:souqi/data/repositories/audit_repository.dart';
+import 'package:souqi/data/repositories/price_change_repository.dart';
 import 'package:souqi/data/repositories/product_repository.dart';
+import 'package:souqi/domain/models/price_change.dart';
 import 'package:souqi/data/repositories/voucher_repository.dart';
 import 'package:souqi/domain/models/voucher.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -32,8 +34,8 @@ void main() {
   group('schema', () {
     test('user_version is the latest migration', () async {
       final rows = await db.rawQuery('PRAGMA user_version');
-      expect(rows.first.values.first, 5);
-      expect(AppDatabase.schemaVersion, 5);
+      expect(rows.first.values.first, 6);
+      expect(AppDatabase.schemaVersion, 6);
     });
 
     test('foreign keys are enforced', () async {
@@ -690,7 +692,8 @@ void main() {
       final upgraded =
           await AppDatabase.open(factory: databaseFactoryFfi, path: path);
       final db = upgraded.db;
-      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 5);
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first,
+          AppDatabase.schemaVersion);
 
       // Not a row lost, in any table; the scratch copy is gone.
       expect(await counts(db), before);
@@ -877,6 +880,103 @@ void main() {
               "WHERE name = 'debt_transactions'"))
           .single['sql'] as String;
       expect(sql, contains('AUTOINCREMENT'));
+    });
+  });
+
+  group('v5 → v6 (bulk price change undo)', () {
+    Future<Database> openV5(String path) => databaseFactoryFfi.openDatabase(
+          path,
+          options: OpenDatabaseOptions(
+            version: 5,
+            onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+            onCreate: (db, _) async {
+              for (final m in AppDatabase.migrations) {
+                if (m.version <= 5) await m.apply(db);
+              }
+            },
+          ),
+        );
+
+    test('a populated version-5 database upgrades without losing a row',
+        () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v5_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV5(path);
+      final sugar = await insertProduct(old, name: 'Sugar', code: '101');
+      final tea = await insertProduct(old, name: 'Tea', code: '102');
+      final ahmad = await insertCustomer(old);
+      final invoice = await insertInvoice(old, invoiceNo: 1);
+      await insertInvoiceItem(old, invoiceId: invoice, productId: sugar);
+      await DebtRepository(old).addManualDebt(
+        customerId: ahmad,
+        amountBaseMinor: 5000,
+      );
+      Future<Map<String, int>> counts(DatabaseExecutor db) async => {
+            for (final table in [
+              'products',
+              'customers',
+              'invoices',
+              'invoice_items',
+              'debt_transactions',
+              'settings',
+              'audit_log',
+            ])
+              table: (await db.rawQuery('SELECT COUNT(*) FROM $table'))
+                  .first
+                  .values
+                  .first! as int,
+          };
+      final before = await counts(old);
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      final db = upgraded.db;
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 6);
+      expect(await counts(db), before);
+      expect(await db.query('price_changes'), isEmpty);
+      expect(await db.query('price_change_items'), isEmpty);
+      expect(await db.rawQuery('PRAGMA foreign_key_check'), isEmpty);
+
+      // The new tables work on the old rows…
+      final prices = PriceChangeRepository(db);
+      final plan = await prices.preview(
+        basisPoints: 1000,
+        rounding: PriceRounding.none,
+        scope: PriceChangeScope.all,
+      );
+      expect(await prices.apply(plan), 2);
+      expect((await ProductRepository(db).getById(sugar))!.priceMinor, 1100);
+      // …and a deleted product takes its undo line with it.
+      await db.delete('products', where: 'id = ?', whereArgs: [tea]);
+      expect(await db.query('price_change_items'), hasLength(1));
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('a database from a NEWER version is refused, not relabelled',
+        () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_newer_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      await (await AppDatabase.open(factory: databaseFactoryFfi, path: path))
+          .close();
+      final raw = await databaseFactoryFfi.openDatabase(path);
+      await raw.execute('PRAGMA user_version = 99');
+      await raw.close();
+
+      await expectLater(
+        AppDatabase.open(factory: databaseFactoryFfi, path: path),
+        throwsA(isA<NewerDatabaseException>()),
+      );
+      expect(
+        await AppDatabase.fileVersion(path, factory: databaseFactoryFfi),
+        99,
+        reason: 'the file is left as it was',
+      );
+      await databaseFactoryFfi.deleteDatabase(path);
     });
   });
 

@@ -20,4 +20,7 @@ class SecureStorageKeyStore implements SecretKeyStore {
   @override
   Future<void> write(String name, String value) =>
       _storage.write(key: name, value: value);
+
+  @override
+  Future<void> delete(String name) => _storage.delete(key: name);
 }

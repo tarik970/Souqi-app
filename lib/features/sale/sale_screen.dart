@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,8 +26,10 @@ import '../invoice/invoice_providers.dart';
 import '../products/products_providers.dart';
 import '../settings/storage_providers.dart';
 import '../stats/stats_providers.dart';
+import '../vouchers/code_scan_screen.dart';
 import '../vouchers/voucher_providers.dart';
 import 'cash_received.dart';
+import 'new_barcode_item_dialog.dart';
 import 'discount_sheet.dart';
 import 'payment_sheet.dart';
 import 'quantity_sheet.dart';
@@ -50,6 +53,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onHardwareKey);
     _search.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -92,7 +96,11 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
   /// with the price empty and selected, quantity 1, the unit of the previous
   /// new item, kind GOODS, the base currency. The line goes straight into the
   /// cart; the product itself is only created when the invoice is saved.
-  Future<void> _startNewItem(String name) async {
+  ///
+  /// [barcode]: started from a barcode no product has ("new product with
+  /// this barcode"): the product made on save gets it, and is saved even
+  /// with "save new items" off — that is what the seller just asked for.
+  Future<void> _startNewItem(String name, {String? barcode}) async {
     final settingsRepository = ref.read(settingsRepositoryProvider);
     final locale = _locale;
     // All three are requested before the first await (see _lineFor).
@@ -112,7 +120,8 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         unitPriceMinor: 0,
         priceCurrencyCode: ctx.baseCode,
         qtyThousandths: 1000,
-        saveAsProduct: saleSettings.saveNewItems,
+        saveAsProduct: barcode != null || saleSettings.saveNewItems,
+        barcode: barcode,
       ),
       startAtPrice: true,
     );
@@ -174,35 +183,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     final byCode = await repository.getByExactCode(raw);
     if (!mounted) return;
     if (byCode != null) {
-      final line = await _lineFor(byCode);
-      if (!mounted) return;
-      // No sheet on this path, so the stock check the sheet makes for a
-      // card product is made here: one more must still be in stock.
-      if (line.codeStock) {
-        final locale = _locale;
-        final stock = await ref.read(voucherAvailabilityProvider.future);
-        if (!mounted) return;
-        final have = stock[byCode.id] ?? 0;
-        final wanted =
-            (ref.read(cartProvider).codeStockQuantities[byCode.id] ?? 0) + 1;
-        if (wanted > have) {
-          messenger
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(
-              content: Text(have == 0
-                  ? l10n.stockOutWarning(byCode.name)
-                  : l10n.codeStockShort(
-                      byCode.name,
-                      formatMinor(wanted, decimals: 0, locale: locale),
-                      formatMinor(have, decimals: 0, locale: locale),
-                    )),
-            ));
-          return;
-        }
-      }
-      ref.read(cartProvider.notifier).add(line);
-      _clearSearch();
-      _searchFocus.requestFocus();
+      await _addOne(byCode);
       return;
     }
 
@@ -214,12 +195,133 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       return;
     }
     if (_digitsOnly.hasMatch(normalizeCode(results.query))) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.codeNotFound(results.query))),
-      );
+      // A hardware scanner typed it, or a code was mistyped: never an item
+      // by itself — but one tap makes it a new product with this barcode.
+      final code = results.query;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(l10n.codeNotFound(code)),
+          action: barcodeEnabled
+              ? SnackBarAction(
+                  key: const ValueKey('code-not-found-new'),
+                  label: l10n.newProductWithBarcode,
+                  onPressed: () => _offerNewProduct(code),
+                )
+              : null,
+        ));
+      // Ready for the next scan.
+      _searchFocus.requestFocus();
       return;
     }
     await _startNewItem(results.query);
+  }
+
+  /// A known code or barcode: straight into the cart with quantity 1.
+  Future<void> _addOne(Product product) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final line = await _lineFor(product);
+    if (!mounted) return;
+    // No sheet on this path, so the stock check the sheet makes for a
+    // card product is made here: one more must still be in stock.
+    if (line.codeStock) {
+      final locale = _locale;
+      final stock = await ref.read(voucherAvailabilityProvider.future);
+      if (!mounted) return;
+      final have = stock[product.id] ?? 0;
+      final wanted =
+          (ref.read(cartProvider).codeStockQuantities[product.id] ?? 0) + 1;
+      if (wanted > have) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text(have == 0
+                ? l10n.stockOutWarning(product.name)
+                : l10n.codeStockShort(
+                    product.name,
+                    formatMinor(wanted, decimals: 0, locale: locale),
+                    formatMinor(have, decimals: 0, locale: locale),
+                  )),
+          ));
+        return;
+      }
+    }
+    ref.read(cartProvider.notifier).add(line);
+    _clearSearch();
+    _searchFocus.requestFocus();
+  }
+
+  /// The camera: a known barcode adds its product, an unknown one offers a
+  /// new product with it.
+  Future<void> _scan() async {
+    final repository = ref.read(productRepositoryProvider);
+    final scanned = await scanOneBarcode(context);
+    if (scanned == null || !mounted) return;
+    final product = await repository.getByExactCode(scanned);
+    if (!mounted) return;
+    if (product != null) {
+      await _addOne(product);
+    } else {
+      await _offerNewProduct(scanned);
+    }
+  }
+
+  /// "No product has this barcode — new product?": asks for the name, then
+  /// the usual type-to-sell sheet (price first) with the barcode attached.
+  Future<void> _offerNewProduct(String barcode) async {
+    if (!mounted) return;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => NewBarcodeItemDialog(barcode: barcode),
+    );
+    if (name == null || name.trim().isEmpty || !mounted) return;
+    await _startNewItem(name.trim(), barcode: barcode);
+  }
+
+  // ---- Hardware barcode scanners ----------------------------------------
+  //
+  // A USB / Bluetooth scanner is a keyboard: it types the code and Enter.
+  // With the search box focused that is simply `_submitSearch`. When the
+  // focus is elsewhere (the seller tapped the cart), the first keystrokes
+  // would be lost — so while this screen is on top and no other text field
+  // has the focus, typed characters go into the search box, and Enter
+  // submits it.
+
+  bool _onHardwareKey(KeyEvent event) {
+    if (event is! KeyDownEvent || _searchFocus.hasFocus || !mounted) {
+      return false;
+    }
+    final route = ModalRoute.of(context);
+    if (route == null || !route.isCurrent) return false;
+    final focused = FocusManager.instance.primaryFocus?.context?.widget;
+    if (focused is EditableText) return false;
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      if (_search.text.trim().isEmpty) return false;
+      _submitSearch(_search.text);
+      return true;
+    }
+    final character = event.character;
+    if (character == null ||
+        character.isEmpty ||
+        character.codeUnitAt(0) < 0x20) {
+      return false;
+    }
+    final text = _search.text + character;
+    _search.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    ref.read(saleSearchProvider.notifier).set(text);
+    _searchFocus.requestFocus();
+    return true;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_onHardwareKey);
   }
 
   Future<void> _addQuickItem() async {
@@ -465,6 +567,13 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       appBar: AppBar(
         title: Text(l10n.navSale),
         actions: [
+          if (barcodeEnabled)
+            IconButton(
+              key: const ValueKey('sale-scan'),
+              tooltip: l10n.scanBarcodeTitle,
+              icon: const Icon(Icons.qr_code_scanner),
+              onPressed: _scan,
+            ),
           PopupMenuButton<void>(
             itemBuilder: (context) => [
               PopupMenuItem<void>(

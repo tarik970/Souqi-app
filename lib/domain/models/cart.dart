@@ -76,6 +76,7 @@ class CartLine {
     this.listCurrencyCode,
     this.requiresAccount = false,
     this.codeStock = false,
+    this.barcode,
   });
 
   /// Stable identity inside one cart (not a database id).
@@ -117,6 +118,10 @@ class CartLine {
   /// prepaid card code when the invoice is saved. Such a line is sold in
   /// whole cards and never beyond what is in stock.
   final bool codeStock;
+
+  /// For a typed item started from an unknown barcode ("new product with
+  /// this barcode"): the product created on save gets it.
+  final String? barcode;
 
   /// A typed item that becomes a product when the invoice is saved.
   bool get createsProduct => productId == null && saveAsProduct;
@@ -176,6 +181,7 @@ class CartLine {
       listCurrencyCode: listCurrencyCode,
       requiresAccount: requiresAccount,
       codeStock: codeStock,
+      barcode: barcode,
     );
   }
 }

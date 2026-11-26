@@ -57,6 +57,12 @@ import 'package:souqi/features/vouchers/add_batch_screen.dart';
 import 'package:souqi/features/vouchers/code_widgets.dart';
 import 'package:souqi/features/vouchers/product_stock_screen.dart';
 import 'package:souqi/features/debts/report/debt_report_settings_screen.dart';
+import 'package:souqi/core/backup/backup_crypto.dart';
+import 'package:souqi/core/backup/backup_file.dart';
+import 'package:souqi/features/backup/backup_dialogs.dart';
+import 'package:souqi/features/backup/backup_screen.dart';
+import 'package:souqi/features/products/bulk_price_screen.dart';
+import 'package:souqi/features/sale/new_barcode_item_dialog.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -1433,6 +1439,92 @@ void main() {
       shown: find.byType(DebtReportSettingsScreen),
       isPage: true,
     ),
+    // ---- Phase 5: bulk prices, barcodes, backup & restore -----------------
+    Closable(
+      'change-prices page',
+      home: host((context) => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const BulkPriceScreen()),
+          )),
+      open: openHost,
+      shown: find.byType(BulkPriceScreen),
+      isPage: true,
+    ),
+    Closable(
+      'product chooser of the price change',
+      home: host((context) => Navigator.of(context).push(
+            MaterialPageRoute<Set<int>>(
+              fullscreenDialog: true,
+              builder: (_) => const ProductChooserScreen(),
+            ),
+          )),
+      open: openHost,
+      shown: find.byType(ProductChooserScreen),
+      isPage: true,
+    ),
+    Closable(
+      '"new product with this barcode" dialog',
+      home: host((context) => showDialog<String>(
+            context: context,
+            builder: (_) => const NewBarcodeItemDialog(barcode: '6221234567890'),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('new-barcode-dialog')),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'backup & restore page',
+      home: host((context) => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
+          )),
+      open: openHost,
+      shown: find.byType(BackupScreen),
+      isPage: true,
+    ),
+    Closable(
+      'backup password dialog',
+      home: host((context) => showDialog<String>(
+            context: context,
+            builder: (_) => const BackupPasswordDialog(title: 'Password'),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('backup-password-dialog')),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'backup unlock dialog of a restore',
+      home: host((context) => showDialog<Object>(
+            context: context,
+            builder: (_) => BackupUnlockDialog(
+              manifest: _sampleManifest,
+              unlock: (_) async => throw const WrongBackupPasswordException(),
+            ),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('backup-unlock-dialog')),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'restore confirmation dialog',
+      home: host((context) => showDialog<bool>(
+            context: context,
+            builder: (_) => RestoreConfirmDialog(manifest: _sampleManifest),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('restore-confirm-dialog')),
+      button: cancel,
+    ),
+    Closable(
+      'where-to-save sheet of a backup',
+      home: host((context) => showModalBottomSheet<BackupDestination>(
+            context: context,
+            builder: (_) => const BackupDestinationSheet(folderName: 'USB'),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('backup-destination-sheet')),
+    ),
   ];
 
   setUp(() async {
@@ -1626,3 +1718,19 @@ void main() {
     });
   });
 }
+
+/// A backup as the restore dialogs show it.
+final _sampleManifest = BackupManifest(
+  appVersion: '1.0.0+1',
+  schemaVersion: 6,
+  createdAt: DateTime.utc(2026, 11, 25, 21, 30),
+  counts: const BackupCounts(
+    invoices: 1204,
+    customers: 85,
+    products: 310,
+    codes: 2000,
+    debtEntries: 940,
+  ),
+  files: const [],
+  kdf: const BackupKdf(iterations: 1000, salt: [1, 2, 3, 4, 5, 6, 7, 8]),
+);

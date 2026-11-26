@@ -5,6 +5,7 @@ import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../backup/backup_screen.dart';
 import '../currencies/currencies_screen.dart';
 import '../debts/debt_settings.dart';
 import '../debts/report/debt_report_settings_screen.dart';
@@ -39,6 +40,8 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          // "No backup in the last 7 days": first thing on the page.
+          const BackupReminderBanner(),
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.setupLanguage),
@@ -212,6 +215,17 @@ class SettingsScreen extends ConsumerWidget {
           const PinSettingsTile(),
           const AuditLogTile(),
           const PinAutoLockTile(),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              l10n.backupSection,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+          const BackupSettingsTile(),
           const Divider(),
           if (ref.watch(debtFeatureProvider)) ...[
             Padding(
