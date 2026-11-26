@@ -3002,4 +3002,368 @@ class AppLocalizationsEn extends AppLocalizations {
   String printerCalibrationInfo(String dots, String offset) {
     return 'Width $dots dots · offset $offset';
   }
+
+  @override
+  String get reportTitle => 'Debt report';
+
+  @override
+  String get reportSheetSummary => 'Summary';
+
+  @override
+  String get reportSheetDebtors => 'Debtors';
+
+  @override
+  String get reportSheetMovements => 'Today\'s movements';
+
+  @override
+  String get reportSheetBalances => 'All balances';
+
+  @override
+  String get reportGeneratedAt => 'Generated';
+
+  @override
+  String get reportShop => 'Shop';
+
+  @override
+  String get reportCurrency => 'Currency';
+
+  @override
+  String get reportTotalOutstanding => 'Total outstanding';
+
+  @override
+  String get reportDebtorsCount => 'Number of debtors';
+
+  @override
+  String get reportOverdueCount => 'Overdue debtors';
+
+  @override
+  String get reportCreditBalances => 'Credit balances (owed to customers)';
+
+  @override
+  String get reportAgingHeading => 'Age of the unpaid debt';
+
+  @override
+  String get reportCollectedToday => 'Collected today';
+
+  @override
+  String get reportNewDebtToday => 'New debt today';
+
+  @override
+  String get reportColCustomer => 'Customer';
+
+  @override
+  String get reportColPhone => 'Phone';
+
+  @override
+  String get reportColBalance => 'Balance';
+
+  @override
+  String get reportColOldestUnpaid => 'Oldest unpaid';
+
+  @override
+  String get reportColOverdue => 'Overdue';
+
+  @override
+  String get reportColTime => 'Written at';
+
+  @override
+  String get reportColDate => 'Date';
+
+  @override
+  String get reportColEntry => 'Entry';
+
+  @override
+  String get reportColDebit => 'Debit (owes more)';
+
+  @override
+  String get reportColCredit => 'Credit (owes less)';
+
+  @override
+  String get reportColReceiptNo => 'Receipt no.';
+
+  @override
+  String get reportColInvoiceNo => 'Invoice no.';
+
+  @override
+  String get reportColMethod => 'Method';
+
+  @override
+  String get reportColNote => 'Note';
+
+  @override
+  String get reportColStatus => 'Status';
+
+  @override
+  String get reportColActive => 'Active';
+
+  @override
+  String get reportYes => 'Yes';
+
+  @override
+  String get reportNo => 'No';
+
+  @override
+  String get reportReversed => 'Reversed';
+
+  @override
+  String get reportStatusOwes => 'Owes';
+
+  @override
+  String get reportStatusCredit => 'Credit';
+
+  @override
+  String get reportStatusSettled => 'Settled';
+
+  @override
+  String get reportNoDebtors => 'No customer owes anything.';
+
+  @override
+  String reportPageOf(String page, String pages) {
+    return 'Page $page of $pages';
+  }
+
+  @override
+  String get debtReportTitle => 'Daily debt report';
+
+  @override
+  String get debtReportIntro =>
+      'Every day Souqi saves a file of all debts by itself — on this phone or in a folder you choose. Nothing is ever sent from the app.';
+
+  @override
+  String get debtReportOff => 'Off';
+
+  @override
+  String get debtReportTimeLabel => 'Time of day';
+
+  @override
+  String get debtReportTimeHint =>
+      'Around this time: battery saving can delay it.';
+
+  @override
+  String get debtReportFormatsLabel => 'Formats';
+
+  @override
+  String get debtReportFormatXlsx => 'Excel (.xlsx)';
+
+  @override
+  String get debtReportFormatPdf => 'PDF';
+
+  @override
+  String get debtReportFormatNeedOne => 'Keep at least one format.';
+
+  @override
+  String get debtReportFolderLabel => 'Destination folder';
+
+  @override
+  String get debtReportFolderDownloads =>
+      'Download/Souqi/Reports (on this phone)';
+
+  @override
+  String get debtReportFolderWhy =>
+      'Choose a folder on an SD card, a USB drive or a cloud app (e.g. Google Drive): that is what keeps the debts safe if the phone breaks or is lost.';
+
+  @override
+  String get debtReportFolderOnPhone =>
+      'This stays on the phone: if the phone breaks or is lost, the reports go with it.';
+
+  @override
+  String get debtReportFolderKindPhone => 'On this phone';
+
+  @override
+  String get debtReportFolderKindRemovable => 'SD card / USB drive';
+
+  @override
+  String get debtReportFolderKindCloud => 'Cloud app';
+
+  @override
+  String get debtReportChooseFolder => 'Choose folder';
+
+  @override
+  String get debtReportUseDownloads => 'Use Downloads';
+
+  @override
+  String get debtReportFolderChanged => 'Folder changed';
+
+  @override
+  String get debtReportKeepLabel => 'Keep reports of';
+
+  @override
+  String get debtReportKeepHint =>
+      'The reports of the last days that have one stay; older ones are deleted from the folder. Only Souqi\'s own report files are ever deleted.';
+
+  @override
+  String get debtReportNotifyLabel => 'Notify me when ready';
+
+  @override
+  String get debtReportNotifyHint =>
+      'A notification with Share and Open folder.';
+
+  @override
+  String get debtReportNotificationsBlocked =>
+      'Notifications are turned off for Souqi in the phone\'s settings.';
+
+  @override
+  String get debtReportAllowNotifications => 'Allow';
+
+  @override
+  String get debtReportBatteryTitle => 'Battery saving may delay the report';
+
+  @override
+  String get debtReportBatteryHint =>
+      'To save battery, Android can hold work back for hours. Exempting Souqi lets the report be made close to its time. Souqi does nothing else in the background.';
+
+  @override
+  String get debtReportBatteryButton => 'Exempt Souqi';
+
+  @override
+  String get debtReportBatteryOk =>
+      'Souqi is exempt from battery optimization.';
+
+  @override
+  String get debtReportBatteryLater => 'Not now';
+
+  @override
+  String get debtReportRunNow => 'Create report now';
+
+  @override
+  String get debtReportRunning => 'Creating the report…';
+
+  @override
+  String get debtReportBusy => 'A report is already being made.';
+
+  @override
+  String debtReportRunDone(String location) {
+    return 'Report saved to $location';
+  }
+
+  @override
+  String debtReportRunFallback(String location) {
+    return 'The folder is not available — saved to $location instead';
+  }
+
+  @override
+  String debtReportRunFailed(String reason) {
+    return 'The report could not be saved: $reason';
+  }
+
+  @override
+  String debtReportLastOk(String when) {
+    return 'Last report: $when ✓';
+  }
+
+  @override
+  String debtReportLastFallback(String when) {
+    return 'Last report: $when — saved to Downloads (folder not available)';
+  }
+
+  @override
+  String debtReportLastFailed(String reason) {
+    return 'Failed: $reason';
+  }
+
+  @override
+  String get debtReportNever => 'No report yet';
+
+  @override
+  String debtReportNext(String when) {
+    return 'Next report: $when';
+  }
+
+  @override
+  String debtReportToday(String time) {
+    return 'today $time';
+  }
+
+  @override
+  String debtReportYesterday(String time) {
+    return 'yesterday $time';
+  }
+
+  @override
+  String debtReportTomorrow(String time) {
+    return 'tomorrow $time';
+  }
+
+  @override
+  String get debtReportProblemFolder => 'folder not available';
+
+  @override
+  String get debtReportProblemWrite => 'the file could not be written';
+
+  @override
+  String get debtReportProblemUnknown => 'unexpected error';
+
+  @override
+  String get debtReportShare => 'Share';
+
+  @override
+  String get debtReportOpenFolder => 'Open folder';
+
+  @override
+  String get debtReportFilesGone =>
+      'The report files are no longer on this phone. Create the report again.';
+
+  @override
+  String get debtReportFolderCannotOpen =>
+      'No app on this phone can open the folder.';
+
+  @override
+  String get debtReportFolderPickFailed =>
+      'The folder picker could not be opened.';
+
+  @override
+  String get pinReasonDebtReport =>
+      'The report holds customers\' names, phones and balances. Enter the PIN.';
+
+  @override
+  String get auditDebtReportOn => 'Daily debt report turned on';
+
+  @override
+  String get auditDebtReportOff => 'Daily debt report turned off';
+
+  @override
+  String get auditDebtReportFolder => 'Debt report folder changed';
+
+  @override
+  String auditDetailFolder(String name) {
+    return 'Folder: $name';
+  }
+
+  @override
+  String get debtReportChannelName => 'Debt reports';
+
+  @override
+  String get debtReportNoticeReady => 'Debt report ready';
+
+  @override
+  String debtReportNoticeReadyText(int count, String amount) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString debtors, $amount outstanding',
+      one: '1 debtor, $amount outstanding',
+      zero: 'No customer owes anything',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get debtReportNoticeFallback => 'Debt report saved to Downloads';
+
+  @override
+  String debtReportNoticeFallbackText(String location) {
+    return 'The chosen folder is not available (its permission was removed, or the SD card or USB drive is not there). The report was saved to $location instead. Choose the folder again in Settings → Debts → Daily debt report.';
+  }
+
+  @override
+  String get debtReportNoticeFailed => 'Debt report failed';
+
+  @override
+  String debtReportNoticeFailedText(String reason) {
+    return '$reason. Open Settings → Debts → Daily debt report to try again.';
+  }
 }

@@ -3013,4 +3013,365 @@ class AppLocalizationsAr extends AppLocalizations {
   String printerCalibrationInfo(String dots, String offset) {
     return 'العرض $dots نقطة · الإزاحة $offset';
   }
+
+  @override
+  String get reportTitle => 'تقرير الديون';
+
+  @override
+  String get reportSheetSummary => 'الملخص';
+
+  @override
+  String get reportSheetDebtors => 'المدينون';
+
+  @override
+  String get reportSheetMovements => 'حركات اليوم';
+
+  @override
+  String get reportSheetBalances => 'كل الأرصدة';
+
+  @override
+  String get reportGeneratedAt => 'تاريخ الإنشاء';
+
+  @override
+  String get reportShop => 'المحل';
+
+  @override
+  String get reportCurrency => 'العملة';
+
+  @override
+  String get reportTotalOutstanding => 'إجمالي الديون المستحقة';
+
+  @override
+  String get reportDebtorsCount => 'عدد المدينين';
+
+  @override
+  String get reportOverdueCount => 'مدينون متأخرون';
+
+  @override
+  String get reportCreditBalances => 'أرصدة دائنة (للزبائن)';
+
+  @override
+  String get reportAgingHeading => 'عمر الدين غير المسدد';
+
+  @override
+  String get reportCollectedToday => 'المحصّل اليوم';
+
+  @override
+  String get reportNewDebtToday => 'ديون جديدة اليوم';
+
+  @override
+  String get reportColCustomer => 'الزبون';
+
+  @override
+  String get reportColPhone => 'الهاتف';
+
+  @override
+  String get reportColBalance => 'الرصيد';
+
+  @override
+  String get reportColOldestUnpaid => 'أقدم دين غير مسدد';
+
+  @override
+  String get reportColOverdue => 'متأخر';
+
+  @override
+  String get reportColTime => 'وقت التسجيل';
+
+  @override
+  String get reportColDate => 'التاريخ';
+
+  @override
+  String get reportColEntry => 'الحركة';
+
+  @override
+  String get reportColDebit => 'مدين (عليه)';
+
+  @override
+  String get reportColCredit => 'دائن (له)';
+
+  @override
+  String get reportColReceiptNo => 'رقم السند';
+
+  @override
+  String get reportColInvoiceNo => 'رقم الفاتورة';
+
+  @override
+  String get reportColMethod => 'طريقة الدفع';
+
+  @override
+  String get reportColNote => 'ملاحظة';
+
+  @override
+  String get reportColStatus => 'الحالة';
+
+  @override
+  String get reportColActive => 'نشط';
+
+  @override
+  String get reportYes => 'نعم';
+
+  @override
+  String get reportNo => 'لا';
+
+  @override
+  String get reportReversed => 'معكوسة';
+
+  @override
+  String get reportStatusOwes => 'عليه';
+
+  @override
+  String get reportStatusCredit => 'له';
+
+  @override
+  String get reportStatusSettled => 'مسدد';
+
+  @override
+  String get reportNoDebtors => 'لا يوجد زبون عليه دين.';
+
+  @override
+  String reportPageOf(String page, String pages) {
+    return 'صفحة $page من $pages';
+  }
+
+  @override
+  String get debtReportTitle => 'تقرير الديون اليومي';
+
+  @override
+  String get debtReportIntro =>
+      'يحفظ سوقي كل يوم ملفاً بكل الديون من تلقاء نفسه، على الهاتف أو في مجلد تختاره. لا يُرسل التطبيق أي شيء بنفسه.';
+
+  @override
+  String get debtReportOff => 'متوقف';
+
+  @override
+  String get debtReportTimeLabel => 'وقت التقرير';
+
+  @override
+  String get debtReportTimeHint =>
+      'في حدود هذا الوقت: قد يؤخره توفير البطارية.';
+
+  @override
+  String get debtReportFormatsLabel => 'الصيغ';
+
+  @override
+  String get debtReportFormatXlsx => 'ملف Excel (.xlsx)';
+
+  @override
+  String get debtReportFormatPdf => 'PDF';
+
+  @override
+  String get debtReportFormatNeedOne => 'اترك صيغة واحدة على الأقل.';
+
+  @override
+  String get debtReportFolderLabel => 'مجلد الحفظ';
+
+  @override
+  String get debtReportFolderDownloads =>
+      'Download/Souqi/Reports (على هذا الهاتف)';
+
+  @override
+  String get debtReportFolderWhy =>
+      'اختر مجلداً على بطاقة ذاكرة أو فلاشة USB أو في تطبيق سحابي (مثل Google Drive): هذا ما يحمي الديون إذا تعطل الهاتف أو ضاع.';
+
+  @override
+  String get debtReportFolderOnPhone =>
+      'هذا المجلد على الهاتف نفسه: إذا تعطل الهاتف أو ضاع ضاعت التقارير معه.';
+
+  @override
+  String get debtReportFolderKindPhone => 'على هذا الهاتف';
+
+  @override
+  String get debtReportFolderKindRemovable => 'بطاقة ذاكرة / فلاشة USB';
+
+  @override
+  String get debtReportFolderKindCloud => 'تطبيق سحابي';
+
+  @override
+  String get debtReportChooseFolder => 'اختيار مجلد';
+
+  @override
+  String get debtReportUseDownloads => 'استخدام التنزيلات';
+
+  @override
+  String get debtReportFolderChanged => 'تم تغيير المجلد';
+
+  @override
+  String get debtReportKeepLabel => 'الاحتفاظ بتقارير';
+
+  @override
+  String get debtReportKeepHint =>
+      'تبقى تقارير آخر الأيام التي لها تقرير، ويُحذف الأقدم من المجلد. لا يحذف سوقي إلا ملفات تقاريره هو.';
+
+  @override
+  String get debtReportNotifyLabel => 'أعلمني عند الجاهزية';
+
+  @override
+  String get debtReportNotifyHint => 'إشعار فيه «مشاركة» و«فتح المجلد».';
+
+  @override
+  String get debtReportNotificationsBlocked =>
+      'الإشعارات متوقفة لسوقي في إعدادات الهاتف.';
+
+  @override
+  String get debtReportAllowNotifications => 'السماح';
+
+  @override
+  String get debtReportBatteryTitle => 'قد يؤخر توفير البطارية التقرير';
+
+  @override
+  String get debtReportBatteryHint =>
+      'لتوفير البطارية قد يؤجل أندرويد المهام ساعات. استثناء سوقي يجعل التقرير يُنشأ قريباً من وقته. لا يفعل سوقي أي شيء آخر في الخلفية.';
+
+  @override
+  String get debtReportBatteryButton => 'استثناء سوقي';
+
+  @override
+  String get debtReportBatteryOk => 'سوقي مستثنى من تحسين البطارية.';
+
+  @override
+  String get debtReportBatteryLater => 'ليس الآن';
+
+  @override
+  String get debtReportRunNow => 'إنشاء التقرير الآن';
+
+  @override
+  String get debtReportRunning => 'جارٍ إنشاء التقرير…';
+
+  @override
+  String get debtReportBusy => 'يجري إنشاء تقرير الآن.';
+
+  @override
+  String debtReportRunDone(String location) {
+    return 'حُفظ التقرير في $location';
+  }
+
+  @override
+  String debtReportRunFallback(String location) {
+    return 'المجلد غير متاح — حُفظ التقرير في $location بدلاً منه';
+  }
+
+  @override
+  String debtReportRunFailed(String reason) {
+    return 'تعذر حفظ التقرير: $reason';
+  }
+
+  @override
+  String debtReportLastOk(String when) {
+    return 'آخر تقرير: $when ✓';
+  }
+
+  @override
+  String debtReportLastFallback(String when) {
+    return 'آخر تقرير: $when — حُفظ في التنزيلات (المجلد غير متاح)';
+  }
+
+  @override
+  String debtReportLastFailed(String reason) {
+    return 'فشل: $reason';
+  }
+
+  @override
+  String get debtReportNever => 'لا يوجد تقرير بعد';
+
+  @override
+  String debtReportNext(String when) {
+    return 'التقرير القادم: $when';
+  }
+
+  @override
+  String debtReportToday(String time) {
+    return 'اليوم $time';
+  }
+
+  @override
+  String debtReportYesterday(String time) {
+    return 'أمس $time';
+  }
+
+  @override
+  String debtReportTomorrow(String time) {
+    return 'غداً $time';
+  }
+
+  @override
+  String get debtReportProblemFolder => 'المجلد غير متاح';
+
+  @override
+  String get debtReportProblemWrite => 'تعذرت كتابة الملف';
+
+  @override
+  String get debtReportProblemUnknown => 'خطأ غير متوقع';
+
+  @override
+  String get debtReportShare => 'مشاركة';
+
+  @override
+  String get debtReportOpenFolder => 'فتح المجلد';
+
+  @override
+  String get debtReportFilesGone =>
+      'ملفات التقرير لم تعد على هذا الهاتف. أنشئ التقرير من جديد.';
+
+  @override
+  String get debtReportFolderCannotOpen =>
+      'لا يوجد تطبيق على هذا الهاتف يفتح المجلد.';
+
+  @override
+  String get debtReportFolderPickFailed => 'تعذر فتح نافذة اختيار المجلد.';
+
+  @override
+  String get pinReasonDebtReport =>
+      'التقرير فيه أسماء الزبائن وهواتفهم وأرصدتهم. أدخل الرمز.';
+
+  @override
+  String get auditDebtReportOn => 'تشغيل تقرير الديون اليومي';
+
+  @override
+  String get auditDebtReportOff => 'إيقاف تقرير الديون اليومي';
+
+  @override
+  String get auditDebtReportFolder => 'تغيير مجلد تقرير الديون';
+
+  @override
+  String auditDetailFolder(String name) {
+    return 'المجلد: $name';
+  }
+
+  @override
+  String get debtReportChannelName => 'تقارير الديون';
+
+  @override
+  String get debtReportNoticeReady => 'تقرير الديون جاهز';
+
+  @override
+  String debtReportNoticeReadyText(int count, String amount) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString مدينين، $amount مستحقة',
+      one: 'مدين واحد، $amount مستحقة',
+      zero: 'لا يوجد زبون عليه دين',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get debtReportNoticeFallback => 'حُفظ تقرير الديون في التنزيلات';
+
+  @override
+  String debtReportNoticeFallbackText(String location) {
+    return 'المجلد المختار غير متاح (أُزيل إذنه، أو بطاقة الذاكرة أو الفلاشة غير موجودة). حُفظ التقرير في $location بدلاً منه. اختر المجلد من جديد في الإعدادات ← الديون ← تقرير الديون اليومي.';
+  }
+
+  @override
+  String get debtReportNoticeFailed => 'فشل تقرير الديون';
+
+  @override
+  String debtReportNoticeFailedText(String reason) {
+    return '$reason. افتح الإعدادات ← الديون ← تقرير الديون اليومي لإعادة المحاولة.';
+  }
 }

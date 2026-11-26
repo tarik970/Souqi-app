@@ -7,6 +7,7 @@ import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../currencies/currencies_screen.dart';
 import '../debts/debt_settings.dart';
+import '../debts/report/debt_report_settings_screen.dart';
 import '../invoice/invoice_settings_screen.dart';
 import '../sale/sale_providers.dart';
 import '../security/pin_session.dart';
@@ -225,6 +226,7 @@ class SettingsScreen extends ConsumerWidget {
             const DebtDueDaysTile(),
             const DebtRequirePinTile(),
             const DebtReminderTile(),
+            const DebtReportTile(),
             const OpeningBalancesTile(),
             const Divider(),
           ],

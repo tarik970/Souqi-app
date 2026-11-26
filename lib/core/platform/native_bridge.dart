@@ -74,6 +74,34 @@ class PickedTextFile {
   final String content;
 }
 
+/// A folder the user chose in the system folder picker, with the permission
+/// to write to it kept across reboots.
+class PickedFolder {
+  const PickedFolder({
+    required this.uri,
+    required this.name,
+    required this.kind,
+  });
+
+  /// The Storage Access Framework tree URI.
+  final String uri;
+
+  /// What the picker calls it ("Reports", "My Drive").
+  final String name;
+
+  /// PHONE (internal storage), REMOVABLE (SD card / USB drive), CLOUD (a
+  /// cloud app's provider) or OTHER.
+  final String kind;
+}
+
+/// One file handed to the share sheet.
+class ShareableFile {
+  const ShareableFile({required this.path, required this.mimeType});
+
+  final String path;
+  final String mimeType;
+}
+
 /// How the bytes of a print job are fed to the printer, unless said
 /// otherwise: cheap printers drop data that arrives faster.
 const defaultPrintChunkSize = 1024;
@@ -158,6 +186,33 @@ abstract class NativeBridge {
 
   /// A short beep confirming a scanned card. Never throws.
   Future<void> beep();
+
+  // ---- The daily debt report ----------------------------------------
+
+  /// Opens the system folder picker (ACTION_OPEN_DOCUMENT_TREE): SD cards,
+  /// USB drives and cloud apps that offer a folder all appear there. The
+  /// write permission is persisted. Null when the user backs out.
+  Future<PickedFolder?> pickFolder();
+
+  /// The share sheet with several files at once.
+  Future<void> shareFiles(List<ShareableFile> files, {String? text});
+
+  /// Opens [treeUri] — or Download/Souqi/Reports when null — in a file
+  /// manager. False when no app on the phone can show it.
+  Future<bool> openFolder(String? treeUri);
+
+  /// Asks Android to exempt the app from battery optimization (its own
+  /// confirmation dialog, or the settings list where that is not offered).
+  /// False when neither could be opened.
+  Future<bool> requestBatteryExemption();
+
+  /// Android 13+: the notification permission. True when notifications may
+  /// be shown afterwards.
+  Future<bool> requestNotificationPermission();
+
+  /// Android 9 and older: the storage permission the report needs to write
+  /// to Downloads from the background. True on newer versions.
+  Future<bool> requestLegacyStoragePermission();
 }
 
 class MethodChannelNativeBridge implements NativeBridge {
@@ -327,4 +382,43 @@ class MethodChannelNativeBridge implements NativeBridge {
       ),
     );
   }
+
+  @override
+  Future<PickedFolder?> pickFolder() async {
+    final map = await _invoke<Map<Object?, Object?>>('pickFolder');
+    final uri = map?['uri'] as String?;
+    if (map == null || uri == null || uri.isEmpty) return null;
+    return PickedFolder(
+      uri: uri,
+      name: (map['name'] as String?) ?? '',
+      kind: (map['kind'] as String?) ?? 'OTHER',
+    );
+  }
+
+  @override
+  Future<void> shareFiles(List<ShareableFile> files, {String? text}) async {
+    if (files.isEmpty) return;
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [for (final f in files) XFile(f.path, mimeType: f.mimeType)],
+        text: text == null || text.isEmpty ? null : text,
+      ),
+    );
+  }
+
+  @override
+  Future<bool> openFolder(String? treeUri) async =>
+      await _invoke<bool>('openFolder', {'uri': treeUri}) ?? false;
+
+  @override
+  Future<bool> requestBatteryExemption() async =>
+      await _invoke<bool>('requestBatteryExemption') ?? false;
+
+  @override
+  Future<bool> requestNotificationPermission() async =>
+      await _invoke<bool>('requestNotificationPermission') ?? false;
+
+  @override
+  Future<bool> requestLegacyStoragePermission() async =>
+      await _invoke<bool>('requestLegacyStoragePermission') ?? false;
 }

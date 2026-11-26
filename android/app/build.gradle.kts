@@ -47,3 +47,10 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // The daily debt report's scheduler (DebtReportWorker.kt). From Google
+    // Maven, fetched through the Aliyun mirrors like everything else; no
+    // Flutter plugin.
+    implementation("androidx.work:work-runtime:2.11.2")
+}

@@ -5142,6 +5142,624 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Width {dots} dots · offset {offset}'**
   String printerCalibrationInfo(String dots, String offset);
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt report'**
+  String get reportTitle;
+
+  /// No description provided for @reportSheetSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get reportSheetSummary;
+
+  /// No description provided for @reportSheetDebtors.
+  ///
+  /// In en, this message translates to:
+  /// **'Debtors'**
+  String get reportSheetDebtors;
+
+  /// No description provided for @reportSheetMovements.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s movements'**
+  String get reportSheetMovements;
+
+  /// No description provided for @reportSheetBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'All balances'**
+  String get reportSheetBalances;
+
+  /// No description provided for @reportGeneratedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated'**
+  String get reportGeneratedAt;
+
+  /// No description provided for @reportShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get reportShop;
+
+  /// No description provided for @reportCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get reportCurrency;
+
+  /// No description provided for @reportTotalOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Total outstanding'**
+  String get reportTotalOutstanding;
+
+  /// No description provided for @reportDebtorsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of debtors'**
+  String get reportDebtorsCount;
+
+  /// No description provided for @reportOverdueCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue debtors'**
+  String get reportOverdueCount;
+
+  /// No description provided for @reportCreditBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit balances (owed to customers)'**
+  String get reportCreditBalances;
+
+  /// No description provided for @reportAgingHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Age of the unpaid debt'**
+  String get reportAgingHeading;
+
+  /// No description provided for @reportCollectedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected today'**
+  String get reportCollectedToday;
+
+  /// No description provided for @reportNewDebtToday.
+  ///
+  /// In en, this message translates to:
+  /// **'New debt today'**
+  String get reportNewDebtToday;
+
+  /// No description provided for @reportColCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get reportColCustomer;
+
+  /// No description provided for @reportColPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get reportColPhone;
+
+  /// No description provided for @reportColBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get reportColBalance;
+
+  /// No description provided for @reportColOldestUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest unpaid'**
+  String get reportColOldestUnpaid;
+
+  /// No description provided for @reportColOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get reportColOverdue;
+
+  /// No description provided for @reportColTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Written at'**
+  String get reportColTime;
+
+  /// No description provided for @reportColDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get reportColDate;
+
+  /// No description provided for @reportColEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry'**
+  String get reportColEntry;
+
+  /// No description provided for @reportColDebit.
+  ///
+  /// In en, this message translates to:
+  /// **'Debit (owes more)'**
+  String get reportColDebit;
+
+  /// No description provided for @reportColCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit (owes less)'**
+  String get reportColCredit;
+
+  /// No description provided for @reportColReceiptNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt no.'**
+  String get reportColReceiptNo;
+
+  /// No description provided for @reportColInvoiceNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice no.'**
+  String get reportColInvoiceNo;
+
+  /// No description provided for @reportColMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get reportColMethod;
+
+  /// No description provided for @reportColNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get reportColNote;
+
+  /// No description provided for @reportColStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get reportColStatus;
+
+  /// No description provided for @reportColActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get reportColActive;
+
+  /// No description provided for @reportYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get reportYes;
+
+  /// No description provided for @reportNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get reportNo;
+
+  /// No description provided for @reportReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversed'**
+  String get reportReversed;
+
+  /// No description provided for @reportStatusOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes'**
+  String get reportStatusOwes;
+
+  /// No description provided for @reportStatusCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get reportStatusCredit;
+
+  /// No description provided for @reportStatusSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get reportStatusSettled;
+
+  /// No description provided for @reportNoDebtors.
+  ///
+  /// In en, this message translates to:
+  /// **'No customer owes anything.'**
+  String get reportNoDebtors;
+
+  /// No description provided for @reportPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {pages}'**
+  String reportPageOf(String page, String pages);
+
+  /// No description provided for @debtReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily debt report'**
+  String get debtReportTitle;
+
+  /// No description provided for @debtReportIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day Souqi saves a file of all debts by itself — on this phone or in a folder you choose. Nothing is ever sent from the app.'**
+  String get debtReportIntro;
+
+  /// No description provided for @debtReportOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get debtReportOff;
+
+  /// No description provided for @debtReportTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time of day'**
+  String get debtReportTimeLabel;
+
+  /// No description provided for @debtReportTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Around this time: battery saving can delay it.'**
+  String get debtReportTimeHint;
+
+  /// No description provided for @debtReportFormatsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Formats'**
+  String get debtReportFormatsLabel;
+
+  /// No description provided for @debtReportFormatXlsx.
+  ///
+  /// In en, this message translates to:
+  /// **'Excel (.xlsx)'**
+  String get debtReportFormatXlsx;
+
+  /// No description provided for @debtReportFormatPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF'**
+  String get debtReportFormatPdf;
+
+  /// No description provided for @debtReportFormatNeedOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep at least one format.'**
+  String get debtReportFormatNeedOne;
+
+  /// No description provided for @debtReportFolderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination folder'**
+  String get debtReportFolderLabel;
+
+  /// No description provided for @debtReportFolderDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Download/Souqi/Reports (on this phone)'**
+  String get debtReportFolderDownloads;
+
+  /// No description provided for @debtReportFolderWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder on an SD card, a USB drive or a cloud app (e.g. Google Drive): that is what keeps the debts safe if the phone breaks or is lost.'**
+  String get debtReportFolderWhy;
+
+  /// No description provided for @debtReportFolderOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'This stays on the phone: if the phone breaks or is lost, the reports go with it.'**
+  String get debtReportFolderOnPhone;
+
+  /// No description provided for @debtReportFolderKindPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone'**
+  String get debtReportFolderKindPhone;
+
+  /// No description provided for @debtReportFolderKindRemovable.
+  ///
+  /// In en, this message translates to:
+  /// **'SD card / USB drive'**
+  String get debtReportFolderKindRemovable;
+
+  /// No description provided for @debtReportFolderKindCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud app'**
+  String get debtReportFolderKindCloud;
+
+  /// No description provided for @debtReportChooseFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose folder'**
+  String get debtReportChooseFolder;
+
+  /// No description provided for @debtReportUseDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Downloads'**
+  String get debtReportUseDownloads;
+
+  /// No description provided for @debtReportFolderChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder changed'**
+  String get debtReportFolderChanged;
+
+  /// No description provided for @debtReportKeepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep reports of'**
+  String get debtReportKeepLabel;
+
+  /// No description provided for @debtReportKeepHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The reports of the last days that have one stay; older ones are deleted from the folder. Only Souqi\'s own report files are ever deleted.'**
+  String get debtReportKeepHint;
+
+  /// No description provided for @debtReportNotifyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify me when ready'**
+  String get debtReportNotifyLabel;
+
+  /// No description provided for @debtReportNotifyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A notification with Share and Open folder.'**
+  String get debtReportNotifyHint;
+
+  /// No description provided for @debtReportNotificationsBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are turned off for Souqi in the phone\'s settings.'**
+  String get debtReportNotificationsBlocked;
+
+  /// No description provided for @debtReportAllowNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get debtReportAllowNotifications;
+
+  /// No description provided for @debtReportBatteryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery saving may delay the report'**
+  String get debtReportBatteryTitle;
+
+  /// No description provided for @debtReportBatteryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To save battery, Android can hold work back for hours. Exempting Souqi lets the report be made close to its time. Souqi does nothing else in the background.'**
+  String get debtReportBatteryHint;
+
+  /// No description provided for @debtReportBatteryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Exempt Souqi'**
+  String get debtReportBatteryButton;
+
+  /// No description provided for @debtReportBatteryOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi is exempt from battery optimization.'**
+  String get debtReportBatteryOk;
+
+  /// No description provided for @debtReportBatteryLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get debtReportBatteryLater;
+
+  /// No description provided for @debtReportRunNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Create report now'**
+  String get debtReportRunNow;
+
+  /// No description provided for @debtReportRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating the report…'**
+  String get debtReportRunning;
+
+  /// No description provided for @debtReportBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'A report is already being made.'**
+  String get debtReportBusy;
+
+  /// No description provided for @debtReportRunDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Report saved to {location}'**
+  String debtReportRunDone(String location);
+
+  /// No description provided for @debtReportRunFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'The folder is not available — saved to {location} instead'**
+  String debtReportRunFallback(String location);
+
+  /// No description provided for @debtReportRunFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The report could not be saved: {reason}'**
+  String debtReportRunFailed(String reason);
+
+  /// No description provided for @debtReportLastOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Last report: {when} ✓'**
+  String debtReportLastOk(String when);
+
+  /// No description provided for @debtReportLastFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Last report: {when} — saved to Downloads (folder not available)'**
+  String debtReportLastFallback(String when);
+
+  /// No description provided for @debtReportLastFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {reason}'**
+  String debtReportLastFailed(String reason);
+
+  /// No description provided for @debtReportNever.
+  ///
+  /// In en, this message translates to:
+  /// **'No report yet'**
+  String get debtReportNever;
+
+  /// No description provided for @debtReportNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next report: {when}'**
+  String debtReportNext(String when);
+
+  /// No description provided for @debtReportToday.
+  ///
+  /// In en, this message translates to:
+  /// **'today {time}'**
+  String debtReportToday(String time);
+
+  /// No description provided for @debtReportYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'yesterday {time}'**
+  String debtReportYesterday(String time);
+
+  /// No description provided for @debtReportTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'tomorrow {time}'**
+  String debtReportTomorrow(String time);
+
+  /// No description provided for @debtReportProblemFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'folder not available'**
+  String get debtReportProblemFolder;
+
+  /// No description provided for @debtReportProblemWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'the file could not be written'**
+  String get debtReportProblemWrite;
+
+  /// No description provided for @debtReportProblemUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'unexpected error'**
+  String get debtReportProblemUnknown;
+
+  /// No description provided for @debtReportShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get debtReportShare;
+
+  /// No description provided for @debtReportOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get debtReportOpenFolder;
+
+  /// No description provided for @debtReportFilesGone.
+  ///
+  /// In en, this message translates to:
+  /// **'The report files are no longer on this phone. Create the report again.'**
+  String get debtReportFilesGone;
+
+  /// No description provided for @debtReportFolderCannotOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this phone can open the folder.'**
+  String get debtReportFolderCannotOpen;
+
+  /// No description provided for @debtReportFolderPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The folder picker could not be opened.'**
+  String get debtReportFolderPickFailed;
+
+  /// No description provided for @pinReasonDebtReport.
+  ///
+  /// In en, this message translates to:
+  /// **'The report holds customers\' names, phones and balances. Enter the PIN.'**
+  String get pinReasonDebtReport;
+
+  /// No description provided for @auditDebtReportOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily debt report turned on'**
+  String get auditDebtReportOn;
+
+  /// No description provided for @auditDebtReportOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily debt report turned off'**
+  String get auditDebtReportOff;
+
+  /// No description provided for @auditDebtReportFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt report folder changed'**
+  String get auditDebtReportFolder;
+
+  /// No description provided for @auditDetailFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder: {name}'**
+  String auditDetailFolder(String name);
+
+  /// No description provided for @debtReportChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt reports'**
+  String get debtReportChannelName;
+
+  /// No description provided for @debtReportNoticeReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt report ready'**
+  String get debtReportNoticeReady;
+
+  /// No description provided for @debtReportNoticeReadyText.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No customer owes anything} =1{1 debtor, {amount} outstanding} other{{count} debtors, {amount} outstanding}}'**
+  String debtReportNoticeReadyText(int count, String amount);
+
+  /// No description provided for @debtReportNoticeFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt report saved to Downloads'**
+  String get debtReportNoticeFallback;
+
+  /// No description provided for @debtReportNoticeFallbackText.
+  ///
+  /// In en, this message translates to:
+  /// **'The chosen folder is not available (its permission was removed, or the SD card or USB drive is not there). The report was saved to {location} instead. Choose the folder again in Settings → Debts → Daily debt report.'**
+  String debtReportNoticeFallbackText(String location);
+
+  /// No description provided for @debtReportNoticeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt report failed'**
+  String get debtReportNoticeFailed;
+
+  /// No description provided for @debtReportNoticeFailedText.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason}. Open Settings → Debts → Daily debt report to try again.'**
+  String debtReportNoticeFailedText(String reason);
 }
 
 class _AppLocalizationsDelegate

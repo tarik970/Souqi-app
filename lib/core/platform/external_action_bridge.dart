@@ -112,6 +112,28 @@ class ExternalActionBridge implements NativeBridge {
   @override
   Future<PickedTextFile?> pickTextFile() => _external(_inner.pickTextFile);
 
+  // The daily debt report: the folder picker, the share sheet with both
+  // files, a file manager on the folder, the battery-optimization dialog.
+
+  @override
+  Future<PickedFolder?> pickFolder() => _external(_inner.pickFolder);
+
+  @override
+  Future<void> shareFiles(List<ShareableFile> files, {String? text}) =>
+      _external(() => _inner.shareFiles(files, text: text));
+
+  @override
+  Future<bool> openFolder(String? treeUri) => _external(
+        () => _inner.openFolder(treeUri),
+        opened: (answer) => answer,
+      );
+
+  @override
+  Future<bool> requestBatteryExemption() => _external(
+        _inner.requestBatteryExemption,
+        opened: (answer) => answer,
+      );
+
   // ---- Straight through: nothing leaves the app. ----
 
   @override
@@ -158,4 +180,14 @@ class ExternalActionBridge implements NativeBridge {
 
   @override
   Future<void> beep() => _inner.beep();
+
+  /// A permission dialog over the app, like the Bluetooth one: nothing
+  /// leaves the app.
+  @override
+  Future<bool> requestNotificationPermission() =>
+      _inner.requestNotificationPermission();
+
+  @override
+  Future<bool> requestLegacyStoragePermission() =>
+      _inner.requestLegacyStoragePermission();
 }

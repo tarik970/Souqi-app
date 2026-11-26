@@ -220,4 +220,47 @@ class FakeNativeBridge implements NativeBridge {
 
   @override
   Future<void> beep() async => beeps++;
+
+  // ---- The daily debt report ----
+
+  /// What the folder picker returns; null = the user backed out.
+  PickedFolder? folderToPick;
+  int folderPicks = 0;
+  final sharedSets = <List<ShareableFile>>[];
+  final openedFolders = <String?>[];
+  bool folderOpens = true;
+  int batteryRequests = 0;
+  int notificationRequests = 0;
+  bool grantNotifications = true;
+
+  @override
+  Future<PickedFolder?> pickFolder() async {
+    folderPicks++;
+    return folderToPick;
+  }
+
+  @override
+  Future<void> shareFiles(List<ShareableFile> files, {String? text}) async =>
+      sharedSets.add(files);
+
+  @override
+  Future<bool> openFolder(String? treeUri) async {
+    openedFolders.add(treeUri);
+    return folderOpens;
+  }
+
+  @override
+  Future<bool> requestBatteryExemption() async {
+    batteryRequests++;
+    return true;
+  }
+
+  @override
+  Future<bool> requestNotificationPermission() async {
+    notificationRequests++;
+    return grantNotifications;
+  }
+
+  @override
+  Future<bool> requestLegacyStoragePermission() async => true;
 }

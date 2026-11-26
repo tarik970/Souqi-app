@@ -56,6 +56,7 @@ import 'package:souqi/features/units/units_screen.dart';
 import 'package:souqi/features/vouchers/add_batch_screen.dart';
 import 'package:souqi/features/vouchers/code_widgets.dart';
 import 'package:souqi/features/vouchers/product_stock_screen.dart';
+import 'package:souqi/features/debts/report/debt_report_settings_screen.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -1409,6 +1410,28 @@ void main() {
       },
       shown: find.byType(QuantitySheet),
       button: cancel,
+    ),
+    // ---- The daily debt report (phase 4e) ---------------------------------
+    Closable(
+      'battery-optimization offer of the daily debt report',
+      home: host((context) => showDialog<bool>(
+            context: context,
+            builder: (_) => const BatteryExemptionDialog(),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('debt-report-battery-dialog')),
+      button: find.byKey(const ValueKey('debt-report-battery-later')),
+    ),
+    Closable(
+      'daily debt report settings page',
+      home: host((context) => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const DebtReportSettingsScreen(),
+            ),
+          )),
+      open: openHost,
+      shown: find.byType(DebtReportSettingsScreen),
+      isPage: true,
     ),
   ];
 

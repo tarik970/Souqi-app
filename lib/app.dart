@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'core/money/money_format.dart';
 import 'core/providers.dart';
+import 'features/debts/report/report_launch.dart';
+import 'features/debts/report/report_providers.dart';
 import 'features/home/home_screen.dart';
 import 'features/security/pin_session.dart';
 import 'features/settings/storage_providers.dart';
@@ -71,6 +73,12 @@ ThemeData buildTheme() {
   );
 }
 
+/// The app's Navigator, for what is opened from outside any screen: the
+/// daily debt report's notification. One per ProviderScope, so a test that
+/// pumps the app twice never hands the old Navigator to the new app.
+final appNavigatorKeyProvider =
+    Provider<GlobalKey<NavigatorState>>((ref) => GlobalKey<NavigatorState>());
+
 class SouqiApp extends ConsumerWidget {
   const SouqiApp({super.key});
 
@@ -78,7 +86,9 @@ class SouqiApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(appLocaleProvider);
     final setupDone = ref.watch(setupDoneProvider);
+    final navigatorKey = ref.watch(appNavigatorKeyProvider);
     return MaterialApp(
+      navigatorKey: navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -96,7 +106,12 @@ class SouqiApp extends ConsumerWidget {
       // "optimizing…" indicator it (or a delete) may raise — and the watch
       // that locks everything the PIN opened when the app is left.
       builder: (context, child) => PinSessionObserver(
-        child: _Housekeeping(child: child ?? const SizedBox.shrink()),
+        child: ReportLaunchListener(
+          navigatorKey: navigatorKey,
+          // Like the housekeeping: only the real app has an Android side.
+          enabled: ref.watch(housekeepingOnStartProvider),
+          child: _Housekeeping(child: child ?? const SizedBox.shrink()),
+        ),
       ),
       home: setupDone ? const HomeScreen() : const SetupScreen(),
     );
@@ -124,9 +139,17 @@ class _HousekeepingState extends ConsumerState<_Housekeeping> {
     if (!ref.read(housekeepingOnStartProvider)) return;
     // After the first frame: the seller sees the app, not a white screen,
     // while old invoices and stale share files are cleared out.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      ref.read(housekeepingProvider.notifier).runOnAppStart();
+      final container = ProviderScope.containerOf(context, listen: false);
+      await ref.read(housekeepingProvider.notifier).runOnAppStart();
+      // Then the daily debt report: re-plan it, and make the one that was
+      // missed (the catch-up rule).
+      try {
+        await debtReportOnAppStart(container);
+      } on Object {
+        // The next start tries again; the status line says what happened.
+      }
     });
   }
 

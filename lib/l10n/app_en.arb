@@ -1624,5 +1624,185 @@
       "dots": {"type": "String"},
       "offset": {"type": "String"}
     }
+  },
+  "reportTitle": "Debt report",
+  "reportSheetSummary": "Summary",
+  "reportSheetDebtors": "Debtors",
+  "reportSheetMovements": "Today's movements",
+  "reportSheetBalances": "All balances",
+  "reportGeneratedAt": "Generated",
+  "reportShop": "Shop",
+  "reportCurrency": "Currency",
+  "reportTotalOutstanding": "Total outstanding",
+  "reportDebtorsCount": "Number of debtors",
+  "reportOverdueCount": "Overdue debtors",
+  "reportCreditBalances": "Credit balances (owed to customers)",
+  "reportAgingHeading": "Age of the unpaid debt",
+  "reportCollectedToday": "Collected today",
+  "reportNewDebtToday": "New debt today",
+  "reportColCustomer": "Customer",
+  "reportColPhone": "Phone",
+  "reportColBalance": "Balance",
+  "reportColOldestUnpaid": "Oldest unpaid",
+  "reportColOverdue": "Overdue",
+  "reportColTime": "Written at",
+  "reportColDate": "Date",
+  "reportColEntry": "Entry",
+  "reportColDebit": "Debit (owes more)",
+  "reportColCredit": "Credit (owes less)",
+  "reportColReceiptNo": "Receipt no.",
+  "reportColInvoiceNo": "Invoice no.",
+  "reportColMethod": "Method",
+  "reportColNote": "Note",
+  "reportColStatus": "Status",
+  "reportColActive": "Active",
+  "reportYes": "Yes",
+  "reportNo": "No",
+  "reportReversed": "Reversed",
+  "reportStatusOwes": "Owes",
+  "reportStatusCredit": "Credit",
+  "reportStatusSettled": "Settled",
+  "reportNoDebtors": "No customer owes anything.",
+  "reportPageOf": "Page {page} of {pages}",
+  "@reportPageOf": {
+    "placeholders": {
+      "page": {"type": "String"},
+      "pages": {"type": "String"}
+    }
+  },
+  "debtReportTitle": "Daily debt report",
+  "debtReportIntro": "Every day Souqi saves a file of all debts by itself — on this phone or in a folder you choose. Nothing is ever sent from the app.",
+  "debtReportOff": "Off",
+  "debtReportTimeLabel": "Time of day",
+  "debtReportTimeHint": "Around this time: battery saving can delay it.",
+  "debtReportFormatsLabel": "Formats",
+  "debtReportFormatXlsx": "Excel (.xlsx)",
+  "debtReportFormatPdf": "PDF",
+  "debtReportFormatNeedOne": "Keep at least one format.",
+  "debtReportFolderLabel": "Destination folder",
+  "debtReportFolderDownloads": "Download/Souqi/Reports (on this phone)",
+  "debtReportFolderWhy": "Choose a folder on an SD card, a USB drive or a cloud app (e.g. Google Drive): that is what keeps the debts safe if the phone breaks or is lost.",
+  "debtReportFolderOnPhone": "This stays on the phone: if the phone breaks or is lost, the reports go with it.",
+  "debtReportFolderKindPhone": "On this phone",
+  "debtReportFolderKindRemovable": "SD card / USB drive",
+  "debtReportFolderKindCloud": "Cloud app",
+  "debtReportChooseFolder": "Choose folder",
+  "debtReportUseDownloads": "Use Downloads",
+  "debtReportFolderChanged": "Folder changed",
+  "debtReportKeepLabel": "Keep reports of",
+  "debtReportKeepHint": "The reports of the last days that have one stay; older ones are deleted from the folder. Only Souqi's own report files are ever deleted.",
+  "debtReportNotifyLabel": "Notify me when ready",
+  "debtReportNotifyHint": "A notification with Share and Open folder.",
+  "debtReportNotificationsBlocked": "Notifications are turned off for Souqi in the phone's settings.",
+  "debtReportAllowNotifications": "Allow",
+  "debtReportBatteryTitle": "Battery saving may delay the report",
+  "debtReportBatteryHint": "To save battery, Android can hold work back for hours. Exempting Souqi lets the report be made close to its time. Souqi does nothing else in the background.",
+  "debtReportBatteryButton": "Exempt Souqi",
+  "debtReportBatteryOk": "Souqi is exempt from battery optimization.",
+  "debtReportBatteryLater": "Not now",
+  "debtReportRunNow": "Create report now",
+  "debtReportRunning": "Creating the report…",
+  "debtReportBusy": "A report is already being made.",
+  "debtReportRunDone": "Report saved to {location}",
+  "@debtReportRunDone": {
+    "placeholders": {
+      "location": {"type": "String"}
+    }
+  },
+  "debtReportRunFallback": "The folder is not available — saved to {location} instead",
+  "@debtReportRunFallback": {
+    "placeholders": {
+      "location": {"type": "String"}
+    }
+  },
+  "debtReportRunFailed": "The report could not be saved: {reason}",
+  "@debtReportRunFailed": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  },
+  "debtReportLastOk": "Last report: {when} ✓",
+  "@debtReportLastOk": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "debtReportLastFallback": "Last report: {when} — saved to Downloads (folder not available)",
+  "@debtReportLastFallback": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "debtReportLastFailed": "Failed: {reason}",
+  "@debtReportLastFailed": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  },
+  "debtReportNever": "No report yet",
+  "debtReportNext": "Next report: {when}",
+  "@debtReportNext": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "debtReportToday": "today {time}",
+  "@debtReportToday": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "debtReportYesterday": "yesterday {time}",
+  "@debtReportYesterday": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "debtReportTomorrow": "tomorrow {time}",
+  "@debtReportTomorrow": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "debtReportProblemFolder": "folder not available",
+  "debtReportProblemWrite": "the file could not be written",
+  "debtReportProblemUnknown": "unexpected error",
+  "debtReportShare": "Share",
+  "debtReportOpenFolder": "Open folder",
+  "debtReportFilesGone": "The report files are no longer on this phone. Create the report again.",
+  "debtReportFolderCannotOpen": "No app on this phone can open the folder.",
+  "debtReportFolderPickFailed": "The folder picker could not be opened.",
+  "pinReasonDebtReport": "The report holds customers' names, phones and balances. Enter the PIN.",
+  "auditDebtReportOn": "Daily debt report turned on",
+  "auditDebtReportOff": "Daily debt report turned off",
+  "auditDebtReportFolder": "Debt report folder changed",
+  "auditDetailFolder": "Folder: {name}",
+  "@auditDetailFolder": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "debtReportChannelName": "Debt reports",
+  "debtReportNoticeReady": "Debt report ready",
+  "debtReportNoticeReadyText": "{count, plural, =0{No customer owes anything} =1{1 debtor, {amount} outstanding} other{{count} debtors, {amount} outstanding}}",
+  "@debtReportNoticeReadyText": {
+    "placeholders": {
+      "count": {"type": "int", "format": "decimalPattern"},
+      "amount": {"type": "String"}
+    }
+  },
+  "debtReportNoticeFallback": "Debt report saved to Downloads",
+  "debtReportNoticeFallbackText": "The chosen folder is not available (its permission was removed, or the SD card or USB drive is not there). The report was saved to {location} instead. Choose the folder again in Settings → Debts → Daily debt report.",
+  "@debtReportNoticeFallbackText": {
+    "placeholders": {
+      "location": {"type": "String"}
+    }
+  },
+  "debtReportNoticeFailed": "Debt report failed",
+  "debtReportNoticeFailedText": "{reason}. Open Settings → Debts → Daily debt report to try again.",
+  "@debtReportNoticeFailedText": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
   }
 }

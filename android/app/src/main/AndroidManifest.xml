@@ -20,6 +20,18 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- The daily debt report (phase 4e). Android 13+: "Debt report ready"
+         is a notification, asked for when the report is turned on. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Offering Android's own "let Souqi run in the background?" dialog, so
+         battery saving does not hold the report back for hours. Only ever
+         shown after the app explains why; the user can say no. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- WorkManager (the report's scheduler) adds RECEIVE_BOOT_COMPLETED and
+         its own boot receiver to keep the plan across reboots. No exact
+         alarms: the report may come a little late, and the app catches up
+         on its next start. -->
+
     <uses-feature android:name="android.hardware.bluetooth"
         android:required="false" />
 

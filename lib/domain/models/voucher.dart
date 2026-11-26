@@ -318,7 +318,14 @@ enum AuditAction {
 
   /// A sale on credit saved although it takes the customer over their
   /// credit limit.
-  creditLimitOverride('CREDIT_LIMIT_OVERRIDE');
+  creditLimitOverride('CREDIT_LIMIT_OVERRIDE'),
+
+  /// The daily debt report (names, phones, balances) turned on or off.
+  debtReportOn('DEBT_REPORT_ON'),
+  debtReportOff('DEBT_REPORT_OFF'),
+
+  /// The folder the daily debt report is written to was changed.
+  debtReportFolder('DEBT_REPORT_FOLDER');
 
   const AuditAction(this.db);
 

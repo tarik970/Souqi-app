@@ -169,6 +169,9 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.debtReversal => l10n.auditDebtReversal,
       AuditAction.debtAdjustment => l10n.auditDebtAdjustment,
       AuditAction.creditLimitOverride => l10n.auditCreditLimitOverride,
+      AuditAction.debtReportOn => l10n.auditDebtReportOn,
+      AuditAction.debtReportOff => l10n.auditDebtReportOff,
+      AuditAction.debtReportFolder => l10n.auditDebtReportFolder,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -192,6 +195,9 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
       AuditAction.debtReversal => Icons.undo,
       AuditAction.debtAdjustment => Icons.tune,
       AuditAction.creditLimitOverride => Icons.report_gmailerrorred_outlined,
+      AuditAction.debtReportOn || AuditAction.debtReportOff =>
+        Icons.summarize_outlined,
+      AuditAction.debtReportFolder => Icons.folder_outlined,
       null => Icons.info_outline,
     };
 
@@ -239,6 +245,8 @@ class _AuditTile extends ConsumerWidget {
         l10n.serialLabel(ltrIsolate(details['serial'] as String)),
       if (details['invoice_no'] is int)
         l10n.invoiceNoLabel(number(details['invoice_no'])),
+      if (details['folder'] is String)
+        l10n.auditDetailFolder(details['folder'] as String),
       if (details['reason'] is String &&
           (details['reason'] as String).isNotEmpty)
         l10n.auditDetailReason(details['reason'] as String),

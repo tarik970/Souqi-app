@@ -159,6 +159,31 @@ abstract final class SettingsKeys {
   /// language (Arabic or English).
   static const debtReminderText = 'debt_reminder_text';
 
+  // The daily debt report (phase 4e). Its STATUS (last run, outcome) is not
+  // here: the background job keeps it on the Android side, see
+  // `ReportPlatform.saveStatus`.
+  static const debtReportEnabled = 'debt_report_enabled';
+
+  /// Minutes after midnight, local time (1320 = 22:00).
+  static const debtReportMinute = 'debt_report_minute';
+
+  /// Comma-separated: XLSX, PDF. Never empty.
+  static const debtReportFormats = 'debt_report_formats';
+
+  /// The Storage Access Framework tree chosen with the folder picker, its
+  /// name and kind (PHONE / REMOVABLE / CLOUD / OTHER). '' = Downloads.
+  static const debtReportFolderUri = 'debt_report_folder_uri';
+  static const debtReportFolderName = 'debt_report_folder_name';
+  static const debtReportFolderKind = 'debt_report_folder_kind';
+
+  /// How many days of reports stay in the folder.
+  static const debtReportKeepDays = 'debt_report_keep_days';
+  static const debtReportNotify = 'debt_report_notify';
+
+  /// Epoch milliseconds of the last time the report was turned on; the
+  /// catch-up rule owes no report from before it.
+  static const debtReportEnabledAt = 'debt_report_enabled_at';
+
   /// Defaults applied when a key is missing from the table.
   static const Map<String, String> defaults = {
     baseCurrencyCode: 'SYP',
@@ -234,5 +259,14 @@ abstract final class SettingsKeys {
     debtDefaultDueDays: '30',
     debtRequirePin: '0',
     debtReminderText: '',
+    debtReportEnabled: '0',
+    debtReportMinute: '1320',
+    debtReportFormats: 'XLSX,PDF',
+    debtReportFolderUri: '',
+    debtReportFolderName: '',
+    debtReportFolderKind: '',
+    debtReportKeepDays: '30',
+    debtReportNotify: '1',
+    debtReportEnabledAt: '0',
   };
 }

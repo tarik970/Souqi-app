@@ -52,6 +52,12 @@ dependencies:
   mobile_scanner: ^7.5.0
   # Pure Dart: the module matrix of the optional QR code printed with a card.
   qr: ^3.0.3
+
+  # Phase 4e (daily debt report). Pure Dart: the zip container of the .xlsx
+  # workbook (lib/core/reports/xlsx_writer.dart). Already in the lock file
+  # through `pdf`; listed because the app now imports it itself. The daily
+  # scheduling uses NO plugin: see android/.../DebtReportWorker.kt.
+  archive: ^4.7.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

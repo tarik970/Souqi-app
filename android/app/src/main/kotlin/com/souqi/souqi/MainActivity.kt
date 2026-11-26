@@ -2,6 +2,7 @@ package com.souqi.souqi
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothManager
@@ -16,12 +17,15 @@ import android.media.MediaScannerConnection
 import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -41,7 +45,12 @@ import java.util.concurrent.Executors
  *  - saving a file to Downloads/Souqi,
  *  - picking a .txt / .csv file of card codes and reading it as text,
  *  - the beep that confirms a scanned card,
- *  - shortcuts into the system Bluetooth and app settings.
+ *  - shortcuts into the system Bluetooth and app settings,
+ *  - the daily debt report's screens: the folder picker, a file manager on
+ *    the report folder, the battery-optimization exemption and the
+ *    notification permission (its files, schedule and notification are on
+ *    the "souqi/report" channel, [ReportChannel], which the background
+ *    worker uses too), and the taps on its notification.
  *
  * Nothing here uses the network.
  */
@@ -58,6 +67,11 @@ class MainActivity : FlutterActivity() {
     /** The "pick a text file" call waiting for the system picker to return. */
     private var pendingPick: MethodChannel.Result? = null
 
+    /** The "pick a folder" call waiting for the folder picker to return. */
+    private var pendingFolder: MethodChannel.Result? = null
+
+    private var reportChannel: ReportChannel? = null
+
     /** Created on the first beep and kept: creating one per beep is slow. */
     private var tone: ToneGenerator? = null
 
@@ -68,6 +82,29 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler(::onMethodCall)
+        reportChannel?.dispose()
+        reportChannel = ReportChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+            .also { ReportChannel.appChannel = it }
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        if (ReportChannel.appChannel === reportChannel) ReportChannel.appChannel = null
+        reportChannel?.dispose()
+        reportChannel = null
+        super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Opened from the report notification: the Dart side takes it after
+        // its first frame.
+        ReportLaunch.offer(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Already running: tell the Dart side now.
+        if (ReportLaunch.offer(intent)) ReportChannel.pushToApp("launchAction")
     }
 
     override fun onDestroy() {
@@ -117,6 +154,11 @@ class MainActivity : FlutterActivity() {
                 beep()
                 result.success(null)
             }
+            "pickFolder" -> pickFolder(result)
+            "openFolder" -> result.success(openFolder(call.argument<String>("uri")))
+            "requestBatteryExemption" -> result.success(requestBatteryExemption())
+            "requestNotificationPermission" -> requestNotificationPermission(result)
+            "requestLegacyStoragePermission" -> requestLegacyStoragePermission(result)
             else -> result.notImplemented()
         }
     }
@@ -478,6 +520,10 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_PICK_FOLDER) {
+            onFolderPicked(resultCode, data)
+            return
+        }
         if (requestCode != REQUEST_PICK_TEXT) return
         val result = pendingPick ?: return
         pendingPick = null
@@ -543,11 +589,156 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    // ---- The daily debt report -------------------------------------------
+
+    /**
+     * The system folder picker (Storage Access Framework): internal storage,
+     * an SD card, a USB drive, or any cloud app that offers folders. The
+     * write permission is made persistent, so the background job can still
+     * use it after a reboot. Replies {"uri", "name", "kind"} or null.
+     */
+    private fun pickFolder(result: MethodChannel.Result) {
+        pendingFolder?.success(null)
+        pendingFolder = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+                Intent.FLAG_GRANT_PREFIX_URI_PERMISSION,
+        )
+        try {
+            @Suppress("DEPRECATION")
+            startActivityForResult(intent, REQUEST_PICK_FOLDER)
+        } catch (e: ActivityNotFoundException) {
+            pendingFolder = null
+            result.error(PICK_FAILED, e.message, null)
+        }
+    }
+
+    private fun onFolderPicked(resultCode: Int, data: Intent?) {
+        val result = pendingFolder ?: return
+        pendingFolder = null
+        val tree = data?.data
+        if (resultCode != RESULT_OK || tree == null) {
+            result.success(null)
+            return
+        }
+        try {
+            contentResolver.takePersistableUriPermission(
+                tree,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+        } catch (e: SecurityException) {
+            // A provider that does not let its folders be kept.
+            result.error(PICK_FAILED, e.message, null)
+            return
+        }
+        io.execute {
+            val picked = mapOf(
+                "uri" to tree.toString(),
+                "name" to ReportFiles.folderName(this, tree),
+                "kind" to ReportFiles.folderKind(tree),
+            )
+            main.post { result.success(picked) }
+        }
+    }
+
+    /**
+     * Shows the report folder in a file manager: the chosen folder, or
+     * Download/Souqi/Reports. False when nothing on the phone can.
+     */
+    private fun openFolder(uri: String?): Boolean {
+        val folder = try {
+            ReportFiles.folderDocument(uri)
+        } catch (_: Exception) {
+            null
+        }
+        val attempts = mutableListOf<Intent>()
+        if (folder != null) {
+            attempts.add(
+                Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(folder, DocumentsContract.Document.MIME_TYPE_DIR)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+            )
+            attempts.add(
+                Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(folder, "resource/folder")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+            )
+        }
+        if (uri == null) attempts.add(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS))
+        for (intent in attempts) {
+            try {
+                startActivity(intent)
+                return true
+            } catch (_: ActivityNotFoundException) {
+            } catch (_: SecurityException) {
+            }
+        }
+        return false
+    }
+
+    /**
+     * Android's own "let this app run in the background?" dialog, or the
+     * battery-optimization list where a phone does not offer the dialog.
+     */
+    @SuppressLint("BatteryLife")
+    private fun requestBatteryExemption(): Boolean {
+        val attempts = listOf(
+            Intent(
+                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.fromParts("package", packageName, null),
+            ),
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+        )
+        for (intent in attempts) {
+            try {
+                startActivity(intent)
+                return true
+            } catch (_: ActivityNotFoundException) {
+            } catch (_: SecurityException) {
+            }
+        }
+        return false
+    }
+
+    private fun notificationsEnabled() =
+        NotificationManagerCompat.from(this).areNotificationsEnabled()
+
+    /** Android 13+ asks; older versions answer whether they are on. */
+    private fun requestNotificationPermission(result: MethodChannel.Result) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            result.success(notificationsEnabled())
+            return
+        }
+        askPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS)) { granted ->
+            result.success(granted && notificationsEnabled())
+        }
+    }
+
+    /** Android 9 and older: writing to Downloads needs the storage permission. */
+    private fun requestLegacyStoragePermission(result: MethodChannel.Result) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            result.success(true)
+            return
+        }
+        askPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)) { granted ->
+            result.success(granted)
+        }
+    }
+
     companion object {
         private const val CHANNEL = "souqi/native"
         private const val FOLDER = "Souqi"
         private const val REQUEST_PERMISSIONS = 48731
         private const val REQUEST_PICK_TEXT = 48732
+        private const val REQUEST_PICK_FOLDER = 48733
 
         /** Far more than any card list: 100,000 codes are about 2 MB. */
         private const val MAX_TEXT_BYTES = 4 * 1024 * 1024
