@@ -113,7 +113,9 @@ void main() {
     final line = indicator(tester);
     final bar = tester.getRect(find.byType(TabBar));
     final center = tester.getCenter(find.byKey(key)).dx;
-    expect(line.color, gold);
+    // The painted colour may be a different Color type (another colour
+    // space or float precision) from the constant: compare the 8-bit ARGB.
+    expect(line.color.toARGB32(), gold.toARGB32());
     expect(line.thickness, 3);
     expect(line.left, moreOrLessEquals(center - bar.width / 4, epsilon: 0.5));
     expect(line.right, moreOrLessEquals(center + bar.width / 4, epsilon: 0.5));

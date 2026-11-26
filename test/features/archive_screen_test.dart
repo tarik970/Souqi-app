@@ -201,7 +201,22 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('archive-search-target')));
       await animated(tester);
-      await tester.tap(find.text('Customer, phone or card number').last);
+      // Tap the menu item, not its label: the item's ListTile ignores
+      // pointers, so a tap aimed at the Text "misses" (the hit lands on the
+      // item around it). Fatal here, so a real miss fails the test.
+      final customerItem = find.ancestor(
+        of: find.text('Customer, phone or card number'),
+        matching: find.byWidgetPredicate((w) => w is CheckedPopupMenuItem),
+      );
+      await tester.ensureVisible(customerItem);
+      await animated(tester);
+      final wasFatal = WidgetController.hitTestWarningShouldBeFatal;
+      WidgetController.hitTestWarningShouldBeFatal = true;
+      try {
+        await tester.tap(customerItem);
+      } finally {
+        WidgetController.hitTestWarningShouldBeFatal = wasFatal;
+      }
       await animated(tester);
 
       await tester.enterText(

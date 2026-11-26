@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -374,6 +375,31 @@ void main() {
           more.document.pdfPageList.pages.length,
           greaterThan(pages.length),
         );
+      });
+
+      // The Arabic dates and amounts carry RLM/LRM marks Tajawal has no
+      // glyph for. The bidi-safe fonts take them: no "Unable to find a
+      // font" warning, so no crossed box drawn in their place. The pages
+      // are laid out as they are added and painted on save: both watched.
+      test('[$language] the marks in dates and amounts draw no box',
+          () async {
+        final fonts = await testReportFonts();
+        final warnings = <String>[];
+        final bytes = await runZoned(
+          () async {
+            final doc =
+                await buildDebtReportDocument(many(60, language), fonts: fonts);
+            return doc.save();
+          },
+          zoneSpecification: ZoneSpecification(
+            print: (self, parent, zone, line) =>
+                line.contains('Unable to find a font')
+                    ? warnings.add(line)
+                    : parent.print(zone, line),
+          ),
+        );
+        expect(warnings, isEmpty);
+        expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
       });
     }
   });

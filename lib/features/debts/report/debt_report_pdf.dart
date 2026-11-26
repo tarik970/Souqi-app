@@ -7,19 +7,22 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../core/money/money_format.dart';
+import '../../../core/printing/pdf_fonts.dart';
 import '../../../domain/models/debt.dart';
 import '../../../domain/models/debt_report.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../debt_text.dart';
 
 /// The fonts the PDF is set in: the app's own Tajawal, which shapes Arabic
-/// and carries Latin letters and digits — bundled, never downloaded.
+/// and carries Latin letters and digits — bundled, never downloaded. Built
+/// bidi-safe, so the marks in Arabic dates and amounts order the text
+/// instead of printing as boxes (see pdf_fonts.dart).
 class ReportFonts {
   const ReportFonts({required this.regular, required this.bold});
 
   ReportFonts.fromBytes({required ByteData regular, required ByteData bold})
-      : regular = pw.Font.ttf(regular),
-        bold = pw.Font.ttf(bold);
+      : regular = bidiSafeTtf(regular),
+        bold = bidiSafeTtf(bold);
 
   final pw.Font regular;
   final pw.Font bold;
