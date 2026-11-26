@@ -40,6 +40,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// Every screen, sheet and dialog of the debt ledger on the smallest phone
 /// this app targets — 360×640 — at system font scale 1.3, in Arabic and in
@@ -728,6 +729,7 @@ void main() {
           locale: locale,
           keyboard: false,
         );
+        await statsLoaded(tester);
         await scrollThrough(tester, find.byType(ListView).last);
         expect(
           find.byKey(const ValueKey('stats-debts'), skipOffstage: false),

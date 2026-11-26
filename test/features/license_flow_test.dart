@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:souqi/app.dart';
 import 'package:souqi/config/features.dart';
+import 'package:souqi/config/support.dart';
 import 'package:souqi/core/constants/settings_keys.dart';
 import 'package:souqi/core/licensing/license_codec.dart';
 import 'package:souqi/core/licensing/license_service.dart';
@@ -482,16 +483,43 @@ void main() {
       expect(clipboard, phone.requestCode);
       expect(find.text('Request code copied'), findsOneWidget);
 
-      // Send on WhatsApp: the request code as a message, handed to WhatsApp.
-      await tester.tap(find.byKey(const ValueKey('license-whatsapp')));
+      // Send on WhatsApp: the request code as a message. With the developer's
+      // number in the build (config/support.dart) the chat with THAT number
+      // opens, the message already typed; while the constant is still a
+      // placeholder the message is handed to WhatsApp and the shop picks the
+      // chat. Whichever the build has is what is checked here.
+      final number = developerWhatsAppNumber;
+      final send = find.byKey(const ValueKey('license-whatsapp'));
+      await tester.tap(send);
+      await settle(tester);
+      if (number.isNotEmpty) {
+        final chat = bridge.chats.single;
+        expect(chat.package, whatsAppPackage);
+        expect(chat.phone, number);
+        expect(chat.text, contains(phone.requestCode));
+        expect(bridge.sharedTexts, isEmpty);
+      } else {
+        expect(bridge.chats, isEmpty);
+        expect(bridge.sharedTexts.single.package, whatsAppPackage);
+        expect(bridge.sharedTexts.single.text, contains(phone.requestCode));
+      }
+
+      // The chat cannot be opened: the message still goes to WhatsApp, which
+      // asks for the chat.
+      bridge.chatOpens = false;
+      bridge.sharedTexts.clear();
+      await tester.tap(send);
       await settle(tester);
       expect(bridge.sharedTexts.single.package, whatsAppPackage);
       expect(bridge.sharedTexts.single.text, contains(phone.requestCode));
+      expect(find.textContaining('Could not open WhatsApp'), findsNothing);
 
-      // No WhatsApp on the phone: the share sheet.
+      // No WhatsApp on the phone: the share sheet, and no chat is tried.
       bridge.installedWhatsApp = const [];
-      await tester.tap(find.byKey(const ValueKey('license-whatsapp')));
+      final chatsSoFar = bridge.chats.length;
+      await tester.tap(send);
       await settle(tester);
+      expect(bridge.chats, hasLength(chatsSoFar));
       expect(bridge.sharedTexts.last.package, isNull);
       expect(bridge.sharedTexts.last.text, contains(phone.requestCode));
 

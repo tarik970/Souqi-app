@@ -28,6 +28,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// Customers, accounts and renewals, driven through the real screens on a
 /// real database: the quick search, "Renew", the sale screen's Customer chip
@@ -1628,7 +1629,7 @@ void main() {
       await animated(tester);
 
       await pump(tester, const StatsScreen());
-      await settle(tester, 24);
+      await statsLoaded(tester);
       final renewals = find.byKey(const ValueKey('stats-renewals'));
       await tester.scrollUntilVisible(
         renewals,
@@ -1672,7 +1673,7 @@ void main() {
       await animated(tester);
 
       await pump(tester, const StatsScreen());
-      await settle(tester, 24);
+      await statsLoaded(tester);
       expect(find.byKey(const ValueKey('stats-total-value')), findsOneWidget);
       expect(find.byKey(const ValueKey('stats-renewals'), skipOffstage: false),
           findsNothing);

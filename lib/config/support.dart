@@ -1,15 +1,15 @@
 /// Where a shop reaches the developer.
 library;
 
-/// The developer's WhatsApp number as it is written on a card:
-/// "+963 9XX XXX XXX". With a real number here, "Send on WhatsApp" on the
-/// activation screen opens that chat directly with the request code already
+/// The developer's WhatsApp number as it is written on a card, in
+/// international form: "+963 9XX XXX XXX". "Send on WhatsApp" on the
+/// activation screen opens that chat directly, with the request code already
 /// typed.
 ///
-/// STILL A PLACEHOLDER: the X's stand for digits that have not been filled
-/// in. Until they are, [developerWhatsAppNumber] is empty and WhatsApp opens
-/// for the shop to choose the chat itself — exactly as with no number at
-/// all. Replace the X's with the real digits; nothing else has to change.
+/// To change it, write the new number here; nothing else has to change. A
+/// value that is not a usable number — empty, or with letters left in it
+/// like the X's above — leaves [developerWhatsAppNumber] empty, and WhatsApp
+/// then opens for the shop to choose the chat itself.
 const String developerWhatsApp = '+963962080317';
 
 /// [developerWhatsApp] in the form WhatsApp takes — international, digits

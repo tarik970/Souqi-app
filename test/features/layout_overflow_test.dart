@@ -60,6 +60,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// The screens with text input, on the smallest phone this app targets, with
 /// the keyboard up and the system font turned up: nothing may overflow.
@@ -989,6 +990,7 @@ void main() {
         return true;
       });
       await pumpPhone(tester, const StatsScreen(), keyboard: false);
+      await statsLoaded(tester);
       for (final key in [
         'stats-renewals',
         'stats-top-packages',
@@ -1688,6 +1690,7 @@ void main() {
       await seedCards(tester);
       await sellCards(tester);
       await pumpPhone(tester, const StatsScreen());
+      await statsLoaded(tester);
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('stats-cards')),
         200,

@@ -42,6 +42,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// Prepaid card codes, driven through the real screens on a real database:
 /// the product switch, loading a batch, the stock shown wherever the product
@@ -1530,17 +1531,24 @@ void main() {
   });
 
   group('statistics', () {
+    /// The report's own list — not the row of period chips above it, which
+    /// scrolls sideways.
+    final report = find
+        .descendant(
+          of: find.byType(ListView),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+
     testWidgets('cards sold per product, with the profit', (tester) async {
       await load(tester, [codeA, codeB], cost: 4500);
       await sell(tester, qty: 2);
       await pump(tester, const StatsScreen());
+      await statsLoaded(tester);
 
       final card = find.byKey(const ValueKey('stats-cards'));
-      await tester.scrollUntilVisible(
-        card,
-        200,
-        scrollable: find.byType(Scrollable).last,
-      );
+      await tester.scrollUntilVisible(card, 200, scrollable: report);
+      await settle(tester, 4);
       expect(
         find.descendant(of: card, matching: find.text('Card 5000')),
         findsOneWidget,
@@ -1563,7 +1571,13 @@ void main() {
     testWidgets('nothing sold: no cards section', (tester) async {
       await load(tester, [codeA]);
       await pump(tester, const StatsScreen());
-      expect(find.byKey(const ValueKey('stats-cards')), findsNothing);
+      // Loaded first: nothing at all is shown while the report is loading.
+      await statsLoaded(tester);
+      expect(find.text('No sales in this period'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('stats-cards'), skipOffstage: false),
+        findsNothing,
+      );
     });
   });
 

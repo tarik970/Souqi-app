@@ -18,6 +18,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// The archive, its detail screen and the statistics screen all read from the
 /// database, so their futures only progress inside [WidgetTester.runAsync] —
@@ -666,6 +667,7 @@ void main() {
         );
       });
       await pump(tester, const StatsScreen());
+      await statsLoaded(tester);
 
       expect(find.text('Total sales'), findsOneWidget);
       expect(find.text('Invoices'), findsOneWidget);
@@ -705,6 +707,7 @@ void main() {
         );
       });
       await pump(tester, const StatsScreen());
+      await statsLoaded(tester);
 
       final trend = tester.widget<Text>(
         find.byKey(const ValueKey('stats-total-trend')),
@@ -718,6 +721,7 @@ void main() {
     testWidgets('an empty period says so instead of showing empty tables',
         (tester) async {
       await pump(tester, const StatsScreen());
+      await statsLoaded(tester);
       expect(find.text('No sales in this period'), findsOneWidget);
       expect(find.byKey(const ValueKey('stats-top-sales')), findsNothing);
     });
@@ -741,6 +745,7 @@ void main() {
         }
       });
       await pump(tester, const StatsScreen());
+      await statsLoaded(tester);
 
       expect(find.byKey(const ValueKey('stats-top-sales')), findsOneWidget);
       expect(find.text('3 sales'), findsOneWidget);

@@ -44,6 +44,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/db_test_utils.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// The debt ledger through its screens: a sale that goes on credit, the
 /// customer's account, a payment and its receipt, a reversal, the debtors
@@ -1649,7 +1650,7 @@ void main() {
       await owe(tester, sara, 9000);
       await pay(tester, sara, 3000);
       await pump(tester, const StatsScreen());
-      await settle(tester, 20);
+      await statsLoaded(tester);
       await reveal(tester, find.byKey(const ValueKey('stats-debt-rate')));
       await settle(tester);
 
@@ -1791,7 +1792,7 @@ void main() {
       expect(textOf(tester, 'account-balance'), 'Owes 5,000 ل.س');
 
       await pump(tester, const StatsScreen());
-      await settle(tester, 20);
+      await statsLoaded(tester);
       await reveal(tester, find.byKey(const ValueKey('stats-debts')));
       expect(find.byKey(const ValueKey('stats-debts-locked')), findsOneWidget);
       expect(find.byKey(const ValueKey('stats-debt-outstanding')), findsNothing);
@@ -2340,7 +2341,7 @@ void main() {
       expect(find.byKey(const ValueKey('customer-phone')), findsOneWidget);
 
       await pump(tester, const StatsScreen(), debtOn: false);
-      await settle(tester, 20);
+      await statsLoaded(tester);
       expect(
         find.byKey(const ValueKey('stats-debts'), skipOffstage: false),
         findsNothing,

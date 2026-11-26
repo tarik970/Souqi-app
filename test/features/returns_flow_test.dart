@@ -30,6 +30,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/correction_test_kit.dart';
 import 'invoice_test_utils.dart';
+import 'stats_test_utils.dart';
 
 /// A license that has run out, as the screens see it.
 class _Unlicensed extends LicenseController {
@@ -797,7 +798,7 @@ void main() {
         (tester) async {
       await seed(tester);
       await pump(tester, const StatsScreen());
-      await settle(tester);
+      await statsLoaded(tester);
 
       expect(find.text('Net sales'), findsOneWidget);
       expect(find.text('Total sales'), findsNothing);
@@ -816,7 +817,7 @@ void main() {
         return true;
       });
       await pump(tester, const StatsScreen());
-      await settle(tester);
+      await statsLoaded(tester);
       expect(find.text('Total sales'), findsOneWidget);
       expect(find.text('Net sales'), findsNothing);
       expect(key('stats-returns-value'), findsNothing);
@@ -1059,12 +1060,25 @@ void main() {
   });
 
   group('the developer WhatsApp number', () {
-    test('the placeholder is not a number: the chat is not opened on it', () {
-      expect(developerWhatsApp, '+963XXXXXXXXX');
-      expect(developerWhatsAppNumber, '');
+    // Neither test knows what `developerWhatsApp` holds today: the rule is
+    // checked on values written here, so filling the number in — or changing
+    // it — breaks nothing.
+    test('a placeholder is not a number: the chat is not opened on it', () {
+      // As the constant was shipped before the real digits went in.
+      expect(whatsAppNumberOf('+963XXXXXXXXX'), '');
+      expect(whatsAppNumberOf('+963 9XX XXX XXX'), '');
+      // Half filled in is still not a number.
+      expect(whatsAppNumberOf('+963 944 123 XXX'), '');
+      expect(whatsAppNumberOf('+963 944 123 45x'), '');
+    });
+
+    test('the number the app uses is the constant, through the same rule', () {
+      expect(developerWhatsAppNumber, whatsAppNumberOf(developerWhatsApp));
     });
 
     test('a real number is taken in the form WhatsApp wants', () {
+      expect(whatsAppNumberOf('+963944123456'), '963944123456');
+      expect(whatsAppNumberOf('+963 (944) 123-456'), '963944123456');
       expect(whatsAppNumberOf('+963 944 123 456'), '963944123456');
       expect(whatsAppNumberOf('963-944-123-456'), '963944123456');
       expect(whatsAppNumberOf('963944123456'), '963944123456');

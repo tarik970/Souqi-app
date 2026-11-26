@@ -21,6 +21,7 @@ import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../data/correction_test_kit.dart';
+import 'stats_test_utils.dart';
 
 /// Every screen and dialog of phase 7 — voiding an invoice, returns, the
 /// locked door of settings / archive / statistics — on the smallest phone
@@ -497,7 +498,7 @@ void main() {
           locale: locale,
           keyboard: false,
         );
-        await settle(tester);
+        await statsLoaded(tester);
         // Three tall cards at this font: the third is below the fold.
         await reach(tester, key('stats-returns-value'));
         expect(key('stats-returns-value'), findsOneWidget);

@@ -179,27 +179,13 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
   // Aggregate queries, all on idx_invoices_created. They are independent,
   // so they go out together. The customer and renewal ones are only asked
   // for when their feature is on: a flag that is off shows nothing anywhere.
-  final customerStats = Future.wait([
-    featureOn(Feature.accounts)
-        ? repository.renewals(from: range.from, to: range.to)
-        : Future.value(const RenewalStats(count: 0, totalBaseMinor: 0)),
-    featureOn(Feature.accounts)
-        ? repository.topProducts(
-            from: range.from,
-            to: range.to,
-            baseDecimals: base.decimalPlaces,
-            ranking: ProductRanking.sales,
-            renewalsOnly: true,
-          )
-        : Future.value(const <ProductStat>[]),
-    featureOn(Feature.customers)
-        ? repository.topCustomers(from: range.from, to: range.to)
-        : Future.value(const <CustomerStat>[]),
-    featureOn(Feature.vouchers)
-        ? repository.cardSales(from: range.from, to: range.to)
-        : Future.value(const <CardSaleStat>[]),
-  ]);
-  final results = await Future.wait([
+  //
+  // ONE wait for all of them. They used to be two groups, the second only
+  // listened to at the very end: when the first failed (the database closed
+  // under a report still loading) the second failed with nobody listening,
+  // and the same failure reached the error log a second time, as an
+  // unhandled one.
+  final results = await Future.wait<Object>([
     repository.summary(
       from: range.from,
       to: range.to,
@@ -223,6 +209,24 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
       ranking: ProductRanking.amount,
     ),
     repository.byCurrency(from: range.from, to: range.to),
+    featureOn(Feature.accounts)
+        ? repository.renewals(from: range.from, to: range.to)
+        : Future.value(const RenewalStats(count: 0, totalBaseMinor: 0)),
+    featureOn(Feature.accounts)
+        ? repository.topProducts(
+            from: range.from,
+            to: range.to,
+            baseDecimals: base.decimalPlaces,
+            ranking: ProductRanking.sales,
+            renewalsOnly: true,
+          )
+        : Future.value(const <ProductStat>[]),
+    featureOn(Feature.customers)
+        ? repository.topCustomers(from: range.from, to: range.to)
+        : Future.value(const <CustomerStat>[]),
+    featureOn(Feature.vouchers)
+        ? repository.cardSales(from: range.from, to: range.to)
+        : Future.value(const <CardSaleStat>[]),
   ]);
 
   return StatsReport(
@@ -233,9 +237,9 @@ final statsReportProvider = FutureProvider<StatsReport>((ref) async {
     topBySales: results[2] as List<ProductStat>,
     topByAmount: results[3] as List<ProductStat>,
     byCurrency: results[4] as List<CurrencyTotal>,
-    renewals: (await customerStats)[0] as RenewalStats,
-    topPackages: (await customerStats)[1] as List<ProductStat>,
-    topCustomers: (await customerStats)[2] as List<CustomerStat>,
-    cardSales: (await customerStats)[3] as List<CardSaleStat>,
+    renewals: results[5] as RenewalStats,
+    topPackages: results[6] as List<ProductStat>,
+    topCustomers: results[7] as List<CustomerStat>,
+    cardSales: results[8] as List<CardSaleStat>,
   );
 });
