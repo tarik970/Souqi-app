@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'dart:async';
 import '../../core/backup/backup_crypto.dart';
 import '../../core/backup/backup_file.dart';
 import '../../core/money/money_format.dart';
@@ -372,8 +373,11 @@ Future<T> runWithProgress<T>(
   String text,
   Future<T> Function() work,
 ) async {
-  final navigator = Navigator.of(context);
-  showDialog<void>(
+  final navigator = Navigator.of(context, rootNavigator: true);
+  // Its own route, removed by name at the end: a route pushed over it
+  // meanwhile (the report notification opens a screen) must not be popped
+  // in its place, leaving a dialog that can never be dismissed.
+  final route = DialogRoute<void>(
     context: context,
     barrierDismissible: false,
     builder: (_) => PopScope(
@@ -394,11 +398,12 @@ Future<T> runWithProgress<T>(
       ),
     ),
   );
+  unawaited(navigator.push(route));
   try {
     return await work();
   } finally {
     // After a restore the whole app has started over: that navigator, and
     // the dialog with it, are gone already.
-    if (navigator.mounted) navigator.pop();
+    if (navigator.mounted && route.isActive) navigator.removeRoute(route);
   }
 }

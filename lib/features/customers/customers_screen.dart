@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../config/features.dart';
 import '../../core/utils/bidi.dart';
 import '../../data/repositories/customer_repository.dart';
@@ -94,7 +95,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               skipLoadingOnReload: true,
               skipLoadingOnRefresh: true,
               loading: () => const SizedBox.shrink(),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, stack) => LoadErrorView(e, stack),
               data: (data) => data.entries.isEmpty
                   ? Center(
                       // Scrollable: with the keyboard up there is hardly

@@ -6,6 +6,7 @@ import '../../core/printing/calibration_pattern.dart';
 import '../../core/printing/escpos.dart';
 import '../../core/printing/print_geometry.dart';
 import '../../core/printing/print_job.dart';
+import '../../core/printing/printer_detect.dart';
 import '../../core/utils/bidi.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -24,9 +25,14 @@ import 'printer_widgets.dart';
 /// Each has a short test here; the user says whether it printed, and the
 /// one that did becomes the setting.
 ///
+/// The first of those the app answers BY ITSELF where it can ("Detect the
+/// printer's language": by the printer's name, or by asking it).
+///
 /// And a printer that prints, but with one side cut off, is CALIBRATED
-/// here: a ruler is printed across the printable width, and the print is
-/// moved or narrowed step by step until both of its ends are on the paper.
+/// here — under "Advanced", because the defaults and the built-in profiles
+/// are meant to fit without it: a ruler is printed across the printable
+/// width, and the print is moved or narrowed step by step until both of
+/// its ends are on the paper.
 class PrinterDiagnosticsScreen extends ConsumerStatefulWidget {
   const PrinterDiagnosticsScreen({super.key});
 
@@ -56,10 +62,15 @@ class _PrinterDiagnosticsScreenState
     extends ConsumerState<PrinterDiagnosticsScreen> {
   _Test? _running;
   bool _calibrating = false;
+  bool _detecting = false;
+
+  /// What the last "detect" found, shown under its button.
+  PrinterDetection? _detected;
   final _answers = <_Test, _Answer>{};
 
-  /// One print at a time: a test or a calibration slip.
-  bool get _busy => _running != null || _calibrating;
+  /// One thing on the Bluetooth link at a time: a test, a calibration slip
+  /// or the language question.
+  bool get _busy => _running != null || _calibrating || _detecting;
 
   void _change(InvoiceSettings Function(InvoiceSettings s) update) {
     ref.read(invoiceSettingsProvider.notifier).change(update);
@@ -128,6 +139,40 @@ class _PrinterDiagnosticsScreenState
     setState(() {
       _running = null;
       if (sent) _answers[test] = _Answer.asking;
+    });
+  }
+
+  /// Finds out the chosen printer's language again — by its name, or by
+  /// asking it — and makes what was found the setting (for a printer the
+  /// app knows by name: its whole profile, width and position included).
+  Future<void> _detect() async {
+    if (_busy) return;
+    final settings = ref.read(invoiceSettingsProvider).value;
+    final address = settings?.printerAddress;
+    if (settings == null || address == null || address.isEmpty) return;
+    // `ref` is only read before the first await.
+    final output = ref.read(invoiceOutputProvider);
+    final notifier = ref.read(invoiceSettingsProvider.notifier);
+    setState(() {
+      _detecting = true;
+      _detected = null;
+    });
+    PrinterDetection? found;
+    await _guarded(() async {
+      await output.ensureBluetoothReady();
+      found = await output.detectPrinter(
+        address: address,
+        name: settings.printerName,
+      );
+    });
+    final detection = found;
+    if (detection != null) {
+      await notifier.change((s) => s.withDetection(detection, address: address));
+    }
+    if (!mounted) return;
+    setState(() {
+      _detecting = false;
+      _detected = detection;
     });
   }
 
@@ -228,90 +273,37 @@ class _PrinterDiagnosticsScreenState
                 // ---- Language ----
                 _Title(l10n.diagLanguageSection),
                 _Note(l10n.diagLanguageIntro),
-                _test(_Test.receipt, s),
-                _test(_Test.label, s),
-                _Note(l10n.diagLanguageHint, strong: true),
-
-                // ---- Calibration ----
-                _Title(l10n.diagCalibrationSection),
-                _Note(l10n.diagCalibrationHint),
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: FilledButton.tonalIcon(
-                    key: const ValueKey('diag-calibration-test'),
-                    onPressed: _busy ? null : _calibrate,
-                    icon: _calibrating
+                  child: FilledButton.icon(
+                    key: const ValueKey('diag-detect'),
+                    onPressed: _busy || !s.hasPrinter ? null : _detect,
+                    icon: _detecting
                         ? const SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.straighten),
+                        : const Icon(Icons.auto_fix_high),
                     label: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        l10n.calibrationTest,
+                        l10n.printerDetectButton,
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
                 ),
-                _Stepper(
-                  key: const ValueKey('diag-offset'),
-                  label: l10n.horizontalOffsetValue(
-                    ltrIsolate(formatOffsetDots(s.printerOffsetDots)),
+                if (_detected != null)
+                  _Note(
+                    printerDetectionText(l10n, _detected!),
+                    key: const ValueKey('diag-detect-result'),
+                    strong: true,
                   ),
-                  lessIcon: Icons.arrow_back,
-                  moreIcon: Icons.arrow_forward,
-                  lessTooltip: l10n.calibrationShiftLeft,
-                  moreTooltip: l10n.calibrationShiftRight,
-                  // The offset belongs to a printer: none, nothing to move.
-                  onLess: _busy ||
-                          !s.hasPrinter ||
-                          s.printerOffsetDots <= -maxOffsetDots
-                      ? null
-                      : () => _calibrate(
-                            (s) => s.withPrinterOffset(
-                              s.printerOffsetDots - offsetStepDots,
-                            ),
-                          ),
-                  onMore: _busy ||
-                          !s.hasPrinter ||
-                          s.printerOffsetDots >= maxOffsetDots
-                      ? null
-                      : () => _calibrate(
-                            (s) => s.withPrinterOffset(
-                              s.printerOffsetDots + offsetStepDots,
-                            ),
-                          ),
-                ),
-                _Stepper(
-                  key: const ValueKey('diag-width'),
-                  label: l10n.printableWidthValue('${s.printableDots}'),
-                  lessIcon: Icons.remove,
-                  moreIcon: Icons.add,
-                  lessTooltip: l10n.calibrationNarrower,
-                  moreTooltip: l10n.calibrationWider,
-                  onLess: _busy || s.printableDots <= minPrintableDots
-                      ? null
-                      : () => _calibrate(
-                            (s) => s.copyWith(
-                              printableDotsOverride: () =>
-                                  snapDots(s.printableDots - 8),
-                            ),
-                          ),
-                  onMore: _busy || s.printableDots >= maxPrintableDots
-                      ? null
-                      : () => _calibrate(
-                            (s) => s.copyWith(
-                              printableDotsOverride: () =>
-                                  snapDots(s.printableDots + 8),
-                            ),
-                          ),
-                ),
-                if (s.printerLanguage == PrinterLanguage.escPos)
-                  _Note(l10n.calibrationReceiptNote),
+                _test(_Test.receipt, s),
+                _test(_Test.label, s),
+                _Note(l10n.diagLanguageHint, strong: true),
 
                 // ---- ESC/POS image mode ----
                 _Title(l10n.diagImageModeSection),
@@ -357,11 +349,102 @@ class _PrinterDiagnosticsScreenState
                 ),
                 _Note(l10n.diagCompatHint),
 
-                // Out of the way: almost no printer needs it.
+                // ---- Advanced: calibration and the rare switches ----
                 ExpansionTile(
+                  key: const ValueKey('diag-advanced'),
                   title: Text(l10n.advancedSection),
-                  initiallyExpanded: s.tsplOneIsBlack,
+                  subtitle: Text(l10n.diagAdvancedSubtitle),
+                  // Open for a printer that has been calibrated: what was
+                  // set stays in sight.
+                  initiallyExpanded: s.tsplOneIsBlack ||
+                      s.printerOffsetDots != 0 ||
+                      s.printableDotsOverride != null,
+                  expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // ---- Calibration ----
+                    // A printer that prints with one side cut off. Out of the
+                    // way: the defaults and the built-in profiles fit, and a
+                    // shop should not have to come here.
+                    _Title(l10n.diagCalibrationSection),
+                    _Note(l10n.diagCalibrationHint),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: FilledButton.tonalIcon(
+                        key: const ValueKey('diag-calibration-test'),
+                        onPressed: _busy ? null : _calibrate,
+                        icon: _calibrating
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.straighten),
+                        label: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            l10n.calibrationTest,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                    _Stepper(
+                      key: const ValueKey('diag-offset'),
+                      label: l10n.horizontalOffsetValue(
+                        ltrIsolate(formatOffsetDots(s.printerOffsetDots)),
+                      ),
+                      lessIcon: Icons.arrow_back,
+                      moreIcon: Icons.arrow_forward,
+                      lessTooltip: l10n.calibrationShiftLeft,
+                      moreTooltip: l10n.calibrationShiftRight,
+                      // The offset belongs to a printer: none, nothing to move.
+                      onLess: _busy ||
+                              !s.hasPrinter ||
+                              s.printerOffsetDots <= -maxOffsetDots
+                          ? null
+                          : () => _calibrate(
+                                (s) => s.withPrinterOffset(
+                                  s.printerOffsetDots - offsetStepDots,
+                                ),
+                              ),
+                      onMore: _busy ||
+                              !s.hasPrinter ||
+                              s.printerOffsetDots >= maxOffsetDots
+                          ? null
+                          : () => _calibrate(
+                                (s) => s.withPrinterOffset(
+                                  s.printerOffsetDots + offsetStepDots,
+                                ),
+                              ),
+                    ),
+                    _Stepper(
+                      key: const ValueKey('diag-width'),
+                      label: l10n.printableWidthValue('${s.printableDots}'),
+                      lessIcon: Icons.remove,
+                      moreIcon: Icons.add,
+                      lessTooltip: l10n.calibrationNarrower,
+                      moreTooltip: l10n.calibrationWider,
+                      onLess: _busy || s.printableDots <= minPrintableDots
+                          ? null
+                          : () => _calibrate(
+                                (s) => s.copyWith(
+                                  printableDotsOverride: () =>
+                                      snapDots(s.printableDots - 8),
+                                ),
+                              ),
+                      onMore: _busy || s.printableDots >= maxPrintableDots
+                          ? null
+                          : () => _calibrate(
+                                (s) => s.copyWith(
+                                  printableDotsOverride: () =>
+                                      snapDots(s.printableDots + 8),
+                                ),
+                              ),
+                    ),
+                    if (s.printerLanguage == PrinterLanguage.escPos)
+                      _Note(l10n.calibrationReceiptNote),
+
                     SwitchListTile(
                       key: const ValueKey('diag-tspl-one-is-black'),
                       title: Text(l10n.tsplOneIsBlackLabel),
@@ -400,7 +483,7 @@ class _Title extends StatelessWidget {
 }
 
 class _Note extends StatelessWidget {
-  const _Note(this.text, {this.strong = false});
+  const _Note(this.text, {super.key, this.strong = false});
 
   final String text;
 

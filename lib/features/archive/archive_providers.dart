@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/normalize.dart';
 import '../../config/features.dart';
 import '../../core/providers.dart';
 import '../../core/utils/date_ranges.dart';
@@ -22,6 +23,18 @@ class ArchiveFilterNotifier extends Notifier<ArchiveFilter> {
     );
   }
 
+  /// "Today", "Yesterday", "This week" and "This month" are resolved to
+  /// dates when they are chosen — and a shop phone is never switched off:
+  /// the next morning "Today" would still be yesterday's dates, and "Delete
+  /// these invoices" would delete yesterday. Called when the archive opens
+  /// and when the app comes back to the front: the dates follow the day.
+  void refreshRelativePeriod({DateTime? now}) {
+    final range = resolvePeriod(state.preset, now: now);
+    if (range == null) return; // "All" or a custom range: nothing relative.
+    if (range.from == state.from && range.to == state.to) return;
+    setPeriod(state.preset, now: now);
+  }
+
   void setCustomRange(DateTime first, DateTime last) {
     final range = customRange(first, last);
     state = state.copyWith(
@@ -35,7 +48,8 @@ class ArchiveFilterNotifier extends Notifier<ArchiveFilter> {
   void setInvoiceNo(String text) {
     final trimmed = text.trim();
     state = state.copyWith(
-      invoiceNo: () => trimmed.isEmpty ? null : int.tryParse(trimmed),
+      invoiceNo: () =>
+          trimmed.isEmpty ? null : int.tryParse(normalizeDigits(trimmed)),
     );
   }
 

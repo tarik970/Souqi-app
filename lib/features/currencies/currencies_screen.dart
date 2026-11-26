@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'rate_text.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/currency_repository.dart';
@@ -30,7 +32,7 @@ class CurrenciesScreen extends ConsumerWidget {
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
@@ -60,7 +62,7 @@ class _CurrencyTile extends ConsumerWidget {
 
     final subtitleLines = <String>[];
     if (!_isBase && baseCode != null) {
-      subtitleLines.add(l10n.rateDisplay(currency.code,
+      subtitleLines.add(rateLine(l10n, currency.code,
           formatRateValue(currency.rate, locale: locale), baseCode!));
       subtitleLines.add(currency.rateUpdatedAt == null
           ? l10n.rateNeverUpdated

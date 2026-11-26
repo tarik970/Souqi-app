@@ -21,7 +21,11 @@ Future<bool> confirmDuplicateAccount(
   required List<AccountDuplicate> duplicates,
 }) async {
   final l10n = AppLocalizations.of(context);
-  final names = duplicates.map((d) => d.customerName).toSet().join('، ');
+  // The list comma of the app's language.
+  final names = duplicates
+      .map((d) => d.customerName)
+      .toSet()
+      .join(l10n.localeName == 'ar' ? '، ' : ', ');
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -202,7 +206,22 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
     setState(() => onPicked(picked));
   }
 
+  bool _inSave = false;
+
+  /// One save at a time. The claim is made BEFORE the first await: the
+  /// form's own "saving" flag is only set after the duplicate check has
+  /// read the database, and a second tap in that gap would save twice.
   Future<void> _save() async {
+    if (_inSave) return;
+    _inSave = true;
+    try {
+      await _saveOnce();
+    } finally {
+      _inSave = false;
+    }
+  }
+
+  Future<void> _saveOnce() async {
     if (_saving || !_formKey.currentState!.validate()) return;
     final navigator = Navigator.of(context);
     // The lists are refreshed through the container: the save must show up

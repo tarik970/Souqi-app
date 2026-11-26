@@ -1,0 +1,2 @@
+cd D:\souqi_keygen
+dart run bin/keygen.dart issue --request XXXX-XXXX-XXXX-XXXX --shop "مخزن الخطيب" --features all --lifetime

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../currencies/rate_text.dart';
+import '../../core/logging/error_log.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../config/features.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/licensing/license_status.dart';
@@ -204,7 +207,9 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
-          content: Text(l10n.codeNotFound(code)),
+          content: Text(
+            l10n.codeNotFound(isolateForRtl(l10n.localeName, code)),
+          ),
           action: featureOn(Feature.barcode)
               ? SnackBarAction(
                   key: const ValueKey('code-not-found-new'),
@@ -324,6 +329,10 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
   @override
   void initState() {
     super.initState();
+    // The search text lives in a provider and outlives this screen; the box
+    // is new each time. Without this it came back EMPTY over a list still
+    // filtered by the old text — and the cart seemed to have vanished.
+    _search.text = ref.read(saleSearchProvider);
     HardwareKeyboard.instance.addHandler(_onHardwareKey);
   }
 
@@ -538,6 +547,15 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       // built: the repository refused, and nothing was saved. The cart
       // stays as it is.
       if (mounted) await showLicenseNeeded(context, e.action);
+    } on Object catch (error, stack) {
+      // ANYTHING ELSE — the storage is full, the database did not answer:
+      // the transaction rolled back, nothing was saved and the cart is as
+      // it was. Said out loud; a Save that does nothing is the one thing a
+      // seller cannot work with.
+      reportError(error, stack, context: 'sale save');
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.saleSaveFailed)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -985,7 +1003,7 @@ class _SearchResults extends ConsumerWidget {
       // searched, instead of flashing a spinner between letters.
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(child: Text('$error')),
+      error: (error, stack) => LoadErrorView(error, stack),
       data: (found) {
         final products = found.products;
         // Offered whenever the typed text is not already a product. While the
@@ -1432,7 +1450,8 @@ class _TotalsPanel extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            l10n.rateDisplay(
+                            rateLine(
+                              l10n,
                               focus.code,
                               formatRateValue(focus.rate, locale: locale),
                               ctx.baseCode,

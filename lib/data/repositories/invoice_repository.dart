@@ -99,7 +99,16 @@ class InvoiceRepository {
       for (var i = 0; i < draft.items.length; i++) {
         final item = draft.items[i];
         var productId = item.productId;
-        if (productId == null && item.saveAsProduct) {
+        // The product may have been deleted while the item sat in the cart
+        // (an unused product is hard-deleted). A dangling id would fail the
+        // foreign key and take the whole sale with it; the line's own
+        // snapshot — name, unit, price — is all the invoice needs.
+        if (productId != null && !await products.exists(productId)) {
+          productId = null;
+        }
+        if (productId == null && item.productId != null) {
+          // Sold as what it was; nothing to create or update.
+        } else if (productId == null && item.saveAsProduct) {
           productId = await _productForTypedItem(txn, products, item);
         } else if (productId != null && item.updateProductPrice) {
           await products.updatePriceFromSale(

@@ -119,7 +119,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
     if (priceMinor == null) return; // validator already showed the error
 
-    final code = _code.text.trim().isEmpty ? null : _code.text.trim();
+    // Stored the way it is looked up (Western digits, upper case).
+    final code = ProductRepository.normalizeProductCode(_code.text);
     final repo = ref.read(productRepositoryProvider);
     // The list is refreshed through the container: the save must show up
     // even if this screen was closed while it ran.

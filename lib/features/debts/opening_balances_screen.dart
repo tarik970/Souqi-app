@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/save_guard.dart';
 import '../../core/money/money_format.dart';
 import '../../core/licensing/license_status.dart';
 import '../../core/providers.dart';
@@ -105,8 +106,10 @@ class _OpeningBalancesScreenState extends ConsumerState<OpeningBalancesScreen> {
     final now = DateTime.now();
     final day = _date;
     setState(() => _saving = true);
-    final result =
-        await container.read(debtRepositoryProvider).addOpeningBalanceFor(
+    final result = await runSave(
+      context,
+      what: 'opening balance',
+      () => container.read(debtRepositoryProvider).addOpeningBalanceFor(
               OpeningBalanceDraft(
                 customerId: picked?.id,
                 name: picked?.name ?? name,
@@ -120,7 +123,12 @@ class _OpeningBalancesScreenState extends ConsumerState<OpeningBalancesScreen> {
                     : DateTime(day.year, day.month, day.day, now.hour,
                         now.minute, now.second, now.millisecond),
               ),
-            );
+            ),
+    );
+    if (result == null) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
     refreshDebtData(container);
     if (result.createdCustomer) refreshCustomerData(container);
     if (!mounted) return;

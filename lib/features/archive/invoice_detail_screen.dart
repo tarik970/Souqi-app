@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
@@ -56,7 +57,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
               )
             : _Body(invoice: data),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
       ),
     );
   }

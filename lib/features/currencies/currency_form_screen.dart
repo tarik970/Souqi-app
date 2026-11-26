@@ -27,6 +27,10 @@ class _CurrencyFormScreenState extends ConsumerState<CurrencyFormScreen> {
   late final TextEditingController _symbol;
   late final TextEditingController _rate;
   late int _decimals;
+
+  /// Editing a currency that already has amounts stored in it: its decimal
+  /// places are frozen. True until the check has answered.
+  bool _decimalsLocked = true;
   String? _codeError;
   bool _saving = false;
 
@@ -43,6 +47,18 @@ class _CurrencyFormScreenState extends ConsumerState<CurrencyFormScreen> {
     _symbol = TextEditingController(text: _initial?.symbol ?? '');
     _rate = TextEditingController();
     _decimals = _initial?.decimalPlaces ?? 0;
+    final initial = _initial;
+    if (initial == null) {
+      _decimalsLocked = false;
+    } else {
+      ref.read(currencyRepositoryProvider).isInUse(initial.code).then(
+        (used) {
+          if (mounted) setState(() => _decimalsLocked = used);
+        },
+        // Could not be checked: stays locked, which is the safe side.
+        onError: (Object _) {},
+      );
+    }
   }
 
   @override
@@ -150,12 +166,22 @@ class _CurrencyFormScreenState extends ConsumerState<CurrencyFormScreen> {
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
               initialValue: _decimals,
-              decoration: InputDecoration(labelText: l10n.currencyDecimals),
+              key: const ValueKey('currency-decimals'),
+              decoration: InputDecoration(
+                labelText: l10n.currencyDecimals,
+                // Amounts are stored as whole minor units: changing the
+                // decimals of a currency in use would re-read all of them.
+                helperText:
+                    !_isNew && _decimalsLocked ? l10n.currencyDecimalsLocked : null,
+                helperMaxLines: 4,
+              ),
               items: [
                 for (var d = 0; d <= 4; d++)
                   DropdownMenuItem(value: d, child: Text('$d')),
               ],
-              onChanged: (v) => setState(() => _decimals = v ?? 0),
+              onChanged: _decimalsLocked
+                  ? null
+                  : (v) => setState(() => _decimals = v ?? 0),
             ),
             if (_isNew) ...[
               const SizedBox(height: 12),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/voucher.dart';
@@ -52,7 +53,7 @@ class CardStockScreen extends ConsumerWidget {
         // No spinner: the counts are one small query, and a spinner would
         // keep a widget test waiting on its animation.
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
         data: (stocks) {
           if (stocks.isEmpty) {
             return Center(
@@ -173,7 +174,7 @@ class _StockCard extends ConsumerWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

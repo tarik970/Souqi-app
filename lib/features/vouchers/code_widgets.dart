@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/utils/bidi.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/security/code_cipher.dart';
@@ -60,7 +61,7 @@ class CodeTile extends ConsumerWidget {
     final facts = <String>[
       codeStatusLabel(l10n, code),
       if (code.serial != null && code.serial!.isNotEmpty)
-        l10n.serialLabel(code.serial!),
+        l10n.serialLabel(isolateForRtl(l10n.localeName, code.serial!)),
       if (code.expiryAt != null)
         l10n.batchExpires(dates.format(expiryLastDay(code.expiryAt!))),
       if (code.soldAt != null)
@@ -340,7 +341,7 @@ class RevealedCodeDialog extends StatelessWidget {
           if (serial != null && serial!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              l10n.serialLabel(serial!),
+              l10n.serialLabel(isolateForRtl(l10n.localeName, serial!)),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall,
             ),

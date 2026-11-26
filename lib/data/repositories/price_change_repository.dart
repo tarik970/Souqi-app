@@ -31,20 +31,23 @@ class PriceChangeRepository {
       where: switch (scope) {
         PriceChangeScope.all => null,
         PriceChangeScope.currency => 'currency_code = ?',
-        PriceChangeScope.selected => productIds.isEmpty
-            ? '0'
-            : 'id IN (${List.filled(productIds.length, '?').join(',')})',
+        // Chosen in Dart below, not with "id IN (?, ?, …)": SQLite before
+        // 3.32 (Android 11 and older) takes at most 999 parameters, and
+        // "select all shown" in a big shop passes that.
+        PriceChangeScope.selected => productIds.isEmpty ? '0' : null,
       },
       whereArgs: switch (scope) {
         PriceChangeScope.all => null,
         PriceChangeScope.currency => [currencyCode],
-        PriceChangeScope.selected => productIds.toList(),
+        PriceChangeScope.selected => null,
       },
       orderBy: 'is_active DESC, name_norm ASC, id ASC',
     );
     return planBulkPriceChange(
       products: [
         for (final row in rows)
+          if (scope != PriceChangeScope.selected ||
+              productIds.contains(row['id']))
           (
             id: row['id'] as int,
             name: row['name'] as String,

@@ -35,9 +35,17 @@ migrate_working_dir/
 
 # Symbolication related
 app.*.symbols
-# Written by tool/build_release.ps1 (--split-debug-info). Not in the
-# repository, but KEEP them somewhere safe with every released APK.
+# Written by tool/build_release.ps1: one folder per version with the APK, the
+# Dart symbols (--split-debug-info) and R8's mapping. Not in the repository,
+# but ARCHIVE each one somewhere safe with the released APK.
+/releases/
 /symbols/
+
+# The release keystore and its passwords never belong in this repository
+# (android/.gitignore says the same for android/key.properties).
+key.properties
+*.jks
+*.keystore
 
 # Licensing: the developer's private key never belongs in this repository.
 *.key

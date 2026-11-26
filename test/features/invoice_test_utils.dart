@@ -142,6 +142,25 @@ class FakeNativeBridge implements NativeBridge {
     printed.add((address: address, bytes: bytes));
   }
 
+  /// What the printer answers to a status question, by the question's first
+  /// byte (0x10 = the ESC/POS one, 0x1B = the TSPL one). Nothing by
+  /// default: a printer that never answers, like most cheap ones.
+  Map<int, List<int>> statusReplies = const {};
+  OutputException? queryError;
+  final queries = <({String address, Uint8List bytes})>[];
+
+  @override
+  Future<Uint8List> queryPrinter(
+    String address,
+    Uint8List bytes, {
+    int timeoutMs = 400,
+  }) async {
+    final error = queryError;
+    if (error != null) throw error;
+    queries.add((address: address, bytes: bytes));
+    return Uint8List.fromList(statusReplies[bytes.first] ?? const []);
+  }
+
   @override
   Future<void> disconnectPrinter() async {}
 

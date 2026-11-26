@@ -143,6 +143,17 @@ abstract class NativeBridge {
     int chunkDelayMs,
   });
 
+  /// Connects to [address] (reusing an open connection), sends [bytes] — a
+  /// status question — and returns what the printer answered within
+  /// [timeoutMs] milliseconds; empty when it said nothing. The connection
+  /// stays open for the print job that follows. Throws [OutputException]
+  /// like [printBytes]. See `detectPrinterLanguage`.
+  Future<Uint8List> queryPrinter(
+    String address,
+    Uint8List bytes, {
+    int timeoutMs,
+  });
+
   Future<void> disconnectPrinter();
 
   Future<void> openBluetoothSettings();
@@ -313,6 +324,19 @@ class MethodChannelNativeBridge implements NativeBridge {
         'chunkSize': chunkSize,
         'chunkDelayMs': chunkDelayMs,
       });
+
+  @override
+  Future<Uint8List> queryPrinter(
+    String address,
+    Uint8List bytes, {
+    int timeoutMs = 400,
+  }) async =>
+      await _invoke<Uint8List>('btQuery', {
+        'address': address,
+        'bytes': bytes,
+        'timeoutMs': timeoutMs,
+      }) ??
+      Uint8List(0);
 
   @override
   Future<void> disconnectPrinter() => _invoke<void>('btDisconnect');

@@ -56,7 +56,12 @@ class InvoiceSettingsNotifier extends AsyncNotifier<InvoiceSettings> {
     };
     if (changed.isEmpty) return _writes;
     final repository = ref.read(settingsRepositoryProvider);
-    return _writes = _writes.then((_) => repository.setMany(changed));
+    // One failed write must not stop every later one: the chain carries
+    // the ORDER of the writes, not their errors (the caller of the failed
+    // write still gets its error).
+    return _writes = _writes
+        .catchError((Object _) {})
+        .then((_) => repository.setMany(changed));
   }
 
   /// Convenience for `set(update(current))`. No-op until the first load.

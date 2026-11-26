@@ -22,9 +22,15 @@ class BackupBusyException implements Exception {
 /// Makes a backup of the whole shop with [password] in the app's own
 /// temporary folder, logs it, and returns it — for the share sheet, "Save
 /// to phone" or the report folder to take from there.
+///
+/// With [record] false nothing is logged yet: the caller delivers the file
+/// first and calls [recordBackupCreated] only when that worked. A backup
+/// that reached nowhere must not show as "Last backup: today" and silence
+/// the reminder.
 Future<CreatedBackup> createBackupFile(
   ProviderContainer container, {
   required String password,
+  bool record = true,
 }) async {
   final database = container.read(databaseProvider);
   final service = container.read(backupServiceProvider);
@@ -43,10 +49,18 @@ Future<CreatedBackup> createBackupFile(
     appVersion: await appVersion(),
     outPath: p.join(out.path, manualBackupName(now.toLocal())),
   );
-  await BackupService.logCreated(database.db, created);
+  if (record) await recordBackupCreated(container, created);
+  return created;
+}
+
+/// Writes the audit line and the "last backup" date of [created].
+Future<void> recordBackupCreated(
+  ProviderContainer container,
+  CreatedBackup created,
+) async {
+  await BackupService.logCreated(container.read(databaseProvider).db, created);
   refreshBackupState(container);
   container.invalidate(auditLogProvider);
-  return created;
 }
 
 /// REPLACES ALL DATA with [backup] and starts the app over on it.

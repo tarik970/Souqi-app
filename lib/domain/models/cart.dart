@@ -74,6 +74,7 @@ class CartLine {
     this.saveAsProduct = false,
     this.listPriceMinor,
     this.listCurrencyCode,
+    this.listUnitId,
     this.requiresAccount = false,
     this.codeStock = false,
     this.barcode,
@@ -110,6 +111,11 @@ class CartLine {
   final int? listPriceMinor;
   final String? listCurrencyCode;
 
+  /// The unit the product's saved price is FOR (null = the product has
+  /// none). A price typed for another unit — the same sugar by the bag
+  /// instead of by the kilo — is this sale's price, never the product's.
+  final int? listUnitId;
+
   /// The product is marked "requires customer account": the sale cannot be
   /// saved until a customer's card / account is attached to it.
   final bool requiresAccount;
@@ -136,6 +142,7 @@ class CartLine {
       productId != null &&
       listPriceMinor != null &&
       listCurrencyCode == priceCurrencyCode &&
+      (listUnitId == null || unitId == listUnitId) &&
       unitPriceMinor != listPriceMinor &&
       unitPriceMinor > 0;
 
@@ -179,6 +186,7 @@ class CartLine {
       saveAsProduct: saveAsProduct ?? this.saveAsProduct,
       listPriceMinor: listPriceMinor,
       listCurrencyCode: listCurrencyCode,
+      listUnitId: listUnitId,
       requiresAccount: requiresAccount,
       codeStock: codeStock,
       barcode: barcode,
@@ -347,9 +355,16 @@ class Cart {
         nextLineId: nextLineId,
       );
 
+  /// An AMOUNT discount is in the invoice currency and does not survive a
+  /// change of it: 5,000 (pounds) read as 50.00 dollars would wipe the
+  /// total out. It is dropped — like the cash received — and typed again;
+  /// a percentage stays.
   Cart withInvoiceCurrency(String? code) => Cart(
         lines: lines,
-        discount: discount,
+        discount: code != invoiceCurrencyCode &&
+                discount?.type == DiscountType.amount
+            ? null
+            : discount,
         invoiceCurrencyCode: code,
         nextLineId: nextLineId,
       );

@@ -8,6 +8,7 @@ import 'migrations/migration_v3.dart';
 import 'migrations/migration_v4.dart';
 import 'migrations/migration_v5.dart';
 import 'migrations/migration_v6.dart';
+import 'migrations/migration_v7.dart';
 
 /// Owns the sqflite [Database]: opening, PRAGMAs and versioned migrations.
 class AppDatabase {
@@ -30,9 +31,13 @@ class AppDatabase {
     MigrationV4(),
     MigrationV5(),
     MigrationV6(),
+    MigrationV7(),
   ];
 
   static int get schemaVersion => migrations.last.version;
+
+  /// How long a statement waits for a lock held by another connection.
+  static const int _busyTimeoutMs = 15000;
 
   /// Where the app's database file is on the phone.
   static Future<String> defaultPath({DatabaseFactory? factory}) async =>
@@ -42,9 +47,19 @@ class AppDatabase {
   ///
   /// [factory] and [path] exist for tests (sqflite_common_ffi, in-memory).
   /// In the app, call with no arguments.
+  ///
+  /// [ownConnection] is for the BACKGROUND ENGINE (the daily job). sqflite's
+  /// Android side keeps one connection per file for the whole PROCESS, not
+  /// per Flutter engine: a second engine that opens the same file the
+  /// ordinary way is handed the app's own connection, and closing it there
+  /// closes it for the app too — every query of the open app then fails
+  /// with "database_closed" until the app is killed. With [ownConnection]
+  /// the caller gets a separate connection that it can close freely; SQLite
+  /// itself arbitrates between the two (see [_busyTimeoutMs]).
   static Future<AppDatabase> open({
     DatabaseFactory? factory,
     String? path,
+    bool ownConnection = false,
   }) async {
     final f = factory ?? databaseFactory;
     final dbPath = path ?? p.join(await f.getDatabasesPath(), fileName);
@@ -52,8 +67,18 @@ class AppDatabase {
       dbPath,
       options: OpenDatabaseOptions(
         version: schemaVersion,
+        singleInstance: !ownConnection,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON');
+          // Another connection — the daily job's, while it copies the
+          // database for the automatic backup — may hold the write lock for
+          // a few seconds. Wait for it instead of failing a sale with
+          // "database is locked" (Android's default gives up after 2.5 s).
+          try {
+            await db.rawQuery('PRAGMA busy_timeout = $_busyTimeoutMs');
+          } on Object {
+            // An engine that does not know the pragma keeps its default.
+          }
         },
         onCreate: (db, version) async {
           for (final m in migrations) {

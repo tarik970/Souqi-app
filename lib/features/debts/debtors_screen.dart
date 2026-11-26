@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/providers.dart';
 import '../../core/utils/normalize.dart';
 import '../../domain/models/debt.dart';
@@ -171,7 +172,7 @@ class _DebtorsScreenState extends ConsumerState<DebtorsScreen> {
           skipLoadingOnReload: true,
           skipLoadingOnRefresh: true,
           loading: () => const SizedBox.shrink(),
-          error: (e, _) => Center(child: Text('$e')),
+          error: (e, stack) => LoadErrorView(e, stack),
           data: (data) {
             final debtors = arrangeDebtors(
               data,

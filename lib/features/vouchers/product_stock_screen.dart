@@ -6,6 +6,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/platform/native_bridge.dart';
 import '../../core/providers.dart';
@@ -420,7 +421,7 @@ class BatchCodesScreen extends ConsumerWidget {
       body: codes.when(
         skipLoadingOnReload: true,
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
         data: (items) => ListView.separated(
           key: const ValueKey('batch-codes'),
           padding: const EdgeInsets.only(bottom: 24),

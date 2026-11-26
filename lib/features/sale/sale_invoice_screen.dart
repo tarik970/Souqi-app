@@ -88,10 +88,9 @@ class SaleInvoiceScreen extends ConsumerWidget {
                       size: 48, color: theme.colorScheme.primary),
                   const SizedBox(height: 8),
                   Text(
-                    l10n.invoiceNoLabel(
-                      NumberFormat.decimalPattern(locale)
-                          .format(invoice.invoiceNo),
-                    ),
+                    // As it is printed: an invoice number has no thousands
+                    // separator ("1234", not "1,234").
+                    l10n.invoiceNoLabel('${invoice.invoiceNo}'),
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 4),

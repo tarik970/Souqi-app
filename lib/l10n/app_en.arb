@@ -2187,5 +2187,62 @@
     "placeholders": {
       "days": {"type": "String"}
     }
+  },
+
+  "printerDetecting": "Checking the printer…",
+  "printerDetectedProfile": "Known printer ({model}): its tested settings are used.",
+  "@printerDetectedProfile": {
+    "placeholders": {
+      "model": {"type": "String"}
+    }
+  },
+  "printerDetectedAnswered": "The printer answered: {language}.",
+  "@printerDetectedAnswered": {
+    "placeholders": {
+      "language": {"type": "String"}
+    }
+  },
+  "printerDetectedSilent": "The printer did not answer, so Receipt (ESC/POS) is used. If nothing prints, choose Label (TSPL).",
+  "printerDetectUnreachable": "The printer could not be reached right now. Its language will be checked at the first print.",
+  "printerDetectButton": "Detect the printer's language",
+  "diagAdvancedSubtitle": "Position on the paper, and switches almost no printer needs",
+  "auditBarcodeDedup": "Duplicate barcodes cleared (app update)",
+  "aboutVersion": "Version",
+  "aboutBuildNumber": "Build number",
+  "aboutSupportSection": "Support",
+  "errorLogShare": "Share error log",
+  "errorLogShareHint": "Technical details of what went wrong on this phone, to send to the developer. Nothing is sent by itself.",
+  "errorLogNone": "No errors recorded",
+  "errorLogCount": "Errors recorded: {count}",
+  "@errorLogCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "errorLogShareFailed": "Could not open the share menu.",
+  "startupFailedTitle": "Souqi could not open its data",
+  "startupFailedBody": "Your data has not been deleted: it is still on this phone. Close the app completely and open it again, or tap Try again. If this keeps happening, send the error log to the developer.",
+  "startupFailedNewerData": "This data was saved by a newer version of Souqi than the one installed. Install the latest version of the app. Your data is still on this phone.",
+  "retry": "Try again",
+  "loadErrorMessage": "This page could not be loaded. Go back and open it again. If it keeps happening, send the error log from Settings → About Souqi.",
+
+  "saleSaveFailed": "The sale could not be saved. Nothing was recorded and the cart is as it was. Try again; if it keeps happening, send the error log from Settings → About Souqi.",
+  "saveFailedGeneric": "Could not be saved. Nothing was recorded. Try again.",
+  "errorSeeLog": "the details are in the error log (Settings → About Souqi)",
+  "currencyDecimalsLocked": "The decimal places cannot be changed: this currency already has prices, invoices or debts stored in it, and every one of those amounts would be read differently.",
+  "retentionConfirmTitle": "Delete old invoices?",
+  "retentionConfirmMessage": "{count} invoices older than {days} days will be deleted now, and older invoices will be deleted every day from now on. This cannot be undone. Products, invoice numbering and sold card codes are kept.",
+  "@retentionConfirmMessage": {
+    "placeholders": {
+      "count": {"type": "String"},
+      "days": {"type": "String"}
+    }
+  },
+  "rateSuspicious": "{entered} is very different from the current rate ({current}). A comma or a dot is read as a decimal point: type 13500, not 13,500. If {entered} is right, tap Save again.",
+  "@rateSuspicious": {
+    "placeholders": {
+      "entered": {"type": "String"},
+      "current": {"type": "String"}
+    }
   }
 }

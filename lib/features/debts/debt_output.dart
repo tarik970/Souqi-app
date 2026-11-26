@@ -158,10 +158,12 @@ class LedgerPaperOutput {
     }
     final output = _ref.read(invoiceOutputProvider);
     await output.ensureBluetoothReady();
+    // A printer whose language is not known yet is asked first.
+    final known = await output.withKnownPrinter(c);
     await output.send(
-      c.settings,
+      known.settings,
       address,
-      await printJob(paper, context: c, copy: copy),
+      await printJob(paper, context: known, copy: copy),
     );
   }
 

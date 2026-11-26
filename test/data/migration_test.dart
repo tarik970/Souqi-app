@@ -5,6 +5,7 @@ import 'package:souqi/data/db/migrations/migration_v1.dart';
 import 'package:souqi/data/db/migrations/migration_v2.dart';
 import 'package:souqi/data/db/migrations/migration_v3.dart';
 import 'package:souqi/data/db/migrations/migration_v4.dart';
+import 'package:souqi/data/db/migrations/migration_v7.dart';
 import 'package:souqi/core/money/exchange.dart';
 import 'package:souqi/data/repositories/debt_repository.dart';
 import 'package:souqi/data/repositories/archive_repository.dart';
@@ -34,8 +35,8 @@ void main() {
   group('schema', () {
     test('user_version is the latest migration', () async {
       final rows = await db.rawQuery('PRAGMA user_version');
-      expect(rows.first.values.first, 6);
-      expect(AppDatabase.schemaVersion, 6);
+      expect(rows.first.values.first, 7);
+      expect(AppDatabase.schemaVersion, 7);
     });
 
     test('foreign keys are enforced', () async {
@@ -933,7 +934,8 @@ void main() {
       final upgraded =
           await AppDatabase.open(factory: databaseFactoryFfi, path: path);
       final db = upgraded.db;
-      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 6);
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first,
+          AppDatabase.schemaVersion);
       expect(await counts(db), before);
       expect(await db.query('price_changes'), isEmpty);
       expect(await db.query('price_change_items'), isEmpty);
@@ -976,6 +978,186 @@ void main() {
         99,
         reason: 'the file is left as it was',
       );
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+  });
+
+  group('v6 → v7 (one barcode, one product; codes as they are looked up)',
+      () {
+    Future<Database> openV6(String path) => databaseFactoryFfi.openDatabase(
+          path,
+          options: OpenDatabaseOptions(
+            version: 6,
+            onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+            onCreate: (db, _) async {
+              for (final m in AppDatabase.migrations) {
+                if (m.version <= 6) await m.apply(db);
+              }
+            },
+          ),
+        );
+
+    Future<int> product(
+      Database db,
+      String name, {
+      String? barcode,
+      String? code,
+      bool active = true,
+    }) async {
+      final id = await insertProduct(db, name: name);
+      await db.update(
+        'products',
+        {'barcode': barcode, 'code': code, 'is_active': active ? 1 : 0},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return id;
+    }
+
+    Future<Map<int, String?>> column(Database db, String name) async => {
+          for (final row in await db.query('products', orderBy: 'id'))
+            row['id'] as int: row[name] as String?,
+        };
+
+    test('duplicates keep the barcode on the product a scan finds; the '
+        'others lose only their barcode, and the count is logged', () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v6_dupes_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV6(path);
+      // Two active products on one barcode: the older one keeps it.
+      final sugar = await product(old, 'Sugar', barcode: '111');
+      final sugar2 = await product(old, 'Sugar 2', barcode: '111');
+      // A deactivated product and an active one: a scan finds the active
+      // one today, so that is the one that keeps it.
+      final oldTea = await product(old, 'Old tea', barcode: '222', active: false);
+      final tea = await product(old, 'Tea', barcode: '222');
+      // Stored with spaces and Arabic-Indic digits: rewritten, and then a
+      // duplicate of the next one.
+      final rice = await product(old, 'Rice', barcode: '٤٤٤ ٥');
+      final rice2 = await product(old, 'Rice 2', barcode: '4445');
+      final blank = await product(old, 'Blank', barcode: '  ');
+      final oil = await product(old, 'Oil', barcode: '333');
+      final none = await product(old, 'No barcode');
+      final invoice = await insertInvoice(old, invoiceNo: 1);
+      await insertInvoiceItem(old, invoiceId: invoice, productId: sugar2);
+      final productsBefore = await old.query('products', orderBy: 'id');
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      final db = upgraded.db;
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 7);
+
+      expect(await column(db, 'barcode'), {
+        sugar: '111',
+        sugar2: null,
+        oldTea: null,
+        tea: '222',
+        rice: '4445',
+        rice2: null,
+        blank: null,
+        oil: '333',
+        none: null,
+      });
+      // Nothing but the barcode changed, and no row went anywhere.
+      final productsAfter = await db.query('products', orderBy: 'id');
+      expect(productsAfter, hasLength(productsBefore.length));
+      for (var i = 0; i < productsBefore.length; i++) {
+        final before = Map.of(productsBefore[i])..remove('barcode');
+        final after = Map.of(productsAfter[i])..remove('barcode');
+        expect(after, before, reason: '${before['name']}');
+      }
+      expect(await db.query('invoice_items'), hasLength(1));
+      expect(await db.rawQuery('PRAGMA foreign_key_check'), isEmpty);
+
+      // How many, and which, is in the audit log.
+      final log = await AuditRepository(db).list();
+      expect(log.single.action, MigrationV7.auditAction);
+      expect(log.single.details['products'], 3);
+      expect(log.single.details['names'], 'Sugar 2, Rice 2, Old tea');
+
+      // The rule is now the database's own…
+      await expectLater(
+        db.update('products', {'barcode': '111'},
+            where: 'id = ?', whereArgs: [none]),
+        throwsA(isA<DatabaseException>()),
+      );
+      // …products without a barcode stay as many as they like…
+      expect(
+        (await db.query('products', where: 'barcode IS NULL')).length,
+        greaterThan(1),
+      );
+      // …and the lookup uses the new index.
+      final plan = await db.rawQuery(
+        'EXPLAIN QUERY PLAN SELECT id FROM products WHERE barcode = ?',
+        ['111'],
+      );
+      expect(plan.map((r) => '${r['detail']}').join(' '),
+          contains('idx_products_barcode'));
+      expect((await ProductRepository(db).findByBarcode('222'))!.id, tea);
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('a database without duplicates upgrades untouched and gets no '
+        'audit line; the index is the one a new install has', () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v6_clean_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV6(path);
+      final a = await product(old, 'A', barcode: '6221234567890');
+      final b = await product(old, 'B', barcode: 'ABC123');
+      await product(old, 'C');
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      expect(await column(upgraded.db, 'barcode'),
+          containsPair(a, '6221234567890'));
+      expect(await column(upgraded.db, 'barcode'), containsPair(b, 'ABC123'));
+      expect(await upgraded.db.query('audit_log'), isEmpty);
+
+      Future<Object?> indexSql(Database db) async => (await db.rawQuery(
+            "SELECT sql FROM sqlite_master WHERE name = 'idx_products_barcode'",
+          ))
+              .single['sql'];
+      expect(await indexSql(upgraded.db), await indexSql(db));
+      expect('${await indexSql(db)}', contains('UNIQUE'));
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('short codes are rewritten the way they are looked up; one whose '
+        'normal form is taken is left as it was', () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v6_codes_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV6(path);
+      final arabic = await product(old, 'Arabic digits', code: '١٠٢');
+      final lower = await product(old, 'Lower case', code: 'a-5');
+      final plain = await product(old, 'Plain', code: '101');
+      final clash = await product(old, 'Clash', code: '١٠١');
+      final blank = await product(old, 'Blank', code: ' ');
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      expect(await column(upgraded.db, 'code'), {
+        arabic: '102',
+        lower: 'A5',
+        plain: '101',
+        clash: '١٠١',
+        blank: null,
+      });
+      // Typed on either keyboard, the code is found now.
+      final products = ProductRepository(upgraded.db);
+      expect((await products.getByExactCode('١٠٢'))!.id, arabic);
+      expect((await products.getByExactCode('a5'))!.id, lower);
+
+      await upgraded.close();
       await databaseFactoryFfi.deleteDatabase(path);
     });
   });

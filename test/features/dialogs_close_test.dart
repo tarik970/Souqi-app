@@ -1300,6 +1300,8 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        // The tile is live once it knows whether a PIN is set.
+        await settle(tester);
         await tester.tap(tile);
         await animated(tester);
       },
@@ -1318,6 +1320,7 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        await settle(tester);
         await tester.tap(tile);
         await animated(tester);
       },

@@ -45,8 +45,15 @@ DateTime startOfWeek(DateTime moment) {
   final day = startOfDay(moment);
   // Monday is 1 … Sunday is 7, so Saturday (6) maps to offset 0.
   final offset = (day.weekday + 1) % 7;
-  return day.subtract(Duration(days: offset));
+  return DateTime(day.year, day.month, day.day - offset);
 }
+
+/// Midnight at the start of the day after [day]. A CALENDAR day, not
+/// "+24 hours": on a phone whose time zone still switches to summer time the
+/// two differ by an hour twice a year, and a range ending an hour late
+/// takes the next day's first invoices with it.
+DateTime startOfNextDay(DateTime day) =>
+    DateTime(day.year, day.month, day.day + 1);
 
 DateTime startOfMonth(DateTime moment) =>
     DateTime(moment.year, moment.month);
@@ -60,15 +67,15 @@ DateRange? resolvePeriod(ArchivePeriod period, {DateTime? now}) {
   return switch (period) {
     ArchivePeriod.all => null,
     ArchivePeriod.custom => null,
-    ArchivePeriod.today => DateRange(today, today.add(const Duration(days: 1))),
+    ArchivePeriod.today => DateRange(today, startOfNextDay(today)),
     ArchivePeriod.yesterday =>
-      DateRange(today.subtract(const Duration(days: 1)), today),
+      DateRange(DateTime(today.year, today.month, today.day - 1), today),
     // Running weeks and months: up to the end of today, not to a future
     // Friday — a "+12%" against a period that has not happened yet is a lie.
     ArchivePeriod.thisWeek =>
-      DateRange(startOfWeek(moment), today.add(const Duration(days: 1))),
+      DateRange(startOfWeek(moment), startOfNextDay(today)),
     ArchivePeriod.thisMonth =>
-      DateRange(startOfMonth(moment), today.add(const Duration(days: 1))),
+      DateRange(startOfMonth(moment), startOfNextDay(today)),
   };
 }
 
@@ -76,5 +83,5 @@ DateRange? resolvePeriod(ArchivePeriod period, {DateTime? now}) {
 /// start of the first day to the end of the last one.
 DateRange customRange(DateTime first, DateTime last) => DateRange(
       startOfDay(first),
-      startOfDay(last).add(const Duration(days: 1)),
+      startOfNextDay(startOfDay(last)),
     );

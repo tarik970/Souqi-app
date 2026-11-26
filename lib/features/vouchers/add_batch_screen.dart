@@ -174,7 +174,20 @@ class _AddBatchScreenState extends ConsumerState<AddBatchScreen> {
     setState(() => _expiry = picked);
   }
 
+  bool _inSave = false;
+
+  /// One save at a time, claimed before the first await (the PIN check).
   Future<void> _save(Currency? currency) async {
+    if (_inSave) return;
+    _inSave = true;
+    try {
+      await _saveOnce(currency);
+    } finally {
+      _inSave = false;
+    }
+  }
+
+  Future<void> _saveOnce(Currency? currency) async {
     if (_saving) return;
     final l10n = AppLocalizations.of(context);
     final navigator = Navigator.of(context);

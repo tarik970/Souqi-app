@@ -391,8 +391,20 @@ class _PinGuardedRouteState extends ConsumerState<PinGuardedRoute> {
             PinAutoLock.defaultMinutes,
       );
 
+  bool _listening = false;
+
   void _restart() {
     _timer?.cancel();
+    // The setting may not have loaded yet when the first thing the PIN
+    // opened appears: reading it (and so starting the load) here, and
+    // starting the timer over when it arrives, keeps "lock after 1 minute"
+    // from being 5 the first time.
+    if (!_listening) {
+      _listening = true;
+      ref.listenManual(pinAutoLockMinutesProvider, (previous, next) {
+        if (previous?.value != next.value && mounted) _restart();
+      });
+    }
     _timer = Timer(_timeout, _close);
     _touchedAt = ref.read(pinClockProvider).stamp();
   }

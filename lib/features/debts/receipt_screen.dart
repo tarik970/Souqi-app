@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/providers.dart';
 import '../../core/utils/date_ranges.dart';
 import '../../domain/models/debt.dart';
@@ -89,7 +90,7 @@ class ReceiptScreen extends ConsumerWidget {
         child: data.when(
         skipLoadingOnReload: true,
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
         data: (receipt) {
           if (receipt == null) {
             return Center(child: Text(l10n.ledgerEmpty));
@@ -261,7 +262,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
             child: data.when(
               skipLoadingOnReload: true,
               loading: () => const SizedBox.shrink(),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, stack) => LoadErrorView(e, stack),
               data: (statement) {
                 if (statement == null) {
                   return Center(child: Text(l10n.customerNotFound));

@@ -82,7 +82,36 @@ class _UpdateRateDialogState extends State<UpdateRateDialog> {
       );
       return;
     }
+    // "13,500" IS READ AS 13.5: the comma or dot is a decimal point here,
+    // and one such slip sells every item priced in this currency a thousand
+    // times too cheap. A rate ten times away from the current one is said
+    // back, and saved only when Save is tapped again on the same text.
+    final current = widget.currency;
+    if (current.rateUpdatedAt != null &&
+        _confirmedText != _controller.text &&
+        _tenTimesApart(rate, current.rate)) {
+      final l10n = AppLocalizations.of(context);
+      setState(() {
+        _confirmedText = _controller.text;
+        _errorText = l10n.rateSuspicious(
+          rateToPlainText(rate),
+          rateToPlainText(current.rate),
+        );
+      });
+      return;
+    }
     Navigator.of(context).pop(rate);
+  }
+
+  /// The text the "very different" warning was shown for.
+  String? _confirmedText;
+
+  /// Whether [a] is at least ten times [b], or [b] ten times [a].
+  static bool _tenTimesApart(RateFraction a, RateFraction b) {
+    final left = BigInt.from(a.numerator) * BigInt.from(b.denominator);
+    final right = BigInt.from(b.numerator) * BigInt.from(a.denominator);
+    final ten = BigInt.from(10);
+    return left >= right * ten || right >= left * ten;
   }
 
   @override
@@ -100,6 +129,7 @@ class _UpdateRateDialogState extends State<UpdateRateDialog> {
           decoration: InputDecoration(
             labelText: l10n.rateHint(widget.currency.code, widget.baseCode),
             errorText: _errorText,
+            errorMaxLines: 6,
           ),
         ),
       ),

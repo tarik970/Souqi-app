@@ -26,7 +26,14 @@ Future<void> handleReportLaunch(
   ReportLaunchAction action,
 ) async {
   final container = ProviderScope.containerOf(context, listen: false);
-  if (!featureOn(Feature.debt)) return;
+  // The debtors list and the report files belong to the debt ledger; the
+  // folder is also where the daily BACKUP goes, with the ledger off.
+  final debtOn = featureOn(Feature.debt);
+  if (!debtOn &&
+      !(action == ReportLaunchAction.openFolder &&
+          featureOn(Feature.backup))) {
+    return;
+  }
   final messenger = ScaffoldMessenger.maybeOf(context);
   final l10n = AppLocalizations.of(context);
   void say(String text) => messenger
@@ -56,7 +63,7 @@ Future<void> handleReportLaunch(
       }
       await container.read(nativeBridgeProvider).shareFiles(files);
     case ReportLaunchAction.openFolder:
-      if (!await requireDebtAccess(context)) return;
+      if (debtOn && !await requireDebtAccess(context)) return;
       container.invalidate(debtReportStatusProvider);
       final status = await container.read(debtReportStatusProvider.future);
       final opened = await container

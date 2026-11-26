@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/on_open_and_resume.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
@@ -36,7 +38,14 @@ class StatsScreen extends ConsumerWidget {
     final report = ref.watch(statsReportProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navStats)),
+      appBar: AppBar(
+        // "Today" follows the day: see refreshRelativePeriod.
+        title: OnOpenAndResume(
+          action: () =>
+              ref.read(statsPeriodProvider.notifier).refreshRelativePeriod(),
+          child: Text(l10n.navStats),
+        ),
+      ),
       body: Column(
         children: [
           SingleChildScrollView(
@@ -60,7 +69,7 @@ class StatsScreen extends ConsumerWidget {
             child: report.when(
               data: (data) => _Report(report: data),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, stack) => LoadErrorView(e, stack),
             ),
           ),
         ],

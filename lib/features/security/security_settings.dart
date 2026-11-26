@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/logging/error_log.dart';
 import '../../core/providers.dart';
 import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -14,7 +15,21 @@ enum _PinChoice { change, remove }
 class PinSettingsTile extends ConsumerWidget {
   const PinSettingsTile({super.key});
 
-  Future<void> _open(BuildContext context, bool isSet) async {
+  Future<void> _open(BuildContext context) async {
+    // ASKED NOW, from the database — never taken from the value on screen,
+    // which is "false" while it is still loading: that would open "choose a
+    // PIN" on a phone that HAS one, without asking for it, and whoever held
+    // the phone would replace the owner's PIN and recovery code.
+    final bool isSet;
+    try {
+      isSet = await ProviderScope.containerOf(context, listen: false)
+          .read(pinRepositoryProvider)
+          .isSet();
+    } on Object catch (error, stack) {
+      reportError(error, stack, context: 'pin state');
+      return;
+    }
+    if (!context.mounted) return;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     void say(String message) => messenger
@@ -102,14 +117,16 @@ class PinSettingsTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final isSet = ref.watch(pinIsSetProvider).value ?? false;
+    final state = ref.watch(pinIsSetProvider);
+    final isSet = state.value ?? false;
     return ListTile(
       key: const ValueKey('setting-pin'),
       leading: Icon(isSet ? Icons.lock_outline : Icons.lock_open),
       title: Text(l10n.pinLockTitle),
       subtitle: Text(isSet ? l10n.pinIsSet : l10n.pinNotSet),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => _open(context, isSet),
+      enabled: state.hasValue,
+      onTap: () => _open(context),
     );
   }
 }

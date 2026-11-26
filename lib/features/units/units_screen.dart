@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/unit_repository.dart';
 import '../../domain/models/unit.dart';
@@ -47,7 +48,7 @@ class UnitsScreen extends ConsumerWidget {
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,

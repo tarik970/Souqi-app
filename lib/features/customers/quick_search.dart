@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/providers.dart';
 import '../../domain/models/customer.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -111,7 +112,7 @@ class _QuickSearchResultsState extends ConsumerState<QuickSearchResults> {
     final leading = widget.leading;
 
     if (error != null && !found.hasValue) {
-      return Center(child: Text('$error'));
+      return LoadErrorView(error, found.stackTrace);
     }
     // Nothing yet (the very first search is still running): no spinner, the
     // answer is a few milliseconds away.

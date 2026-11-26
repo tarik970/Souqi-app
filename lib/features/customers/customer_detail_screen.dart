@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
@@ -172,7 +173,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         skipLoadingOnReload: true,
         skipLoadingOnRefresh: true,
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
         data: (value) => value == null
             ? Center(
                 child: Padding(

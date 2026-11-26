@@ -14,6 +14,7 @@ import '../../core/printing/calibration_pattern.dart';
 import '../../core/printing/pdf_builder.dart';
 import '../../core/printing/png_encoder.dart';
 import '../../core/printing/print_job.dart';
+import '../../core/printing/printer_detect.dart';
 import '../../core/printing/raster.dart';
 import '../../core/printing/widget_capture.dart';
 import '../../core/licensing/license_status.dart';
@@ -247,8 +248,59 @@ class InvoiceOutput {
       throw const OutputException(OutputFailure.noPrinterSelected);
     }
     await ensureBluetoothReady();
-    final job = await printJob(invoice, context: c, copy: copy);
-    await send(c.settings, address, job);
+    final known = await withKnownPrinter(c);
+    final job = await printJob(invoice, context: known, copy: copy);
+    await send(known.settings, address, job);
+  }
+
+  // ---- Which language the printer speaks ---------------------------------
+
+  /// Finds out what the printer at [address] speaks: from its name when the
+  /// app knows the model ([builtInProfileFor]), else by asking the printer
+  /// itself — a status question in each language, 0.4 s each at most
+  /// ([detectPrinterLanguage]). Throws [OutputException] when the printer
+  /// cannot be reached.
+  Future<PrinterDetection> detectPrinter({
+    required String address,
+    String? name,
+  }) =>
+      detectPrinterLanguage(
+        name: name,
+        query: (request, timeoutMs) =>
+            _bridge.queryPrinter(address, request, timeoutMs: timeoutMs),
+      );
+
+  /// PRINTING OUT OF THE BOX: [settings] with the language of the chosen
+  /// printer decided. A printer whose language is already remembered —
+  /// found out earlier, or chosen by hand — costs nothing here. One that
+  /// is not (chosen while it was switched off, or before this version) is
+  /// asked now, once: the answer is stored and comes back in the result.
+  /// Call it after [ensureBluetoothReady], before the job is built.
+  Future<InvoiceSettings> resolvePrinter(InvoiceSettings settings) async {
+    final address = settings.printerAddress;
+    if (address == null || address.isEmpty || settings.knowsPrinter(address)) {
+      return settings;
+    }
+    final detection = await detectPrinter(
+      address: address,
+      name: settings.printerName,
+    );
+    await _ref
+        .read(invoiceSettingsProvider.notifier)
+        .change((s) => s.withDetection(detection, address: address));
+    return settings.withDetection(detection, address: address);
+  }
+
+  /// [c] with [resolvePrinter] applied to its settings.
+  Future<InvoiceRenderContext> withKnownPrinter(InvoiceRenderContext c) async {
+    final settings = await resolvePrinter(c.settings);
+    return identical(settings, c.settings)
+        ? c
+        : InvoiceRenderContext(
+            settings: settings,
+            currencies: c.currencies,
+            logo: c.logo,
+          );
   }
 
   /// Writes [job] to the printer at [address], paced as the compatibility
@@ -327,6 +379,7 @@ class InvoiceOutput {
       throw const OutputException(OutputFailure.noPrinterSelected);
     }
     await ensureBluetoothReady();
+    settings = await resolvePrinter(settings);
     await send(
       settings,
       address,
@@ -349,12 +402,13 @@ class InvoiceOutput {
   /// with a line saying what it is for. Same checks and failures as
   /// [printInvoice].
   Future<void> printRecoveryCode(String code) async {
-    final c = await _context();
-    final address = c.settings.printerAddress;
+    final first = await _context();
+    final address = first.settings.printerAddress;
     if (address == null || address.isEmpty) {
       throw const OutputException(OutputFailure.noPrinterSelected);
     }
     await ensureBluetoothReady();
+    final c = await withKnownPrinter(first);
     final image = await captureWidget(
       RecoverySlipView(
         code: code,

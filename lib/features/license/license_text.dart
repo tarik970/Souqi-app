@@ -42,6 +42,35 @@ String unlicensedReasonText(
   };
 }
 
+/// The license of this phone in one line, for Settings → About:
+/// "Activated · Lifetime license", "Trial version — 5 days / 21 invoices
+/// left", "Not activated · The 7-day trial has ended."
+String licenseStateLine(
+  AppLocalizations l10n,
+  LicenseStatus status,
+  String locale,
+  DateTime now,
+) {
+  switch (status.mode) {
+    case LicenseMode.licensed:
+      final expires = status.license?.expiresAt;
+      final until = expires == null
+          ? l10n.licenseLifetime
+          : l10n.licenseExpiresLine(licenseDate(expires, locale));
+      return '${l10n.licenseStatusLicensed} · $until';
+    case LicenseMode.trial:
+      return l10n.licenseBannerTrial(
+        '${status.trialDaysLeft(now)}',
+        '${status.trialInvoicesLeft ?? 0}',
+      );
+    case LicenseMode.unlicensed:
+      final reason = unlicensedReasonText(l10n, status, locale);
+      return reason.isEmpty
+          ? l10n.licenseStatusUnlicensed
+          : '${l10n.licenseStatusUnlicensed} · $reason';
+  }
+}
+
 /// Why an activation code was not accepted.
 String activationErrorText(AppLocalizations l10n, ActivationError error) =>
     switch (error) {

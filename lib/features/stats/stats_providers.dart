@@ -39,6 +39,14 @@ class StatsPeriodNotifier extends Notifier<StatsPeriod> {
     state = StatsPeriod(preset: preset, range: range);
   }
 
+  /// "Today" chosen yesterday must not stay yesterday: called when the
+  /// statistics open and when the app comes back to the front.
+  void refreshRelativePeriod({DateTime? now}) {
+    final range = resolvePeriod(state.preset, now: now);
+    if (range == null || range == state.range) return;
+    state = StatsPeriod(preset: state.preset, range: range);
+  }
+
   void setCustomRange(DateTime first, DateTime last) => state = StatsPeriod(
         preset: ArchivePeriod.custom,
         range: customRange(first, last),

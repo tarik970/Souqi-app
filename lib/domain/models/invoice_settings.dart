@@ -10,6 +10,7 @@ import '../../core/constants/settings_keys.dart';
 import '../../core/printing/escpos.dart';
 import '../../core/printing/print_geometry.dart';
 import '../../core/printing/print_job.dart';
+import '../../core/printing/printer_detect.dart';
 import '../../core/utils/normalize.dart';
 
 /// What the main button does after a sale is saved.
@@ -146,6 +147,54 @@ class InvoiceSettings {
     final target = address ?? printerAddress;
     if (target == null || target.isEmpty) return this;
     return copyWith(printerLanguages: {...printerLanguages, target: language});
+  }
+
+  /// Whether the language of the printer at [address] has been decided —
+  /// found out from the printer, taken from its built-in profile, or chosen
+  /// by hand. A printer that is not known yet is asked on the first
+  /// connection (`InvoiceOutput.resolvePrinter`).
+  bool knowsPrinter(String address) => printerLanguages.containsKey(address);
+
+  /// The same for the chosen printer. True without one: nothing to find out.
+  bool get printerLanguageKnown =>
+      !hasPrinter || knowsPrinter(printerAddress!);
+
+  /// These settings with what was found out about the printer at [address]
+  /// (default: the chosen printer): its language, and — for a printer the
+  /// app knows by name — the whole of its built-in profile.
+  InvoiceSettings withDetection(PrinterDetection detection, {String? address}) {
+    final profile = detection.profile;
+    return profile != null
+        ? withPrinterProfile(profile, address: address)
+        : withPrinterLanguage(detection.language, address: address);
+  }
+
+  /// These settings with the built-in [profile] applied to the printer at
+  /// [address] (default: the chosen printer): its language and position,
+  /// and the paper and image width it prints complete with. The margin is
+  /// the paper's default; the width is an explicit override only when the
+  /// paper and margin do not already give it.
+  InvoiceSettings withPrinterProfile(PrinterProfile profile, {String? address}) {
+    final target = address ?? printerAddress;
+    if (target == null || target.isEmpty) return this;
+    final margin = defaultSideMarginFor(profile.paperWidthMm);
+    final computed = computePrintableDots(
+      paperWidthMm: profile.paperWidthMm,
+      sideMarginMm: margin,
+      dpi: profile.dpi,
+    );
+    return copyWith(
+      paperWidthMm: profile.paperWidthMm,
+      printerDpi: profile.dpi,
+      sideMarginMm: margin,
+      printableDotsOverride: () =>
+          computed == profile.printableDots ? null : profile.printableDots,
+      printerLanguages: {...printerLanguages, target: profile.language},
+      printerOffsets: {
+        ...printerOffsets,
+        target: snapOffsetDots(profile.offsetDots),
+      },
+    );
   }
 
   /// The calibration offset of the chosen printer, in dots.

@@ -172,6 +172,14 @@ class ExternalActionBridge implements NativeBridge {
       );
 
   @override
+  Future<Uint8List> queryPrinter(
+    String address,
+    Uint8List bytes, {
+    int timeoutMs = 400,
+  }) =>
+      _inner.queryPrinter(address, bytes, timeoutMs: timeoutMs);
+
+  @override
   Future<void> disconnectPrinter() => _inner.disconnectPrinter();
 
   @override

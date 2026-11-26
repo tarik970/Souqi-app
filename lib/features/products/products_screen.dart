@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
@@ -61,7 +62,10 @@ class ProductsScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: TextField(
+            // Starts with the text the list is still filtered by (the
+            // filter outlives the screen), never empty over a narrowed list.
+            child: TextFormField(
+              initialValue: ref.read(productsFilterProvider).query,
               decoration: InputDecoration(
                 hintText: l10n.searchProductsHint,
                 prefixIcon: const Icon(Icons.search),
@@ -122,7 +126,7 @@ class ProductsScreen extends ConsumerWidget {
                           _ProductTile(product: items[index]),
                     ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, stack) => LoadErrorView(e, stack),
             ),
           ),
         ],

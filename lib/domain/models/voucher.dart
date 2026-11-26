@@ -342,7 +342,11 @@ enum AuditAction {
   backupPasswordChange('BACKUP_PASSWORD_CHANGE'),
 
   /// An activation code accepted (phase 5b): which license, for which shop.
-  licenseActivate('LICENSE_ACTIVATE');
+  licenseActivate('LICENSE_ACTIVATE'),
+
+  /// Written by the version-7 migration when it found the same barcode on
+  /// several products and cleared it on all but one (MigrationV7).
+  barcodeDedup('BARCODE_DEDUP');
 
   const AuditAction(this.db);
 

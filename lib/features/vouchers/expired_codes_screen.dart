@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/voucher.dart';
@@ -26,7 +27,7 @@ class ExpiredCodesScreen extends ConsumerWidget {
       body: codes.when(
         skipLoadingOnReload: true,
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, stack) => LoadErrorView(e, stack),
         data: (items) {
           if (items.isEmpty) {
             return Center(

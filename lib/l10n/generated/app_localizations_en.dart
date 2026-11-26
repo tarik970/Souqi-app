@@ -4065,4 +4065,109 @@ class AppLocalizationsEn extends AppLocalizations {
   String licenseBannerEnding(String days) {
     return 'The license ends in $days days. Ask the developer for a new activation code.';
   }
+
+  @override
+  String get printerDetecting => 'Checking the printer…';
+
+  @override
+  String printerDetectedProfile(String model) {
+    return 'Known printer ($model): its tested settings are used.';
+  }
+
+  @override
+  String printerDetectedAnswered(String language) {
+    return 'The printer answered: $language.';
+  }
+
+  @override
+  String get printerDetectedSilent =>
+      'The printer did not answer, so Receipt (ESC/POS) is used. If nothing prints, choose Label (TSPL).';
+
+  @override
+  String get printerDetectUnreachable =>
+      'The printer could not be reached right now. Its language will be checked at the first print.';
+
+  @override
+  String get printerDetectButton => 'Detect the printer\'s language';
+
+  @override
+  String get diagAdvancedSubtitle =>
+      'Position on the paper, and switches almost no printer needs';
+
+  @override
+  String get auditBarcodeDedup => 'Duplicate barcodes cleared (app update)';
+
+  @override
+  String get aboutVersion => 'Version';
+
+  @override
+  String get aboutBuildNumber => 'Build number';
+
+  @override
+  String get aboutSupportSection => 'Support';
+
+  @override
+  String get errorLogShare => 'Share error log';
+
+  @override
+  String get errorLogShareHint =>
+      'Technical details of what went wrong on this phone, to send to the developer. Nothing is sent by itself.';
+
+  @override
+  String get errorLogNone => 'No errors recorded';
+
+  @override
+  String errorLogCount(String count) {
+    return 'Errors recorded: $count';
+  }
+
+  @override
+  String get errorLogShareFailed => 'Could not open the share menu.';
+
+  @override
+  String get startupFailedTitle => 'Souqi could not open its data';
+
+  @override
+  String get startupFailedBody =>
+      'Your data has not been deleted: it is still on this phone. Close the app completely and open it again, or tap Try again. If this keeps happening, send the error log to the developer.';
+
+  @override
+  String get startupFailedNewerData =>
+      'This data was saved by a newer version of Souqi than the one installed. Install the latest version of the app. Your data is still on this phone.';
+
+  @override
+  String get retry => 'Try again';
+
+  @override
+  String get loadErrorMessage =>
+      'This page could not be loaded. Go back and open it again. If it keeps happening, send the error log from Settings → About Souqi.';
+
+  @override
+  String get saleSaveFailed =>
+      'The sale could not be saved. Nothing was recorded and the cart is as it was. Try again; if it keeps happening, send the error log from Settings → About Souqi.';
+
+  @override
+  String get saveFailedGeneric =>
+      'Could not be saved. Nothing was recorded. Try again.';
+
+  @override
+  String get errorSeeLog =>
+      'the details are in the error log (Settings → About Souqi)';
+
+  @override
+  String get currencyDecimalsLocked =>
+      'The decimal places cannot be changed: this currency already has prices, invoices or debts stored in it, and every one of those amounts would be read differently.';
+
+  @override
+  String get retentionConfirmTitle => 'Delete old invoices?';
+
+  @override
+  String retentionConfirmMessage(String count, String days) {
+    return '$count invoices older than $days days will be deleted now, and older invoices will be deleted every day from now on. This cannot be undone. Products, invoice numbering and sold card codes are kept.';
+  }
+
+  @override
+  String rateSuspicious(String entered, String current) {
+    return '$entered is very different from the current rate ($current). A comma or a dot is read as a decimal point: type 13500, not 13,500. If $entered is right, tap Save again.';
+  }
 }

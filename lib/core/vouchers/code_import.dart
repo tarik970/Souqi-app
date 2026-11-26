@@ -148,7 +148,13 @@ CodeParseResult parseCodeList(String text, {required CodeColumns columns}) {
         code = _unquote(line);
       } else {
         final first = _unquote(line.substring(0, cut));
-        final second = _unquote(line.substring(cut + 1));
+        // Only the NEXT field: a third column (a price, a date) or a
+        // trailing separator from a spreadsheet export is not part of the
+        // code — "4567890123456,100" would be stored, printed and hashed as
+        // the code, and the same card could be loaded twice.
+        final rest = line.substring(cut + 1);
+        final end = rest.indexOf(_fieldSeparator);
+        final second = _unquote(end < 0 ? rest : rest.substring(0, end));
         if (columns == CodeColumns.serialThenCode) {
           serial = first;
           code = second;

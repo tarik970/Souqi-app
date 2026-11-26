@@ -206,6 +206,18 @@ class ProductRepository {
     return null;
   }
 
+  /// Whether a product with this id still exists.
+  Future<bool> exists(int id) async {
+    final rows = await _db.query(
+      'products',
+      columns: ['id'],
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
+  }
+
   Future<Product?> getById(int id) async {
     final rows =
         await _db.query('products', where: 'id = ?', whereArgs: [id], limit: 1);
@@ -267,8 +279,19 @@ class ProductRepository {
     );
   }
 
+  /// A short code as it is stored and looked up: [normalizeCode] (Western
+  /// digits, no spaces or dashes, upper case) — the form every lookup
+  /// compares with. Stored as typed, "١٠١" from an Arabic keyboard could
+  /// never be found by typing 101, or ١٠١. Null for nothing at all.
+  static String? normalizeProductCode(String? code) {
+    if (code == null) return null;
+    final normalized = normalizeCode(code);
+    return normalized.isEmpty ? null : normalized;
+  }
+
   /// True when [code] is already used by a different product.
   Future<bool> isCodeTaken(String code, {int? excludeId}) async {
+    code = normalizeCode(code);
     final rows = await _db.query(
       'products',
       columns: ['id'],
@@ -356,7 +379,7 @@ class ProductRepository {
     return {
       'name': p.name.trim(),
       'name_norm': normalizeName(p.name),
-      'code': p.code,
+      'code': normalizeProductCode(p.code),
       'barcode': normalizeBarcode(p.barcode),
       'kind': p.kind.db,
       'unit_id': isService ? null : p.unitId,

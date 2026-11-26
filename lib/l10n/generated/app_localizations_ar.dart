@@ -4069,4 +4069,107 @@ class AppLocalizationsAr extends AppLocalizations {
   String licenseBannerEnding(String days) {
     return 'ينتهي الترخيص خلال $days يوم. اطلب من المطوّر رمز تفعيل جديداً.';
   }
+
+  @override
+  String get printerDetecting => 'جارٍ فحص الطابعة…';
+
+  @override
+  String printerDetectedProfile(String model) {
+    return 'طابعة معروفة ($model): تُستخدم إعداداتها المجرَّبة.';
+  }
+
+  @override
+  String printerDetectedAnswered(String language) {
+    return 'أجابت الطابعة: $language.';
+  }
+
+  @override
+  String get printerDetectedSilent =>
+      'لم تُجب الطابعة، لذلك اعتُمد وضع «إيصالات (ESC/POS)». إذا لم يُطبع شيء فاختر «ملصقات (TSPL)».';
+
+  @override
+  String get printerDetectUnreachable =>
+      'تعذّر الوصول إلى الطابعة الآن. ستُفحص لغتها عند أول طباعة.';
+
+  @override
+  String get printerDetectButton => 'اكتشاف لغة الطابعة تلقائياً';
+
+  @override
+  String get diagAdvancedSubtitle =>
+      'موضع الطباعة على الورق، وخيارات قلّما تحتاجها طابعة';
+
+  @override
+  String get auditBarcodeDedup => 'حذف باركودات مكرّرة (تحديث التطبيق)';
+
+  @override
+  String get aboutVersion => 'الإصدار';
+
+  @override
+  String get aboutBuildNumber => 'رقم البناء';
+
+  @override
+  String get aboutSupportSection => 'الدعم';
+
+  @override
+  String get errorLogShare => 'مشاركة سجل الأخطاء';
+
+  @override
+  String get errorLogShareHint =>
+      'تفاصيل تقنية عن الأخطاء التي حدثت على هذا الهاتف، لإرسالها إلى المطوّر. لا يُرسَل شيء تلقائياً.';
+
+  @override
+  String get errorLogNone => 'لا توجد أخطاء مسجَّلة';
+
+  @override
+  String errorLogCount(String count) {
+    return 'الأخطاء المسجَّلة: $count';
+  }
+
+  @override
+  String get errorLogShareFailed => 'تعذّر فتح قائمة المشاركة.';
+
+  @override
+  String get startupFailedTitle => 'تعذّر على سوقي فتح بياناته';
+
+  @override
+  String get startupFailedBody =>
+      'بياناتك لم تُحذف: ما زالت على هذا الهاتف. أغلق التطبيق تماماً وافتحه من جديد، أو اضغط «إعادة المحاولة». إذا تكرّر ذلك فأرسل سجل الأخطاء إلى المطوّر.';
+
+  @override
+  String get startupFailedNewerData =>
+      'هذه البيانات محفوظة بإصدار من سوقي أحدث من الإصدار المثبَّت. ثبّت أحدث إصدار من التطبيق. بياناتك ما زالت على هذا الهاتف.';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get loadErrorMessage =>
+      'تعذّر تحميل هذه الصفحة. ارجع وافتحها من جديد. إذا تكرّر ذلك فأرسل سجل الأخطاء من الإعدادات ← حول سوقي.';
+
+  @override
+  String get saleSaveFailed =>
+      'تعذّر حفظ عملية البيع. لم يُسجَّل شيء والسلة كما هي. حاول من جديد، وإذا تكرّر ذلك فأرسل سجل الأخطاء من الإعدادات ← حول سوقي.';
+
+  @override
+  String get saveFailedGeneric => 'تعذّر الحفظ. لم يُسجَّل شيء. حاول من جديد.';
+
+  @override
+  String get errorSeeLog => 'التفاصيل في سجل الأخطاء (الإعدادات ← حول سوقي)';
+
+  @override
+  String get currencyDecimalsLocked =>
+      'لا يمكن تغيير الخانات العشرية: لهذه العملة أسعار أو فواتير أو ديون مسجَّلة، وتغييرها يغيّر قراءة كل تلك المبالغ.';
+
+  @override
+  String get retentionConfirmTitle => 'حذف الفواتير القديمة؟';
+
+  @override
+  String retentionConfirmMessage(String count, String days) {
+    return 'سيُحذف الآن $count فاتورة أقدم من $days يوماً، وستُحذف الفواتير الأقدم كل يوم بعد ذلك. لا يمكن التراجع عن هذا. تبقى المنتجات وترقيم الفواتير وأكواد البطاقات المباعة.';
+  }
+
+  @override
+  String rateSuspicious(String entered, String current) {
+    return '$entered يختلف كثيراً عن السعر الحالي ($current). الفاصلة أو النقطة تُقرأ كفاصلة عشرية: اكتب 13500 وليس 13,500. إذا كان $entered صحيحاً فاضغط «حفظ» مرة أخرى.';
+  }
 }

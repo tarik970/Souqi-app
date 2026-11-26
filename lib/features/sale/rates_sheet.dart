@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../currencies/rate_text.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../domain/models/currency.dart';
@@ -83,7 +84,8 @@ class RatesSheet extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final currency = rows[index];
                 return ListTile(
-                  title: Text(l10n.rateDisplay(
+                  title: Text(rateLine(
+                    l10n,
                     currency.code,
                     formatRateValue(currency.rate, locale: locale),
                     baseCode,

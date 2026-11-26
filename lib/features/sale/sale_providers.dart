@@ -212,6 +212,7 @@ CartLine cartLineForProduct(
       // seller changes the price ("remember last price").
       listPriceMinor: product.priceMinor,
       listCurrencyCode: product.currencyCode,
+      listUnitId: product.unitId,
       requiresAccount: featureOn(Feature.accounts) && product.requiresAccount,
       codeStock: featureOn(Feature.vouchers) &&
           product.kind == ProductKind.service &&

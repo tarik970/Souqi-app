@@ -250,6 +250,10 @@ void main() {
     test('the second launch of the same day does nothing', () async {
       final now = DateTime(2026, 11, 24, 8);
       await seed(3, createdAt: now.subtract(const Duration(days: 400)));
+      // The shop is selling: the days are counted back from its newest
+      // invoice (or from now, whichever is earlier).
+      await seed(1,
+          createdAt: now.subtract(const Duration(hours: 1)), firstNo: 100);
       await enable(365);
 
       expect(await controller().applyRetentionDaily(now: now), 3);
@@ -265,12 +269,13 @@ void main() {
       );
       expect(
         await container.read(maintenanceRepositoryProvider).invoiceCount(),
-        2,
+        3,
       );
     });
 
     test('the next day it runs again', () async {
       await seed(2, createdAt: DateTime(2020, 1, 1));
+      await seed(1, createdAt: DateTime(2026, 11, 24, 22), firstNo: 100);
       await enable(365);
       await controller().applyRetentionDaily(now: DateTime(2026, 11, 24, 23));
 
@@ -286,6 +291,8 @@ void main() {
         () async {
       await seed(2, createdAt: DateTime(2020, 1, 1));
       final now = DateTime(2026, 11, 24, 8);
+      await seed(1,
+          createdAt: now.subtract(const Duration(hours: 1)), firstNo: 100);
 
       expect(await controller().applyRetentionDaily(now: now), 0);
       expect(await lastRun(), 0, reason: 'nothing ran, nothing to stamp');
@@ -303,6 +310,78 @@ void main() {
         0,
       );
       expect(container.read(retentionNoticeProvider), isNull);
+    });
+
+    // THE PHONE'S CLOCK IS NOT TRUSTED ALONE: an offline phone has no
+    // network time, and a date a year ahead must not empty the archive.
+    test('a clock that is a year ahead deletes nothing extra', () async {
+      for (var day = 0; day < 5; day++) {
+        await seed(1,
+            createdAt: DateTime(2026, 11, 24 - day * 2, 12),
+            firstNo: 1 + day);
+      }
+      await enable(30);
+
+      expect(
+        await controller().applyRetentionDaily(now: DateTime(2027, 11, 24, 9)),
+        0,
+      );
+      expect(
+        await container.read(maintenanceRepositoryProvider).invoiceCount(),
+        5,
+      );
+    });
+
+    test('after a long closure the newest days of sales are still there',
+        () async {
+      // Sold until the first of August, then closed for months.
+      await seed(1, createdAt: DateTime(2026, 6, 1), firstNo: 1);
+      await seed(1, createdAt: DateTime(2026, 7, 20), firstNo: 2);
+      await seed(1, createdAt: DateTime(2026, 8, 1), firstNo: 3);
+      await enable(30);
+
+      // Thirty days back from the NEWEST invoice, not from today.
+      expect(
+        await controller().applyRetentionDaily(now: DateTime(2026, 11, 24, 9)),
+        1,
+      );
+      expect(
+        await container.read(maintenanceRepositoryProvider).invoiceCount(),
+        2,
+      );
+    });
+
+    test('a daily sweep that would take most of the archive stands down',
+        () async {
+      // 150 real invoices, then one sale made while the phone's date was a
+      // year ahead: by that invoice, all the others are "old".
+      for (var i = 0; i < 150; i++) {
+        await seed(1,
+            createdAt: DateTime(2026, 11, 24).subtract(Duration(hours: i)),
+            firstNo: 1 + i);
+      }
+      await seed(1, createdAt: DateTime(2027, 11, 20), firstNo: 500);
+      await enable(30);
+
+      expect(
+        await controller().applyRetentionDaily(now: DateTime(2027, 11, 21, 9)),
+        0,
+      );
+      expect(
+        await container.read(maintenanceRepositoryProvider).invoiceCount(),
+        151,
+      );
+    });
+
+    test('a number of days beyond a century is no retention at all', () async {
+      await seed(2, createdAt: DateTime(2020, 1, 1));
+      await seed(1, createdAt: DateTime(2026, 11, 24), firstNo: 100);
+      await enable(999999999);
+
+      expect(
+        await controller().applyRetention(now: DateTime(2026, 11, 24, 9)),
+        0,
+      );
     });
 
     test('the day is stamped before the delete', () async {

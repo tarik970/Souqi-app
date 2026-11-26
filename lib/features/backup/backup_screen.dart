@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/logging/error_log.dart';
 import '../../config/features.dart';
 import '../../core/backup/backup_crypto.dart';
 import '../../core/backup/backup_file.dart';
@@ -221,19 +222,30 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         created = await runWithProgress(
           context,
           l10n.backupCreating,
-          () => createBackupFile(container, password: password),
+          () => createBackupFile(
+            container,
+            password: password,
+            record: false,
+          ),
         );
-      } on Object {
+      } on Object catch (error, stack) {
+        reportError(error, stack, context: 'backup create');
         _say(l10n.backupCreateFailed);
         return;
       }
-      await _deliver(container, created, destination, report);
+      // Logged, and counted as the last backup, only once the file is
+      // where it was sent.
+      if (await _deliver(container, created, destination, report)) {
+        await recordBackupCreated(container, created);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _deliver(
+  /// True when the file reached [destination] (for the share sheet: when
+  /// the sheet opened — what the seller does in it cannot be seen).
+  Future<bool> _deliver(
     ProviderContainer container,
     CreatedBackup created,
     BackupDestination destination,
@@ -265,15 +277,18 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               );
           _say(l10n.backupSavedTo(where));
       }
+      return true;
     } on ReportDestinationUnavailable {
       _say(l10n.backupFolderUnavailable);
     } on OutputException catch (e) {
       _say(e.failure == OutputFailure.storagePermissionDenied
           ? l10n.backupStorageDenied
           : l10n.backupSaveFailed);
-    } on Object {
+    } on Object catch (error, stack) {
+      reportError(error, stack, context: 'backup deliver');
       _say(l10n.backupSaveFailed);
     }
+    return false;
   }
 
   // ---- Restore -----------------------------------------------------------
@@ -428,6 +443,14 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           .requestLegacyStoragePermission();
     } on Object {
       // Android 10+ needs none.
+    }
+    // Android 13+: without this the "backup could not be written" and
+    // "saved to Downloads instead" notifications are dropped silently —
+    // the only way the shop hears that its nightly backup is failing.
+    try {
+      await container.read(nativeBridgeProvider).requestNotificationPermission();
+    } on Object {
+      // Older Android has no such permission.
     }
     await container.read(autoBackupSettingsProvider.notifier).save(
           s.copyWith(enabled: true, enabledAt: container.read(clockProvider)()),

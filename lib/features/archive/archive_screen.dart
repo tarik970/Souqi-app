@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/on_open_and_resume.dart';
+import '../../core/logging/error_log.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/archive_repository.dart';
@@ -28,6 +31,23 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   // rebuild on a disposed one.
   final _search = TextEditingController();
   _SearchTarget _target = _SearchTarget.product;
+
+  @override
+  void initState() {
+    super.initState();
+    // The filter outlives this screen: the box comes back with what the
+    // list is still narrowed by, not empty.
+    final filter = ref.read(archiveFilterProvider);
+    if (filter.customerQuery.isNotEmpty) {
+      _target = _SearchTarget.customer;
+      _search.text = filter.customerQuery;
+    } else if (filter.invoiceNo != null) {
+      _target = _SearchTarget.invoiceNo;
+      _search.text = '${filter.invoiceNo}';
+    } else {
+      _search.text = filter.productQuery;
+    }
+  }
 
   @override
   void dispose() {
@@ -76,7 +96,13 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.navArchive),
+        // "Today" follows the day: see refreshRelativePeriod.
+        title: OnOpenAndResume(
+          action: () => ref
+              .read(archiveFilterProvider.notifier)
+              .refreshRelativePeriod(),
+          child: Text(l10n.navArchive),
+        ),
         actions: [
           PopupMenuButton<void>(
             itemBuilder: (context) => [
@@ -194,7 +220,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                     )
                   : _InvoiceList(data: data),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, stack) => LoadErrorView(e, stack),
             ),
           ),
         ],
@@ -243,7 +269,11 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     String message() {
       if (outcome.refused) return l10n.housekeepingBusy;
       final error = outcome.error;
-      if (error != null) return l10n.archiveDeleteFailed('$error');
+      if (error != null) {
+        // The technical text goes to the error log, not into the sentence.
+        reportError(error, null, context: 'archive delete');
+        return l10n.archiveDeleteFailed(l10n.errorSeeLog);
+      }
       if (outcome.remaining > 0) {
         return l10n.archiveDeletePartial(
           formatMinor(outcome.deleted, decimals: 0, locale: locale),

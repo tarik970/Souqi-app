@@ -4,8 +4,10 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/constants/settings_keys.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/utils/normalize.dart';
 import '../../core/widgets/numeric_input.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../data/repositories/archive_repository.dart';
 import 'storage_providers.dart';
 
 /// Settings → Archive → "Auto-delete old invoices".
@@ -106,14 +108,53 @@ class RetentionTile extends ConsumerWidget {
     // outlives it, and the cleanup must finish either way.
     final container = ProviderScope.containerOf(context, listen: false);
 
+    // WHAT THE CHOICE DELETES RIGHT NOW is counted first and confirmed: one
+    // slip of the finger in this list ("30 days" for "365 days") would
+    // otherwise remove eleven months of invoices before any question.
+    final housekeeping = container.read(housekeepingProvider.notifier);
+    if (days > 0) {
+      final cutoff = await housekeeping.retentionCutoff(days);
+      final doomed = cutoff == null
+          ? 0
+          : await container
+              .read(archiveRepositoryProvider)
+              .countMatching(ArchiveFilter(to: cutoff));
+      if (doomed > 0) {
+        if (!context.mounted) return;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            key: const ValueKey('retention-confirm'),
+            scrollable: true,
+            title: Text(l10n.retentionConfirmTitle),
+            content: Text(l10n.retentionConfirmMessage(
+              formatMinor(doomed, decimals: 0, locale: locale),
+              formatMinor(days, decimals: 0, locale: locale),
+            )),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                key: const ValueKey('retention-confirm-delete'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(l10n.delete),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) return;
+      }
+    }
+
     await container
         .read(settingsRepositoryProvider)
         .setInt(SettingsKeys.autoDeleteDays, days);
     container.invalidate(retentionDaysProvider);
     if (days <= 0) return;
 
-    final deleted =
-        await container.read(housekeepingProvider.notifier).applyRetention();
+    final deleted = await housekeeping.applyRetention();
     if (deleted == 0) return;
     messenger
       ..hideCurrentSnackBar()
@@ -150,8 +191,10 @@ class _CustomDaysDialogState extends State<_CustomDaysDialog> {
   }
 
   void _submit() {
-    final days = int.tryParse(_controller.text.trim());
-    if (days == null || days <= 0) {
+    // Arabic-Indic digits are digits too; and a number of days beyond a
+    // century is a typo, not a retention.
+    final days = int.tryParse(normalizeDigits(_controller.text.trim()));
+    if (days == null || days <= 0 || days > maxRetentionDays) {
       setState(() => _error = AppLocalizations.of(context).invalidNumber);
       return;
     }

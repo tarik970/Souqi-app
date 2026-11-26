@@ -908,7 +908,12 @@ class _Keypad extends StatelessWidget {
           id: d,
         );
 
-    return Column(
+    // A NUMBER PAD IS NEVER MIRRORED: 1 2 3 from left to right in Arabic
+    // too, as on the phone's dialer and every calculator. Without this the
+    // rows follow the app's direction and read 3 2 1.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Column(
       children: [
         Row(children: [digit('1'), digit('2'), digit('3')]),
         Row(children: [digit('4'), digit('5'), digit('6')]),
@@ -928,6 +933,7 @@ class _Keypad extends StatelessWidget {
           ),
         ]),
       ],
+      ),
     );
   }
 }

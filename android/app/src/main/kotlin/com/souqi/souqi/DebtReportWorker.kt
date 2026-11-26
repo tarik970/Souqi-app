@@ -32,6 +32,8 @@ class DebtReportWorker(context: Context, params: WorkerParameters) :
 
     override fun doWork(): Result {
         val context = applicationContext
+        // The worker can run in a process the app never opened in.
+        CrashLog.install(context)
         val main = Handler(Looper.getMainLooper())
         val done = CountDownLatch(1)
         val reported = AtomicBoolean(false)

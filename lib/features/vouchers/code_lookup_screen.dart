@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/save_guard.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
@@ -43,12 +44,18 @@ class _CodeLookupScreenState extends ConsumerState<CodeLookupScreen> {
     final repository = ref.read(voucherRepositoryProvider);
     final container = ProviderScope.containerOf(context, listen: false);
     setState(() => _searching = true);
-    final found = await repository.lookup(code);
+    // A lookup that fails (the Keystore, the database) must free the search
+    // again and say so; null = it failed.
+    final found = await runSave(
+      context,
+      what: 'code lookup',
+      () => repository.lookup(code),
+    );
     container.invalidate(auditLogProvider);
     if (!mounted) return;
     setState(() {
       _searching = false;
-      _results = found;
+      if (found != null) _results = found;
     });
   }
 

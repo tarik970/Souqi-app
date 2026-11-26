@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/save_guard.dart';
 import '../../core/money/exchange.dart';
 import '../../core/money/money_format.dart';
 import '../../core/licensing/license_status.dart';
@@ -111,7 +112,10 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     final navigator = Navigator.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     setState(() => _saving = true);
-    final entry = await container.read(debtRepositoryProvider).recordPayment(
+    final entry = await runSave(
+      context,
+      what: 'payment',
+      () => container.read(debtRepositoryProvider).recordPayment(
           customerId: widget.customerId,
           amountMinor: amount,
           currencyCode: currency.code,
@@ -121,7 +125,12 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           baseDecimals: base.decimalPlaces,
           method: _method,
           note: _note.text,
-        );
+        ),
+    );
+    if (entry == null) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
     refreshDebtData(container);
     if (!navigator.mounted) return;
     navigator.pushReplacement(MaterialPageRoute<void>(

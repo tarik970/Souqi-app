@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/settings_keys.dart';
+import '../../core/logging/error_log.dart';
 import '../../core/providers.dart';
 import '../../core/utils/date_ranges.dart';
 import '../../core/utils/temp_files.dart';
@@ -41,6 +42,15 @@ final storageStatsProvider = FutureProvider<StorageStats>((ref) async {
 /// it has to buy back real space. Below this many invoices the free pages are
 /// a few hundred kilobytes that the next weeks of sales fill in again anyway.
 const int vacuumInvoiceThreshold = 1000;
+
+/// The longest retention the app accepts: a hundred years. A number beyond
+/// it is a typo (or "never", which is the "keep everything" choice) — and a
+/// huge one overflows the date arithmetic into a cutoff in the future.
+const int maxRetentionDays = 36500;
+
+/// A daily retention sweep that wants more than this many invoices AND more
+/// than half of the archive is not believed (see [applyRetentionDaily]).
+const int retentionSuspectCount = 100;
 
 /// What housekeeping is doing right now.
 enum HousekeepingPhase { idle, deleting, optimizing }
@@ -172,7 +182,14 @@ class HousekeepingController extends Notifier<HousekeepingState> {
     _idle();
     _refresh();
     if (failure == null && deleted > vacuumInvoiceThreshold) {
-      await vacuum();
+      // The rewrite needs room for a second copy of the file. On a phone
+      // that is nearly full it fails — and that must not turn a delete that
+      // DID happen into an error: the space is simply reclaimed later.
+      try {
+        await vacuum();
+      } on Object catch (error, stack) {
+        reportError(error, stack, context: 'vacuum after delete');
+      }
     }
     return DeleteOutcome(
       deleted: deleted,
@@ -188,10 +205,28 @@ class HousekeepingController extends Notifier<HousekeepingState> {
     final days = await ref
         .read(settingsRepositoryProvider)
         .getInt(SettingsKeys.autoDeleteDays);
-    if (days <= 0) return 0;
-    final cutoff = (now ?? DateTime.now()).subtract(Duration(days: days));
+    final cutoff = await retentionCutoff(days, now: now);
+    if (cutoff == null) return 0;
     final outcome = await deleteMatching(ArchiveFilter(to: cutoff));
     return outcome.deleted;
+  }
+
+  /// Invoices before this moment are what "auto-delete after [days] days"
+  /// removes; null = nothing.
+  ///
+  /// THE PHONE'S CLOCK IS NOT TRUSTED ALONE. An offline phone has no network
+  /// time: after a flat battery it may show a date a year ahead, and "older
+  /// than 90 days" would then be the whole archive. So the days are counted
+  /// back from the EARLIER of now and the newest invoice — a clock that is
+  /// ahead deletes nothing extra, and the newest [days] days of sales always
+  /// survive. For a shop that sells every day the two are the same moment.
+  Future<DateTime?> retentionCutoff(int days, {DateTime? now}) async {
+    if (days <= 0 || days > maxRetentionDays) return null;
+    final newest = await _archive.newestInvoiceAt();
+    if (newest == null) return null;
+    final moment = now ?? DateTime.now();
+    final reference = newest.isBefore(moment) ? newest : moment;
+    return reference.subtract(Duration(days: days));
   }
 
   /// [applyRetention], but at most once a calendar day, and it announces
@@ -220,6 +255,26 @@ class HousekeepingController extends Notifier<HousekeepingState> {
       SettingsKeys.autoDeleteLastRunAt,
       moment.millisecondsSinceEpoch,
     );
+    // A DAILY sweep removes about one day of invoices. One that would take
+    // most of the archive at once means the dates cannot be right (the
+    // clock was ahead while the shop was selling): nothing is deleted, and
+    // the invoices stay until the shop sets auto-delete again in Settings,
+    // where the number is shown and confirmed.
+    final days = await settings.getInt(SettingsKeys.autoDeleteDays);
+    final cutoff = await retentionCutoff(days, now: moment);
+    if (cutoff == null) return 0;
+    final doomed = await _archive.countMatching(ArchiveFilter(to: cutoff));
+    if (doomed > retentionSuspectCount) {
+      final all = await _archive.countMatching(const ArchiveFilter());
+      if (doomed * 2 > all) {
+        reportError(
+          StateError('retention sweep skipped: $doomed of $all invoices'),
+          null,
+          context: 'retention',
+        );
+        return 0;
+      }
+    }
     final deleted = await applyRetention(now: moment);
     if (deleted > 0 && ref.mounted) {
       ref.read(retentionNoticeProvider.notifier).report(deleted);

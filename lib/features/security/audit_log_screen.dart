@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
@@ -106,7 +107,7 @@ class AuditLogScreen extends ConsumerWidget {
             child: log.when(
               skipLoadingOnReload: true,
               loading: () => const SizedBox.shrink(),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, stack) => LoadErrorView(e, stack),
               data: (data) => data.entries.isEmpty
                   ? Center(
                       child: Padding(
@@ -180,6 +181,7 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.backupAutoOff => l10n.auditBackupAutoOff,
       AuditAction.backupPasswordChange => l10n.auditBackupPasswordChange,
       AuditAction.licenseActivate => l10n.auditLicenseActivate,
+      AuditAction.barcodeDedup => l10n.auditBarcodeDedup,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -215,6 +217,7 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
       AuditAction.backupRestore => Icons.settings_backup_restore,
       AuditAction.backupPasswordChange => Icons.password,
       AuditAction.licenseActivate => Icons.verified_outlined,
+      AuditAction.barcodeDedup => Icons.qr_code_2,
       null => Icons.info_outline,
     };
 
@@ -270,6 +273,9 @@ class _AuditTile extends ConsumerWidget {
       if (details['percent'] is String) ltrIsolate(details['percent'] as String),
       if (details['products'] is int)
         l10n.auditDetailProducts(number(details['products'])),
+      // The products a version-7 upgrade took a duplicate barcode from.
+      if (details['names'] is String && (details['names'] as String).isNotEmpty)
+        details['names'] as String,
       if (details['skipped'] is int)
         l10n.auditDetailSkipped(number(details['skipped'])),
       if (details['backup_at'] is int)

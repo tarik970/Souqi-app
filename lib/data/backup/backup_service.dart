@@ -289,8 +289,20 @@ class BackupService {
     final staged = journal.stagedPath;
     await RestoreJournal.deleteDatabaseFiles(staged);
     await backup.extracted.database.copy(staged);
+    // THIS PHONE'S OWN LICENSE goes over to the restored data. The Keystore
+    // holds a second copy and normally puts it back at the next start — but
+    // on a phone whose Keystore entry is gone, the settings row is the only
+    // copy left, and a restore (even of this phone's own backup) would
+    // leave the shop unable to sell until the code is typed in again.
+    final marks =
+        List.filled(SettingsKeys.deviceBoundKeys.length, '?').join(', ');
+    final ownRows = await live.db.query(
+      'settings',
+      where: 'key IN ($marks)',
+      whereArgs: SettingsKeys.deviceBoundKeys,
+    );
     try {
-      await _prepare(staged, backup);
+      await _prepare(staged, backup, deviceRows: ownRows);
       fault?.call('prepared');
     } on Object {
       await RestoreJournal.deleteDatabaseFiles(staged);
@@ -309,7 +321,11 @@ class BackupService {
   }
 
   /// Step 1 on the copy at [path].
-  Future<void> _prepare(String path, UnlockedBackup backup) async {
+  Future<void> _prepare(
+    String path,
+    UnlockedBackup backup, {
+    List<Map<String, Object?>> deviceRows = const [],
+  }) async {
     final manifest = backup.manifest;
     final int version;
     try {
@@ -356,6 +372,14 @@ class BackupService {
           where: 'key IN ($marks)',
           whereArgs: SettingsKeys.deviceBoundKeys,
         );
+        // …and this phone's own (see [restore]) is put in its place.
+        for (final row in deviceRows) {
+          await txn.insert(
+            'settings',
+            Map<String, Object?>.of(row),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
         // The automatic backup's password lives in THIS phone's Keystore.
         // On another phone there is none yet: the daily backup stays off
         // until it is set here, instead of failing every night.

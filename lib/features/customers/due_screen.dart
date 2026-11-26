@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/due_dates.dart';
@@ -129,7 +130,7 @@ class _DueScreenState extends ConsumerState<DueScreen> {
     Widget body;
     if (overview == null) {
       body = loaded.hasError
-          ? Center(child: Text('${loaded.error}'))
+          ? LoadErrorView(loaded.error!, loaded.stackTrace)
           : const SizedBox.shrink();
     } else if (overview.hits.isEmpty) {
       body = Center(

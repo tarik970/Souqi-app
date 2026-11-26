@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/save_guard.dart';
 import '../../core/licensing/license_status.dart';
 import '../../core/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -119,6 +120,7 @@ class _LedgerEntryFormScreenState
     }
     setState(() => _saving = true);
     final at = _entryMoment();
+    final saved = await runSave(context, what: 'ledger entry', () async {
     switch (_kind) {
       case LedgerEntryKind.manualDebt:
         await debts.addManualDebt(
@@ -143,6 +145,12 @@ class _LedgerEntryFormScreenState
           increasesDebt: _increases,
           reason: note,
         );
+    }
+      return true;
+    });
+    if (saved != true) {
+      if (mounted) setState(() => _saving = false);
+      return;
     }
     refreshDebtData(container);
     if (messenger.mounted) {

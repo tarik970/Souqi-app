@@ -109,6 +109,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // A crash on the Android side is written to the local error log
+        // before the process dies (Settings → About → Share error log).
+        CrashLog.install(this)
         super.onCreate(savedInstanceState)
         // Opened from the report notification: the Dart side takes it after
         // its first frame.
@@ -141,6 +144,7 @@ class MainActivity : FlutterActivity() {
             "btRequestPermission" -> requestBluetoothPermission(result)
             "btPairedDevices" -> pairedDevices(result)
             "btPrint" -> print(call, result)
+            "btQuery" -> query(call, result)
             "btDisconnect" -> io.execute {
                 printer.close()
                 main.post { result.success(null) }
@@ -282,6 +286,34 @@ class MainActivity : FlutterActivity() {
             try {
                 printer.write(adapter, address, bytes, chunkSize, chunkDelayMs)
                 main.post { result.success(null) }
+            } catch (e: PrinterException) {
+                main.post { result.error(e.code, e.message, null) }
+            } catch (e: SecurityException) {
+                main.post { result.error(BT_PERMISSION, e.message, null) }
+            } catch (e: Exception) {
+                main.post { result.error(PrinterConnection.WRITE, e.message, null) }
+            }
+        }
+    }
+
+    /**
+     * Asks the printer a status question and replies with the bytes it
+     * answered (empty for a printer that says nothing). Same checks and
+     * errors as [print].
+     */
+    private fun query(call: MethodCall, result: MethodChannel.Result) {
+        val address = call.argument<String>("address")
+        val bytes = call.argument<ByteArray>("bytes")
+        if (address.isNullOrEmpty() || bytes == null) {
+            result.error(PrinterConnection.UNREACHABLE, "missing address or data", null)
+            return
+        }
+        val timeoutMs = (call.argument<Int>("timeoutMs") ?: 400).coerceIn(50, 3000).toLong()
+        val adapter = usableAdapter(result) ?: return
+        io.execute {
+            try {
+                val reply = printer.query(adapter, address, bytes, timeoutMs)
+                main.post { result.success(reply) }
             } catch (e: PrinterException) {
                 main.post { result.error(e.code, e.message, null) }
             } catch (e: SecurityException) {

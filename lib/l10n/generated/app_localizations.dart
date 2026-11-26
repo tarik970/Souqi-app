@@ -6906,6 +6906,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The license ends in {days} days. Ask the developer for a new activation code.'**
   String licenseBannerEnding(String days);
+
+  /// No description provided for @printerDetecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the printer…'**
+  String get printerDetecting;
+
+  /// No description provided for @printerDetectedProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Known printer ({model}): its tested settings are used.'**
+  String printerDetectedProfile(String model);
+
+  /// No description provided for @printerDetectedAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'The printer answered: {language}.'**
+  String printerDetectedAnswered(String language);
+
+  /// No description provided for @printerDetectedSilent.
+  ///
+  /// In en, this message translates to:
+  /// **'The printer did not answer, so Receipt (ESC/POS) is used. If nothing prints, choose Label (TSPL).'**
+  String get printerDetectedSilent;
+
+  /// No description provided for @printerDetectUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'The printer could not be reached right now. Its language will be checked at the first print.'**
+  String get printerDetectUnreachable;
+
+  /// No description provided for @printerDetectButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect the printer\'s language'**
+  String get printerDetectButton;
+
+  /// No description provided for @diagAdvancedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Position on the paper, and switches almost no printer needs'**
+  String get diagAdvancedSubtitle;
+
+  /// No description provided for @auditBarcodeDedup.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate barcodes cleared (app update)'**
+  String get auditBarcodeDedup;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get aboutVersion;
+
+  /// No description provided for @aboutBuildNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Build number'**
+  String get aboutBuildNumber;
+
+  /// No description provided for @aboutSupportSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get aboutSupportSection;
+
+  /// No description provided for @errorLogShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share error log'**
+  String get errorLogShare;
+
+  /// No description provided for @errorLogShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details of what went wrong on this phone, to send to the developer. Nothing is sent by itself.'**
+  String get errorLogShareHint;
+
+  /// No description provided for @errorLogNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No errors recorded'**
+  String get errorLogNone;
+
+  /// No description provided for @errorLogCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors recorded: {count}'**
+  String errorLogCount(String count);
+
+  /// No description provided for @errorLogShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the share menu.'**
+  String get errorLogShareFailed;
+
+  /// No description provided for @startupFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Souqi could not open its data'**
+  String get startupFailedTitle;
+
+  /// No description provided for @startupFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data has not been deleted: it is still on this phone. Close the app completely and open it again, or tap Try again. If this keeps happening, send the error log to the developer.'**
+  String get startupFailedBody;
+
+  /// No description provided for @startupFailedNewerData.
+  ///
+  /// In en, this message translates to:
+  /// **'This data was saved by a newer version of Souqi than the one installed. Install the latest version of the app. Your data is still on this phone.'**
+  String get startupFailedNewerData;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get retry;
+
+  /// No description provided for @loadErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This page could not be loaded. Go back and open it again. If it keeps happening, send the error log from Settings → About Souqi.'**
+  String get loadErrorMessage;
+
+  /// No description provided for @saleSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The sale could not be saved. Nothing was recorded and the cart is as it was. Try again; if it keeps happening, send the error log from Settings → About Souqi.'**
+  String get saleSaveFailed;
+
+  /// No description provided for @saveFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not be saved. Nothing was recorded. Try again.'**
+  String get saveFailedGeneric;
+
+  /// No description provided for @errorSeeLog.
+  ///
+  /// In en, this message translates to:
+  /// **'the details are in the error log (Settings → About Souqi)'**
+  String get errorSeeLog;
+
+  /// No description provided for @currencyDecimalsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The decimal places cannot be changed: this currency already has prices, invoices or debts stored in it, and every one of those amounts would be read differently.'**
+  String get currencyDecimalsLocked;
+
+  /// No description provided for @retentionConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete old invoices?'**
+  String get retentionConfirmTitle;
+
+  /// No description provided for @retentionConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices older than {days} days will be deleted now, and older invoices will be deleted every day from now on. This cannot be undone. Products, invoice numbering and sold card codes are kept.'**
+  String retentionConfirmMessage(String count, String days);
+
+  /// No description provided for @rateSuspicious.
+  ///
+  /// In en, this message translates to:
+  /// **'{entered} is very different from the current rate ({current}). A comma or a dot is read as a decimal point: type 13500, not 13,500. If {entered} is right, tap Save again.'**
+  String rateSuspicious(String entered, String current);
 }
 
 class _AppLocalizationsDelegate

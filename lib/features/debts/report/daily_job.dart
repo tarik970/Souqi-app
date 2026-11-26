@@ -327,7 +327,11 @@ class DailyReportJob {
     }
 
     // 3. Keep-N, per output, in the folder actually written to.
-    await _rotate(destination, outputs);
+    await _rotate(
+      destination,
+      outputs,
+      written: {for (final file in staged) file.name},
+    );
 
     return _finish(
       settings,
@@ -369,10 +373,17 @@ class DailyReportJob {
 
   /// Deletes what each output's keep-N rule says, and only its own files.
   /// A rotation that fails is tried again on the next run.
+  ///
+  /// The files of THIS run ([written]) are never among them. Keep-N ranks
+  /// files by the date in their name; a phone whose date fell back (a flat
+  /// battery, offline) writes tonight's file under an old date, and the
+  /// rule would delete it as the oldest — every night, with the status
+  /// saying all is well.
   Future<void> _rotate(
     ReportDestination destination,
-    List<DailyOutput> outputs,
-  ) async {
+    List<DailyOutput> outputs, {
+    Set<String> written = const {},
+  }) async {
     final List<String> names;
     try {
       names = await platform.listFiles(destination);
@@ -384,6 +395,7 @@ class DailyReportJob {
         names,
         keepDays: output.keepDays,
       )) {
+        if (written.contains(name)) continue;
         try {
           await platform.deleteFile(destination, name);
         } on Object {

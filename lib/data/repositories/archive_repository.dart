@@ -233,6 +233,15 @@ class ArchiveRepository {
   }
 
   /// How many invoices match [filter], counted in sqlite.
+  /// When the newest invoice was made; null for an empty archive.
+  Future<DateTime?> newestInvoiceAt() async {
+    final rows = await _db.rawQuery('SELECT MAX(created_at) AS at FROM invoices');
+    final at = rows.first['at'] as int?;
+    return at == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(at, isUtc: true).toLocal();
+  }
+
   Future<int> countMatching(ArchiveFilter filter) async {
     final (where, args) = _where(filter);
     return Sqflite.firstIntValue(

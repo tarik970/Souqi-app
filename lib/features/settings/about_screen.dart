@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../config/features.dart';
+import '../../core/licensing/license_status.dart';
+import '../../core/logging/error_log.dart';
+import '../../core/logging/error_reporting.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/byte_size.dart';
@@ -11,18 +16,57 @@ import '../../data/dev/customer_seeder.dart';
 import '../../data/dev/debt_seeder.dart';
 import '../../data/dev/invoice_seeder.dart';
 import '../../data/dev/voucher_seeder.dart';
+import '../../data/db/app_database.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../archive/archive_providers.dart';
 import '../customers/customers_providers.dart';
 import '../debts/debt_providers.dart';
+import '../invoice/invoice_output.dart';
+import '../license/license_providers.dart';
+import '../license/license_screen.dart';
+import '../license/license_text.dart';
 import '../products/products_providers.dart';
 import '../sale/sale_providers.dart';
 import '../security/pin_dialogs.dart';
 import '../vouchers/voucher_providers.dart';
 import 'storage_providers.dart';
 
+/// The installed app's version ("1.0.0") and build number ("1"), or null on
+/// a platform that does not say (a widget test).
+final appPackageInfoProvider = FutureProvider<PackageInfo?>((ref) async {
+  try {
+    return await PackageInfo.fromPlatform();
+  } on Object {
+    return null;
+  }
+});
+
+/// Where the error log files are. Tests point it at a temporary folder.
+final errorLogDirectoryProvider =
+    Provider<Future<Directory> Function()>((ref) => errorLogDirectory);
+
+/// How many errors the log holds, for the line under "Share error log";
+/// null when the folder cannot be read.
+final errorLogCountProvider = FutureProvider.autoDispose<int?>((ref) async {
+  try {
+    final directory = await ref.watch(errorLogDirectoryProvider)();
+    return (await ErrorLog.export(directory)).entryCount;
+  } on Object {
+    return null;
+  }
+});
+
+/// Settings → About: which build this is (version and build number), the
+/// LICENSE STATE of this phone, what the data costs in storage, and "Share
+/// error log" — the things the developer asks a shop for on the phone.
 class AboutScreen extends ConsumerWidget {
-  const AboutScreen({super.key});
+  const AboutScreen({super.key, this.showDeveloperTools = true});
+
+  /// The seeders that fill the database with test data. They exist in
+  /// DEBUG builds only, whatever this says: the check below is on the
+  /// compile-time constant, so a release build does not even contain their
+  /// code. A test passes false to see the page a customer sees.
+  final bool showDeveloperTools;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,21 +92,12 @@ class AboutScreen extends ConsumerWidget {
                   style: theme.textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-                FutureBuilder<PackageInfo>(
-                  future: PackageInfo.fromPlatform(),
-                  builder: (context, snapshot) {
-                    final info = snapshot.data;
-                    if (info == null) return const SizedBox.shrink();
-                    return Text(
-                      l10n.versionLabel('${info.version}+${info.buildNumber}'),
-                      style: theme.textTheme.bodyMedium,
-                    );
-                  },
-                ),
               ],
             ),
           ),
+          const Divider(height: 32),
+          const _BuildRows(),
+          const _LicenseRow(),
           const Divider(height: 32),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
@@ -73,9 +108,21 @@ class AboutScreen extends ConsumerWidget {
             ),
           ),
           const _StorageRows(),
-          // Debug builds only: the seeder that fills the archive for
-          // performance testing. Never compiled into a release.
-          if (kDebugMode) ...[
+          const Divider(height: 32),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              l10n.aboutSupportSection,
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(color: theme.colorScheme.primary),
+            ),
+          ),
+          const _ShareErrorLogTile(),
+          // DEVELOPER TOOLS — DEBUG BUILDS ONLY: the seeders that fill the
+          // database for performance testing. kDebugMode is a compile-time
+          // constant, false in release and profile builds, so none of this
+          // (nor lib/data/dev/) is compiled into a release.
+          if (kDebugMode && showDeveloperTools) ...[
             const Divider(height: 32),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
@@ -92,6 +139,175 @@ class AboutScreen extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The version and the build number, each on its own row: what the
+/// developer asks first ("which version do you have?").
+class _BuildRows extends ConsumerWidget {
+  const _BuildRows();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final info = ref.watch(appPackageInfoProvider).value;
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return Column(
+      children: [
+        ListTile(
+          key: const ValueKey('about-version'),
+          leading: const Icon(Icons.info_outline),
+          title: Text(l10n.aboutVersion),
+          trailing: Text(
+            info?.version ?? '—',
+            style: style,
+            textDirection: TextDirection.ltr,
+          ),
+        ),
+        ListTile(
+          key: const ValueKey('about-build'),
+          leading: const Icon(Icons.tag),
+          title: Text(l10n.aboutBuildNumber),
+          trailing: Text(
+            info?.buildNumber ?? '—',
+            style: style,
+            textDirection: TextDirection.ltr,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The license of this phone — activated (until when), on trial (how much
+/// is left) or not activated (why) — and the way to the activation screen.
+class _LicenseRow extends ConsumerWidget {
+  const _LicenseRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final status = ref.watch(licenseProvider);
+    final now = ref.watch(clockProvider)();
+    final shop = status.shopName;
+    return ListTile(
+      key: const ValueKey('about-license'),
+      leading: Icon(
+        status.isLicensed ? Icons.verified_outlined : Icons.vpn_key_outlined,
+      ),
+      title: Text(l10n.licenseTitle),
+      subtitle: Text(
+        [
+          licenseStateLine(l10n, status, locale, now),
+          if (shop != null && shop.isNotEmpty) l10n.licenseShopLine(shop),
+        ].join('\n'),
+        key: const ValueKey('about-license-state'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const LicenseScreen()),
+      ),
+    );
+  }
+}
+
+/// The license as the error log's header says it — plain words for the
+/// developer, not a sentence for the shop.
+String describeLicenseForLog(LicenseStatus status, DateTime now) {
+  final license = status.license;
+  final id = license == null ? '' : ', license no. ${license.licenseId}';
+  final expires = license?.expiresAt;
+  return switch (status.mode) {
+    LicenseMode.licensed => expires == null
+        ? 'activated, lifetime$id'
+        : 'activated until ${expires.toIso8601String()}$id',
+    LicenseMode.trial => 'trial, ${status.trialDaysLeft(now)} days / '
+        '${status.trialInvoicesLeft ?? 0} invoices left',
+    LicenseMode.unlicensed =>
+      'not activated (${status.reason?.name ?? 'unknown'})$id',
+  };
+}
+
+/// "Share error log": every error the app wrote down on this phone, with
+/// the version, the database version and the license state on top, as one
+/// text file handed to the share sheet (WhatsApp, usually). The shop
+/// decides to send it; the app sends nothing by itself.
+class _ShareErrorLogTile extends ConsumerStatefulWidget {
+  const _ShareErrorLogTile();
+
+  @override
+  ConsumerState<_ShareErrorLogTile> createState() => _ShareErrorLogTileState();
+}
+
+class _ShareErrorLogTileState extends ConsumerState<_ShareErrorLogTile> {
+  bool _busy = false;
+
+  Future<void> _share() async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    // ref is only read before the first await.
+    final output = ref.read(invoiceOutputProvider);
+    final directory = ref.read(errorLogDirectoryProvider);
+    final status = ref.read(licenseProvider);
+    final requestCode = ref.read(requestCodeProvider);
+    final info = ref.read(appPackageInfoProvider).value;
+    final now = ref.read(clockProvider)();
+    setState(() => _busy = true);
+    try {
+      await ErrorLog.instance.flush();
+      final export = await ErrorLog.export(await directory());
+      final header = errorLogHeader(
+        appVersion: info == null
+            ? ErrorLog.instance.appVersion
+            : '${info.version}+${info.buildNumber}',
+        createdAt: now,
+        errorCount: export.entryCount,
+        facts: {
+          'Database': 'schema ${AppDatabase.schemaVersion}',
+          'License': describeLicenseForLog(status, now),
+          'Request code': ?requestCode,
+        },
+      );
+      await output.shareTextFile(
+        fileName: errorLogFileName(now),
+        text: '$header\n${export.text}',
+      );
+    } on Object catch (error, stack) {
+      reportError(error, stack, context: 'share error log');
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.errorLogShareFailed)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final count = ref.watch(errorLogCountProvider).value;
+    return ListTile(
+      key: const ValueKey('about-share-error-log'),
+      leading: const Icon(Icons.bug_report_outlined),
+      title: Text(l10n.errorLogShare),
+      subtitle: Text(
+        [
+          l10n.errorLogShareHint,
+          if (count != null)
+            count == 0 ? l10n.errorLogNone : l10n.errorLogCount('$count'),
+        ].join('\n'),
+      ),
+      trailing: _busy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.ios_share),
+      onTap: _busy ? null : _share,
     );
   }
 }

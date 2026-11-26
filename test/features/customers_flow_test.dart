@@ -1539,7 +1539,12 @@ void main() {
       await pump(tester, const SettingsScreen());
       final dropdown =
           find.byKey(const ValueKey('setting-due-soon-dropdown'));
-      await tester.ensureVisible(dropdown);
+      // Far down a lazy list: scrolled to, not assumed to be built.
+      await tester.scrollUntilVisible(
+        dropdown,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await settle(tester, 4);
       expect(
         find.descendant(of: dropdown, matching: find.text('3 days')),

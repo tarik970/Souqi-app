@@ -6,6 +6,7 @@ import '../../config/features.dart';
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../core/utils/bidi.dart';
+import '../../core/utils/normalize.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/price_change.dart';
 import '../../domain/models/product.dart';
@@ -53,8 +54,20 @@ class _BulkPriceScreenState extends ConsumerState<BulkPriceScreen> {
   bool _busy = false;
   String? _percentError;
 
+  ScaffoldMessengerState? _messenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.maybeOf(context);
+  }
+
   @override
   void dispose() {
+    // The "saved — UNDO" snack bar belongs to this screen: its action needs
+    // the screen (the PIN prompt, the refresh). Left behind, a tap on UNDO
+    // from the product list would do nothing at all.
+    _messenger?.hideCurrentSnackBar();
     _percent.dispose();
     super.dispose();
   }
@@ -111,18 +124,22 @@ class _BulkPriceScreenState extends ConsumerState<BulkPriceScreen> {
   }
 
   Future<void> _apply() async {
+    // The lock is taken BEFORE the first await: a second tap while the PIN
+    // check is still reading would apply the percentage twice (+10 % twice
+    // is +21 %, and the undo record would be the second run's).
+    if (_busy) return;
     final l10n = AppLocalizations.of(context);
     final plan = _plan;
     if (plan == null || plan.changing.isEmpty) return;
     final container = _container;
     final repository = container.read(priceChangeRepositoryProvider);
     final locale = ref.read(appLocaleProvider).languageCode;
-    if (!await requirePinIfSet(context, reason: l10n.pinReasonBulkPrice)) {
-      return;
-    }
-    if (!mounted) return;
     setState(() => _busy = true);
     try {
+      if (!await requirePinIfSet(context, reason: l10n.pinReasonBulkPrice)) {
+        return;
+      }
+      if (!mounted) return;
       final changed = await repository.apply(plan);
       refreshPrices(container);
       if (!mounted) return;
@@ -142,6 +159,7 @@ class _BulkPriceScreenState extends ConsumerState<BulkPriceScreen> {
   }
 
   Future<void> _undo() async {
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context);
     final container = _container;
     final repository = container.read(priceChangeRepositoryProvider);
@@ -469,14 +487,18 @@ class _ProductChooserScreenState extends ConsumerState<ProductChooserScreen> {
     final l10n = AppLocalizations.of(context);
     final locale = ref.watch(appLocaleProvider).languageCode;
     final all = _products;
-    final q = _query.trim().toLowerCase();
+    // The shared Arabic normalization, as everywhere a product is searched:
+    // "ارز" finds "أرز".
+    final q = normalizeName(_query);
+    final code = normalizeCode(_query);
     final shown = all == null
         ? const <Product>[]
         : [
             for (final p in all)
               if (q.isEmpty ||
-                  p.name.toLowerCase().contains(q) ||
-                  (p.code ?? '').toLowerCase().contains(q))
+                  normalizeName(p.name).contains(q) ||
+                  (code.isNotEmpty &&
+                      normalizeCode(p.code ?? '').contains(code)))
                 p,
           ];
     return Scaffold(

@@ -95,7 +95,22 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     super.dispose();
   }
 
+  bool _inSave = false;
+
+  /// One save at a time. The claim is made BEFORE the first await: the
+  /// form's own "saving" flag is only set after the duplicate check has
+  /// read the database, and a second tap in that gap would save twice.
   Future<void> _save() async {
+    if (_inSave) return;
+    _inSave = true;
+    try {
+      await _saveOnce();
+    } finally {
+      _inSave = false;
+    }
+  }
+
+  Future<void> _saveOnce() async {
     if (_saving || !_formKey.currentState!.validate()) return;
     final navigator = Navigator.of(context);
     // The lists are refreshed through the container: the save must show up
