@@ -624,7 +624,7 @@ class CustomerRepository {
   }) async {
     final rows = await _db.rawQuery(
       'SELECT i.id, i.invoice_no, i.created_at, i.currency_code, '
-      'i.total_minor, i.account_number, '
+      'i.total_minor, i.account_number, i.voided_at, '
       '(SELECT COUNT(*) FROM invoice_items it WHERE it.invoice_id = i.id) '
       'AS item_count, '
       '(SELECT it.product_name FROM invoice_items it '
@@ -638,13 +638,17 @@ class CustomerRepository {
   }
 
   /// Count, base-currency total and date of the last purchase — from each
-  /// invoice's stored `total_base_minor`, never from today's rates.
+  /// invoice's stored `total_base_minor`, never from today's rates. Voided
+  /// invoices are not purchases; what was returned is taken off the total.
   Future<CustomerTotals> totals(int customerId) async {
     final rows = await _db.rawQuery(
-      'SELECT COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total, '
+      'SELECT COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) '
+      '- COALESCE((SELECT SUM(r.refund_base_minor) FROM invoice_returns r '
+      '  JOIN invoices ri ON ri.id = r.invoice_id '
+      '  WHERE ri.customer_id = ? AND ri.voided_at IS NULL), 0) AS total, '
       'MAX(i.created_at) AS last_at '
-      'FROM invoices i WHERE i.customer_id = ?',
-      [customerId],
+      'FROM invoices i WHERE i.customer_id = ? AND i.voided_at IS NULL',
+      [customerId, customerId],
     );
     final row = rows.first;
     final lastAt = row['last_at'] as int?;

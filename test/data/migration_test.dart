@@ -7,9 +7,13 @@ import 'package:souqi/data/db/migrations/migration_v3.dart';
 import 'package:souqi/data/db/migrations/migration_v4.dart';
 import 'package:souqi/data/db/migrations/migration_v7.dart';
 import 'package:souqi/core/money/exchange.dart';
+import 'package:souqi/core/utils/due_dates.dart';
 import 'package:souqi/data/repositories/debt_repository.dart';
 import 'package:souqi/data/repositories/archive_repository.dart';
 import 'package:souqi/data/repositories/audit_repository.dart';
+import 'package:souqi/data/repositories/invoice_correction_repository.dart';
+import 'package:souqi/domain/models/debt.dart';
+import 'package:souqi/domain/models/invoice_return.dart';
 import 'package:souqi/data/repositories/price_change_repository.dart';
 import 'package:souqi/data/repositories/product_repository.dart';
 import 'package:souqi/domain/models/price_change.dart';
@@ -35,8 +39,8 @@ void main() {
   group('schema', () {
     test('user_version is the latest migration', () async {
       final rows = await db.rawQuery('PRAGMA user_version');
-      expect(rows.first.values.first, 7);
-      expect(AppDatabase.schemaVersion, 7);
+      expect(rows.first.values.first, 8);
+      expect(AppDatabase.schemaVersion, 8);
     });
 
     test('foreign keys are enforced', () async {
@@ -909,10 +913,16 @@ void main() {
       final ahmad = await insertCustomer(old);
       final invoice = await insertInvoice(old, invoiceNo: 1);
       await insertInvoiceItem(old, invoiceId: invoice, productId: sugar);
-      await DebtRepository(old).addManualDebt(
-        customerId: ahmad,
-        amountBaseMinor: 5000,
-      );
+      // Written as version 5 wrote it: today's repository writes columns
+      // (the return link of version 8) this old table does not have.
+      await old.insert('debt_transactions', {
+        'customer_id': ahmad,
+        'type': 'MANUAL_DEBT',
+        'direction': 1,
+        'amount_base_minor': 5000,
+        'created_at': 1000,
+        'recorded_at': 1000,
+      });
       Future<Map<String, int>> counts(DatabaseExecutor db) async => {
             for (final table in [
               'products',
@@ -1047,7 +1057,8 @@ void main() {
       final upgraded =
           await AppDatabase.open(factory: databaseFactoryFfi, path: path);
       final db = upgraded.db;
-      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 7);
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first,
+          AppDatabase.schemaVersion);
 
       expect(await column(db, 'barcode'), {
         sugar: '111',
@@ -1159,6 +1170,576 @@ void main() {
 
       await upgraded.close();
       await databaseFactoryFfi.deleteDatabase(path);
+    });
+  });
+
+  group('v7 → v8 (void and returns; the ledger gets the RETURN type)', () {
+    /// A database exactly as version 7 of the app (phase 6) left it.
+    Future<Database> openV7(String path) => databaseFactoryFfi.openDatabase(
+          path,
+          options: OpenDatabaseOptions(
+            version: 7,
+            onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+            onCreate: (db, _) async {
+              for (final m in AppDatabase.migrations) {
+                if (m.version <= 7) await m.apply(db);
+              }
+            },
+          ),
+        );
+
+    const day = Duration.millisecondsPerDay;
+
+    /// A ledger row in the version-7 shape.
+    Future<int> entry(
+      Database db, {
+      required int customerId,
+      required String type,
+      required int direction,
+      required int amount,
+      required int at,
+      int? invoiceId,
+      int? invoiceNo,
+      int? receiptNo,
+      int? balanceBefore,
+      int? reversesId,
+      int? dueAt,
+      String? method,
+      String? note,
+      int? origAmount,
+    }) =>
+        db.insert('debt_transactions', {
+          'customer_id': customerId,
+          'type': type,
+          'direction': direction,
+          'amount_base_minor': amount,
+          'orig_amount_minor': origAmount,
+          'orig_currency_code': origAmount == null ? null : 'USD',
+          'orig_rate_num': origAmount == null ? null : 13000,
+          'orig_rate_den': origAmount == null ? null : 1,
+          'payment_method': method,
+          'due_at': dueAt,
+          'receipt_no': receiptNo,
+          'balance_before_base_minor': balanceBefore,
+          'invoice_id': invoiceId,
+          'invoice_no': invoiceNo,
+          'reverses_id': reversesId,
+          'note': note,
+          'created_at': at,
+          'recorded_at': at + 1000,
+        });
+
+    test('a populated version-7 database upgrades without losing a row: '
+        'every ledger entry is what it was, id and all', () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v7_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV7(path);
+
+      final sugar = await insertProduct(old, name: 'Sugar', code: '101');
+      final adsl = await insertProduct(old, name: 'ADSL', kind: 'SERVICE');
+      final card = await insertProduct(old,
+          name: 'Card 5000', kind: 'SERVICE', soldFromCodeStock: 1);
+      final ahmad = await insertCustomer(old, name: 'Ahmad');
+      final sara = await insertCustomer(old, name: 'Sara');
+      final renewedAt = 20 * day + 9 * 3600000;
+      final account = await old.insert('customer_accounts', {
+        'customer_id': ahmad,
+        'account_number': '0011-2233',
+        'account_number_norm': '00112233',
+        'renewal_days': 30,
+        'last_renewal_at': renewedAt,
+        'next_due_at': 50 * day,
+        'created_at': 1,
+      });
+      await old.insert('settings',
+          {'key': 'shop_name', 'value': 'Al-Baraka', 'updated_at': 1});
+      await old.update('counters', {'value': 3},
+          where: 'name = ?', whereArgs: ['invoice_no']);
+      await old.insert('counters', {'name': 'receipt_no', 'value': 2});
+
+      // Invoice 1: goods, paid. Invoice 2: an earlier renewal. Invoice 3:
+      // the renewal in force, on credit, with a card.
+      final first = await insertInvoice(old,
+          invoiceNo: 1,
+          subtotalMinor: 2000,
+          createdAt: DateTime.fromMillisecondsSinceEpoch(5 * day));
+      final firstItem = await insertInvoiceItem(old,
+          invoiceId: first, productId: sugar, qtyThousandths: 2000);
+      Future<int> renewal(int no, int at, {int total = 35000}) async {
+        final id = await insertInvoice(old,
+            invoiceNo: no,
+            createdAt: DateTime.fromMillisecondsSinceEpoch(at),
+            subtotalMinor: total,
+            customerName: 'Ahmad',
+            accountNumber: '0011-2233');
+        await old.update(
+            'invoices',
+            {
+              'customer_id': ahmad,
+              'account_id': account,
+              'paid_minor': no == 3 ? 5000 : null,
+            },
+            where: 'id = ?',
+            whereArgs: [id]);
+        await old.insert('invoice_items', {
+          'invoice_id': id,
+          'product_id': adsl,
+          'product_name': 'ADSL',
+          'product_name_norm': 'adsl',
+          'kind': 'SERVICE',
+          'qty_thousandths': 1000,
+          'orig_unit_price_minor': 35000,
+          'orig_currency_code': 'SYP',
+          'orig_rate_num': 1,
+          'orig_rate_den': 1,
+          'unit_price_minor': 35000,
+          'line_total_minor': 35000,
+        });
+        return id;
+      }
+
+      final second = await renewal(2, 8 * day);
+      final third = await renewal(3, renewedAt, total: 40000);
+      final cardItem = await old.insert('invoice_items', {
+        'invoice_id': third,
+        'product_id': card,
+        'sort_order': 1,
+        'product_name': 'Card 5000',
+        'product_name_norm': 'card 5000',
+        'kind': 'SERVICE',
+        'qty_thousandths': 1000,
+        'orig_unit_price_minor': 5000,
+        'orig_currency_code': 'SYP',
+        'orig_rate_num': 1,
+        'orig_rate_den': 1,
+        'unit_price_minor': 5000,
+        'line_total_minor': 5000,
+      });
+      final batch = await insertVoucherBatch(old, productId: card);
+      final code = await insertVoucherCode(old,
+          productId: card, batchId: batch, codeHash: 'h1');
+      await old.update(
+          'voucher_codes',
+          {
+            'status': 'SOLD',
+            'sold_at': renewedAt,
+            'invoice_id': third,
+            'invoice_item_id': cardItem,
+            'sold_invoice_no': 3,
+          },
+          where: 'id = ?',
+          whereArgs: [code]);
+      await old.insert('audit_log', {'created_at': 3000, 'action': 'PIN_SET'});
+
+      // The ledger, every type version 7 knew — with a reversed payment and
+      // its reversal, which is what makes the old table hard to drop.
+      final opening = await entry(old,
+          customerId: sara,
+          type: 'OPENING_BALANCE',
+          direction: 1,
+          amount: 12000,
+          at: 2 * day,
+          dueAt: 32 * day,
+          note: 'from the notebook');
+      final debt = await entry(old,
+          customerId: ahmad,
+          type: 'DEBT',
+          direction: 1,
+          amount: 35000,
+          at: renewedAt,
+          invoiceId: third,
+          invoiceNo: 3,
+          dueAt: 50 * day);
+      final wrong = await entry(old,
+          customerId: sara,
+          type: 'PAYMENT',
+          direction: -1,
+          amount: 9000,
+          at: 21 * day,
+          receiptNo: 1,
+          balanceBefore: 12000,
+          method: 'CASH');
+      final reversal = await entry(old,
+          customerId: sara,
+          type: 'REVERSAL',
+          direction: 1,
+          amount: 9000,
+          at: 21 * day + 5000,
+          reversesId: wrong,
+          note: 'wrong customer');
+      final payment = await entry(old,
+          customerId: ahmad,
+          type: 'PAYMENT',
+          direction: -1,
+          amount: 13000,
+          at: 22 * day,
+          receiptNo: 2,
+          balanceBefore: 35000,
+          method: 'TRANSFER',
+          origAmount: 100);
+      final adjustment = await entry(old,
+          customerId: sara,
+          type: 'ADJUSTMENT',
+          direction: -1,
+          amount: 2000,
+          at: 23 * day,
+          note: 'rounding');
+      final manual = await entry(old,
+          customerId: sara,
+          type: 'MANUAL_DEBT',
+          direction: 1,
+          amount: 700,
+          at: 24 * day,
+          dueAt: 54 * day);
+
+      const tables = [
+        'products',
+        'customers',
+        'customer_accounts',
+        'invoices',
+        'invoice_items',
+        'voucher_batches',
+        'voucher_codes',
+        'audit_log',
+        'settings',
+        'currencies',
+        'units',
+        'debt_transactions',
+        'price_changes',
+        'price_change_items',
+      ];
+      Future<Map<String, int>> counts(DatabaseExecutor db) async => {
+            for (final table in tables)
+              table: (await db.rawQuery('SELECT COUNT(*) FROM $table'))
+                  .first
+                  .values
+                  .first! as int,
+          };
+      final before = await counts(old);
+      final ledgerBefore = await old.query('debt_transactions', orderBy: 'id');
+      final invoicesBefore = await old.query('invoices', orderBy: 'id');
+      final codesBefore = await old.query('voucher_codes', orderBy: 'id');
+      final sequenceBefore = (await old.rawQuery(
+        "SELECT seq FROM sqlite_sequence WHERE name = 'debt_transactions'",
+      ))
+          .single['seq'];
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      final db = upgraded.db;
+      expect((await db.rawQuery('PRAGMA user_version')).first.values.first, 8);
+
+      // Not a row lost, in any table; the scratch copy is gone; nothing
+      // dangles.
+      expect(await counts(db), before);
+      expect(
+        await db.rawQuery("SELECT name FROM sqlite_master "
+            "WHERE name LIKE 'debt_transactions_v%'"),
+        isEmpty,
+      );
+      expect(await db.rawQuery('PRAGMA foreign_key_check'), isEmpty);
+      expect(await db.rawQuery('PRAGMA integrity_check'), [
+        {'integrity_check': 'ok'},
+      ]);
+
+      // Every entry of the ledger, column by column, id by id — and the two
+      // new columns are there and empty.
+      final ledgerAfter = await db.query('debt_transactions', orderBy: 'id');
+      expect(ledgerAfter, hasLength(ledgerBefore.length));
+      for (var i = 0; i < ledgerBefore.length; i++) {
+        for (final column in ledgerBefore[i].keys) {
+          expect(ledgerAfter[i][column], ledgerBefore[i][column],
+              reason: 'debt_transactions.$column of entry '
+                  '${ledgerBefore[i]['id']}');
+        }
+        expect(ledgerAfter[i].containsKey('return_id'), isTrue);
+        expect(ledgerAfter[i]['return_id'], isNull);
+        expect(ledgerAfter[i]['return_no'], isNull);
+      }
+      expect(
+        ledgerAfter.map((row) => row['id']),
+        [opening, debt, wrong, reversal, payment, adjustment, manual],
+      );
+      // An id is never handed out twice.
+      expect(
+        (await db.rawQuery(
+          "SELECT seq FROM sqlite_sequence WHERE name = 'debt_transactions'",
+        ))
+            .single['seq'],
+        sequenceBefore,
+      );
+
+      // Every invoice is what it was; the new columns say "live" and "no
+      // previous dates stored". The card code still points at its line.
+      final invoicesAfter = await db.query('invoices', orderBy: 'id');
+      for (var i = 0; i < invoicesBefore.length; i++) {
+        for (final column in invoicesBefore[i].keys) {
+          expect(invoicesAfter[i][column], invoicesBefore[i][column],
+              reason: 'invoices.$column of row $i');
+        }
+        expect(invoicesAfter[i]['voided_at'], isNull);
+        expect(invoicesAfter[i]['void_reason'], isNull);
+        expect(invoicesAfter[i]['renewal_prev_stored'], 0);
+        expect(invoicesAfter[i]['prev_last_renewal_at'], isNull);
+        expect(invoicesAfter[i]['prev_next_due_at'], isNull);
+        expect(invoicesAfter[i]['renewal_undone'], 0);
+      }
+      expect(await db.query('voucher_codes', orderBy: 'id'), codesBefore);
+
+      // What is new is there, and empty.
+      expect(await db.query('invoice_returns'), isEmpty);
+      expect(await db.query('invoice_return_items'), isEmpty);
+      // No return number was drawn yet: the first return will be number 1.
+      expect(await db.query('counters', where: "name = 'return_no'"), isEmpty);
+      final names = {
+        for (final row in await db.rawQuery("SELECT name FROM sqlite_master "
+            "WHERE type IN ('index', 'trigger')"))
+          row['name'],
+      };
+      expect(
+        names.containsAll([
+          'idx_debt_customer',
+          'idx_debt_fifo',
+          'idx_debt_invoice',
+          'idx_debt_created',
+          'idx_debt_reverses',
+          'idx_debt_receipt',
+          'idx_debt_return',
+          'trg_debt_no_update',
+          'trg_debt_no_delete',
+          'idx_returns_invoice',
+          'idx_returns_created',
+          'idx_return_items_return',
+          'idx_return_items_item',
+          'idx_invoices_voided',
+          'idx_invoices_account',
+        ]),
+        isTrue,
+        reason: 'indexes and triggers: $names',
+      );
+
+      // The rest of the shop is untouched.
+      expect((await db.query('settings',
+              where: 'key = ?', whereArgs: ['shop_name']))
+          .single['value'], 'Al-Baraka');
+      expect(
+        (await db.query('counters', where: "name = 'invoice_no'"))
+            .single['value'],
+        3,
+      );
+
+      // THE LEDGER STILL REFUSES TO BE EDITED…
+      await expectLater(
+        db.update('debt_transactions', {'amount_base_minor': 1},
+            where: 'id = ?', whereArgs: [debt]),
+        throwsA(isA<DatabaseException>()),
+      );
+      await expectLater(
+        db.update('debt_transactions', {'invoice_id': first},
+            where: 'id = ?', whereArgs: [debt]),
+        throwsA(isA<DatabaseException>()),
+      );
+      await expectLater(
+        db.delete('debt_transactions', where: 'id = ?', whereArgs: [manual]),
+        throwsA(isA<DatabaseException>()),
+      );
+      // …and the old reversal is still the only one its entry may have.
+      await expectLater(
+        entry(db,
+            customerId: sara,
+            type: 'REVERSAL',
+            direction: 1,
+            amount: 9000,
+            at: 30 * day,
+            reversesId: wrong),
+        throwsA(isA<DatabaseException>()),
+      );
+
+      // The new code works on the old rows.
+      final debts = DebtRepository(db);
+      expect(await debts.balanceOf(ahmad), 22000);
+      expect(await debts.balanceOf(sara), 10700);
+      final saraLedger = await debts.ledger(sara);
+      expect(saraLedger.map((l) => l.entry.id),
+          [manual, adjustment, reversal, wrong, opening]);
+      expect(saraLedger[3].entry.isReversed, isTrue);
+      expect(saraLedger[2].entry.reversedReceiptNo, 1);
+      final receipt = await debts.recordPayment(
+        customerId: ahmad,
+        amountMinor: 2000,
+        currencyCode: 'SYP',
+        currencyDecimals: 0,
+        baseCode: 'SYP',
+        baseDecimals: 0,
+      );
+      expect(receipt.id, greaterThan(manual));
+      expect(receipt.receiptNo, 3);
+
+      // A RETURN from an old invoice: its own number, a ledger entry of the
+      // new type, the invoice untouched.
+      final corrections = InvoiceCorrectionRepository(db);
+      await db.update('invoices', {'customer_id': sara, 'customer_name': 'Sara'},
+          where: 'id = ?', whereArgs: [first]);
+      final back = await corrections.saveReturn(ReturnDraft(
+        invoiceId: first,
+        method: RefundMethod.debt,
+        lines: [
+          ReturnLineRequest(invoiceItemId: firstItem, qtyThousandths: 500),
+        ],
+      ));
+      expect(back.returnNo, 1);
+      // A quarter of 2 kg for 2,000.
+      expect(back.refundMinor, 500);
+      expect(await debts.balanceOf(sara), 10200);
+      expect(
+        (await debts.ledger(sara)).first.entry.type,
+        DebtEntryType.saleReturn,
+      );
+
+      // A VOID of the old credit renewal: the debt is reversed, the card is
+      // voided, and — no previous dates having been stored by version 7 —
+      // the account goes back to the renewal before it (invoice 2).
+      final plan = await corrections.voidPlan(third,
+          now: DateTime.fromMillisecondsSinceEpoch(renewedAt + day));
+      expect(plan.debtBaseMinor, 35000);
+      expect(plan.soldCodes, 1);
+      expect(plan.renewal!.applies, isTrue);
+      await corrections.voidInvoice(third,
+          reason: 'duplicate',
+          now: DateTime.fromMillisecondsSinceEpoch(renewedAt + day));
+      // 35,000 debt − 13,000 − 2,000 paid, less the reversed 35,000.
+      expect(await debts.balanceOf(ahmad), -15000);
+      expect(
+        (await db.query('voucher_codes')).single['status'],
+        'VOID',
+      );
+      final restored = (await db.query('customer_accounts')).single;
+      expect(restored['last_renewal_at'], 8 * day);
+      expect(
+        restored['next_due_at'],
+        nextDueAfter(
+          DateTime.fromMillisecondsSinceEpoch(8 * day, isUtc: true),
+          30,
+        ).toUtc().millisecondsSinceEpoch,
+      );
+      expect(second, isNot(third));
+
+      // Deleting the old invoices keeps every entry, numbers and all.
+      await ArchiveRepository(db).deleteMatchingChunk(const ArchiveFilter());
+      expect(await db.query('invoices'), isEmpty);
+      expect(await db.query('invoice_returns'), isEmpty);
+      final kept = await db.query('debt_transactions', orderBy: 'id');
+      expect(kept.length, ledgerBefore.length + 3);
+      expect(kept.every((row) => row['invoice_id'] == null), isTrue);
+      expect(kept.firstWhere((row) => row['id'] == debt)['invoice_no'], 3);
+      expect(kept.firstWhere((row) => row['type'] == 'RETURN')['return_no'], 1);
+      expect(await db.rawQuery('PRAGMA foreign_key_check'), isEmpty);
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('a fresh install and an upgraded one have the same schema — every '
+        'table, index and trigger', () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v7_schema_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      await (await openV7(path)).close();
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+
+      Future<Map<Object?, Object?>> schema(Database database) async => {
+            for (final row in await database.rawQuery(
+                "SELECT name, sql FROM sqlite_master "
+                "WHERE name NOT LIKE 'sqlite_%' AND name != 'android_metadata'"))
+              row['name']: row['sql'],
+          };
+
+      // `db` is the fresh in-memory database of setUp.
+      final fresh = await schema(db);
+      final migrated = await schema(upgraded.db);
+      expect(migrated.keys.toSet(), fresh.keys.toSet());
+      for (final name in fresh.keys) {
+        expect(migrated[name], fresh[name], reason: '$name');
+      }
+      final ledger = '${fresh['debt_transactions']}';
+      expect(ledger, contains("'RETURN'"));
+      expect(ledger, contains('AUTOINCREMENT'));
+      expect(ledger, contains('return_id'));
+      // The self-reference points at the table itself, not at the copy.
+      expect(ledger, isNot(contains('debt_transactions_v7')));
+      expect('${fresh['trg_debt_no_update']}', contains('NEW.return_id'));
+
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('an empty ledger upgrades too', () async {
+      final dir = await databaseFactoryFfi.getDatabasesPath();
+      final path = '$dir/souqi_migration_v7_empty_test.db';
+      await databaseFactoryFfi.deleteDatabase(path);
+      final old = await openV7(path);
+      final customer = await insertCustomer(old);
+      await old.close();
+
+      final upgraded =
+          await AppDatabase.open(factory: databaseFactoryFfi, path: path);
+      expect(await upgraded.db.query('debt_transactions'), isEmpty);
+      final debt = await DebtRepository(upgraded.db)
+          .addManualDebt(customerId: customer, amountBaseMinor: 500);
+      expect(debt.id, 1);
+      await upgraded.close();
+      await databaseFactoryFfi.deleteDatabase(path);
+    });
+
+    test('a link of an entry may be cleared and nothing else may change',
+        () async {
+      // `db` is the fresh database of setUp.
+      final customer = await insertCustomer(db);
+      final invoice = await insertInvoice(db, invoiceNo: 1);
+      final other = await insertInvoice(db, invoiceNo: 2);
+      final id = await entry(db,
+          customerId: customer,
+          type: 'DEBT',
+          direction: 1,
+          amount: 4000,
+          at: day,
+          invoiceId: invoice,
+          invoiceNo: 1);
+      for (final change in <Map<String, Object?>>[
+        {'invoice_id': other},
+        {'invoice_no': 2},
+        {'return_no': 5},
+        {'note': 'edited'},
+        {'direction': -1},
+        {'created_at': 2 * day},
+      ]) {
+        await expectLater(
+          db.update('debt_transactions', change,
+              where: 'id = ?', whereArgs: [id]),
+          throwsA(isA<DatabaseException>()),
+          reason: '$change',
+        );
+      }
+      // The one thing that may happen to it: its invoice is deleted.
+      await db.delete('invoices', where: 'id = ?', whereArgs: [invoice]);
+      final row =
+          (await db.query('debt_transactions', where: 'id = $id')).single;
+      expect(row['invoice_id'], isNull);
+      expect(row['invoice_no'], 1);
+      expect(row['amount_base_minor'], 4000);
+      // The type RETURN is a credit and nothing else.
+      await expectLater(
+        entry(db,
+            customerId: customer,
+            type: 'RETURN',
+            direction: 1,
+            amount: 100,
+            at: day),
+        throwsA(isA<DatabaseException>()),
+      );
     });
   });
 

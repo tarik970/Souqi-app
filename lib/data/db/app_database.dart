@@ -9,6 +9,7 @@ import 'migrations/migration_v4.dart';
 import 'migrations/migration_v5.dart';
 import 'migrations/migration_v6.dart';
 import 'migrations/migration_v7.dart';
+import 'migrations/migration_v8.dart';
 
 /// Owns the sqflite [Database]: opening, PRAGMAs and versioned migrations.
 class AppDatabase {
@@ -32,6 +33,7 @@ class AppDatabase {
     MigrationV5(),
     MigrationV6(),
     MigrationV7(),
+    MigrationV8(),
   ];
 
   static int get schemaVersion => migrations.last.version;

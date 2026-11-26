@@ -51,8 +51,12 @@ class StatementData {
 /// direction (the INVOICE language), font, colours and strings, no text
 /// scaling — so it renders identically on screen and in the off-screen
 /// capture — with the shop header on top and the footer underneath.
-class _Paper extends StatelessWidget {
-  const _Paper({
+///
+/// Public since phase 7: the return document ("مرتجع") is built on it too
+/// (lib/features/returns/return_paper.dart).
+class PaperFrame extends StatelessWidget {
+  const PaperFrame({
+    super.key,
     required this.settings,
     required this.logo,
     required this.padding,
@@ -70,7 +74,7 @@ class _Paper extends StatelessWidget {
 
   /// The paper was cancelled (a reversed payment): says so in a box.
   final bool cancelled;
-  final List<Widget> Function(_PaperStyle style) builder;
+  final List<Widget> Function(PaperStyle style) builder;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +91,7 @@ class _Paper extends StatelessWidget {
       fontWeight: FontWeight.w500,
       decoration: TextDecoration.none,
     );
-    final style = _PaperStyle(
+    final style = PaperStyle(
       l10n: l10n,
       base: base,
       gap: base * 0.4,
@@ -196,8 +200,8 @@ class _Paper extends StatelessWidget {
   }
 }
 
-class _PaperStyle {
-  const _PaperStyle({
+class PaperStyle {
+  const PaperStyle({
     required this.l10n,
     required this.base,
     required this.gap,
@@ -219,8 +223,9 @@ class _PaperStyle {
 /// A balance on paper: "عليه 5,000 ل.س" as two separate text runs, so the
 /// amount can never be reordered by the Arabic word beside it, and a narrow
 /// paper wraps between the two.
-class _PaperBalance extends StatelessWidget {
-  const _PaperBalance({
+class PaperBalance extends StatelessWidget {
+  const PaperBalance({
+    super.key,
     required this.baseMinor,
     required this.money,
     required this.currencyCode,
@@ -294,7 +299,7 @@ class ReceiptView extends StatelessWidget {
     final origRate = payment.origRate;
     final method = payment.paymentMethod;
 
-    return _Paper(
+    return PaperFrame(
       settings: s,
       logo: logo,
       padding: padding,
@@ -341,7 +346,7 @@ class ReceiptView extends StatelessWidget {
               label: l10n.previousBalanceLabel,
               gap: gap,
               colon: false,
-              value: _PaperBalance(
+              value: PaperBalance(
                 baseMinor: before,
                 money: money,
                 currencyCode: baseCode,
@@ -391,7 +396,7 @@ class ReceiptView extends StatelessWidget {
               gap: gap,
               colon: false,
               labelStyle: style.bold,
-              value: _PaperBalance(
+              value: PaperBalance(
                 baseMinor: after,
                 money: money,
                 currencyCode: baseCode,
@@ -452,7 +457,7 @@ class StatementView extends StatelessWidget {
     final from = statement.from;
     final to = statement.to;
 
-    return _Paper(
+    return PaperFrame(
       settings: s,
       logo: logo,
       padding: padding,
@@ -471,7 +476,7 @@ class StatementView extends StatelessWidget {
                 ? l10n.statementUntil(day(lastDay!))
                 : null;
 
-        Widget balance(int baseMinor, {TextStyle? textStyle}) => _PaperBalance(
+        Widget balance(int baseMinor, {TextStyle? textStyle}) => PaperBalance(
               baseMinor: baseMinor,
               money: money,
               currencyCode: baseCode,
@@ -576,7 +581,7 @@ class _StatementLine extends StatelessWidget {
   });
 
   final LedgerLine line;
-  final _PaperStyle style;
+  final PaperStyle style;
   final InvoiceMoney money;
   final String baseCode;
   final String language;

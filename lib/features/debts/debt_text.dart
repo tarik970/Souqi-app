@@ -31,8 +31,17 @@ String describeEntry(
   required String locale,
 }) {
   String number(int value) => localizeDigits('$value', locale);
-  String of(DebtEntryType type, {int? invoiceNo, int? receiptNo}) =>
+  String of(
+    DebtEntryType type, {
+    int? invoiceNo,
+    int? receiptNo,
+    int? returnNo,
+  }) =>
       switch (type) {
+        // "مرتجع رقم 12": a refund kept on the account.
+        DebtEntryType.saleReturn => returnNo == null
+            ? l10n.returnTitle
+            : l10n.returnNoLabel(number(returnNo)),
         DebtEntryType.debt => invoiceNo == null
             ? l10n.entryManualDebt
             : l10n.entryInvoice(number(invoiceNo)),
@@ -54,7 +63,12 @@ String describeEntry(
       receiptNo: entry.reversedReceiptNo,
     ));
   }
-  return of(entry.type, invoiceNo: entry.invoiceNo, receiptNo: entry.receiptNo);
+  return of(
+    entry.type,
+    invoiceNo: entry.invoiceNo,
+    receiptNo: entry.receiptNo,
+    returnNo: entry.returnNo,
+  );
 }
 
 /// For a REVERSAL: what the entry it cancels is called ("سند قبض 37") —

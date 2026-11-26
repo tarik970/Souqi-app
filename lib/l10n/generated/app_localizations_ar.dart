@@ -4172,4 +4172,349 @@ class AppLocalizationsAr extends AppLocalizations {
   String rateSuspicious(String entered, String current) {
     return '$entered يختلف كثيراً عن السعر الحالي ($current). الفاصلة أو النقطة تُقرأ كفاصلة عشرية: اكتب 13500 وليس 13,500. إذا كان $entered صحيحاً فاضغط «حفظ» مرة أخرى.';
   }
+
+  @override
+  String get invoiceVoidMark => 'ملغاة';
+
+  @override
+  String get invoiceVoidedOnLabel => 'أُلغيت في';
+
+  @override
+  String invoiceVoidedOn(String date) {
+    return 'أُلغيت في $date';
+  }
+
+  @override
+  String get invoiceVoidedSnack => 'تم إلغاء الفاتورة';
+
+  @override
+  String get voidInvoice => 'إلغاء الفاتورة';
+
+  @override
+  String voidInvoiceTitle(String no) {
+    return 'إلغاء الفاتورة $no؟';
+  }
+
+  @override
+  String get voidReasonQuestion => 'ما سبب الإلغاء؟';
+
+  @override
+  String get voidReasonWrongItems => 'أصناف خاطئة';
+
+  @override
+  String get voidReasonWrongPrice => 'سعر خاطئ';
+
+  @override
+  String get voidReasonCustomerCancelled => 'الزبون ألغى الطلب';
+
+  @override
+  String get voidReasonDuplicate => 'فاتورة مكررة';
+
+  @override
+  String get voidReasonOther => 'سبب آخر';
+
+  @override
+  String voidCodesQuestion(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'أكواد البطاقات المباعة فيها ($countString)',
+      few: 'أكواد البطاقات المباعة فيها ($countString)',
+      two: 'كودا البطاقتين المباعتين فيها',
+      one: 'كود البطاقة المباعة فيها',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get voidCodesVoid => 'إلغاء الأكواد';
+
+  @override
+  String get voidCodesToStock => 'إعادتها إلى المخزون';
+
+  @override
+  String get voidCodesVoidHint =>
+      'للبطاقات التي طُبعت أو سُلّمت للزبون: لا تُباع مرة أخرى أبداً.';
+
+  @override
+  String get voidCodesToStockHint => 'فقط إذا لم يستلمها الزبون: تعود للبيع.';
+
+  @override
+  String get voidConfirmIntro => 'هذا ما سيحدث:';
+
+  @override
+  String get voidEffectKept =>
+      'تبقى الفاتورة في الأرشيف وعليها علامة «ملغاة»، ولا يُستخدم رقمها مرة أخرى.';
+
+  @override
+  String voidEffectDebt(String amount, String customer) {
+    return 'يُعكس الدين البالغ $amount في حساب $customer.';
+  }
+
+  @override
+  String voidEffectCredit(String amount) {
+    return 'يُعاد إلى رصيد الزبون الدائن مبلغ $amount الذي استُخدم منه.';
+  }
+
+  @override
+  String voidEffectCash(String amount) {
+    return 'أعِد إلى الزبون $amount.';
+  }
+
+  @override
+  String voidEffectCodesVoid(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'يُلغى $countString كود بطاقة.',
+      few: 'تُلغى $countString أكواد بطاقات.',
+      two: 'يُلغى كودا بطاقتين.',
+      one: 'يُلغى كود بطاقة واحد.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String voidEffectCodesStock(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'يعود $countString كود بطاقة إلى المخزون.',
+      few: 'تعود $countString أكواد بطاقات إلى المخزون.',
+      two: 'يعود كودا بطاقتين إلى المخزون.',
+      one: 'يعود كود بطاقة واحد إلى المخزون.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String voidEffectRenewal(String account, String date) {
+    return 'الحساب $account: يُلغى التجديد ويعود موعد الاستحقاق إلى $date.';
+  }
+
+  @override
+  String voidEffectRenewalNone(String account) {
+    return 'الحساب $account: يُلغى التجديد ويعود بلا موعد استحقاق.';
+  }
+
+  @override
+  String voidEffectRenewalKept(String account) {
+    return 'الحساب $account: يوجد تجديد أحدث ساري المفعول، فتبقى مواعيده كما هي.';
+  }
+
+  @override
+  String get voidAlready => 'هذه الفاتورة ملغاة مسبقاً.';
+
+  @override
+  String get voidHasReturns =>
+      'لهذه الفاتورة مرتجعات. أرجِع ما بقي منها بدلاً من إلغائها.';
+
+  @override
+  String voidTooOld(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'مضى على هذه الفاتورة أكثر من $daysString يوماً',
+      few: 'مضى على هذه الفاتورة أكثر من $daysString أيام',
+      two: 'مضى على هذه الفاتورة أكثر من يومين',
+      one: 'مضى على هذه الفاتورة أكثر من يوم واحد',
+    );
+    return '$_temp0 ولم يعد إلغاؤها ممكناً. المدة تُحدَّد من الإعدادات ← الأرشيف.';
+  }
+
+  @override
+  String get pinReasonVoid => 'أدخل الرمز لإلغاء الفاتورة.';
+
+  @override
+  String get pinReasonReturn => 'أدخل الرمز لحفظ المرتجع.';
+
+  @override
+  String get pinReasonVoidAge =>
+      'أدخل الرمز لتغيير مدة السماح بإلغاء الفواتير.';
+
+  @override
+  String get pinReasonAdminAccess =>
+      'أدخل الرمز لفتح الإعدادات والأرشيف والإحصائيات.';
+
+  @override
+  String get settingVoidAge => 'إلغاء الفواتير';
+
+  @override
+  String get settingVoidAgeHint =>
+      'يمكن إلغاء الفاتورة ما دام عمرها لا يتجاوز هذه المدة. المرتجعات بلا حد.';
+
+  @override
+  String get voidAgeNoLimit => 'بلا حد';
+
+  @override
+  String get returnTitle => 'مرتجع';
+
+  @override
+  String get returnsTitle => 'المرتجعات';
+
+  @override
+  String returnNoLabel(String no) {
+    return 'مرتجع رقم $no';
+  }
+
+  @override
+  String returnFromInvoice(String no) {
+    return 'من فاتورة $no';
+  }
+
+  @override
+  String get returnItems => 'إرجاع أصناف';
+
+  @override
+  String get returnItemsTitle => 'إرجاع أصناف';
+
+  @override
+  String returnItemsHint(String no) {
+    return 'فاتورة رقم $no — اضغط على الصنف واكتب الكمية المرتجعة.';
+  }
+
+  @override
+  String get returnNothingLeft => 'كل ما في هذه الفاتورة أُرجع مسبقاً.';
+
+  @override
+  String get returnAll => 'إرجاع الكل';
+
+  @override
+  String returnLineLeft(String sold, String left) {
+    return 'المباع $sold · يمكن إرجاع $left';
+  }
+
+  @override
+  String returnLineDone(String sold) {
+    return 'المباع $sold · أُرجع بالكامل';
+  }
+
+  @override
+  String get returnRefundTotal => 'المبلغ المردود';
+
+  @override
+  String get returnRefundMethod => 'طريقة الرد';
+
+  @override
+  String get refundMethodCash => 'نقداً';
+
+  @override
+  String get refundMethodDebt => 'خصم من دين الزبون';
+
+  @override
+  String get refundMethodCredit => 'رصيد للزبون';
+
+  @override
+  String get refundCashBack => 'يُرد نقداً';
+
+  @override
+  String get returnReasonOptional => 'السبب (اختياري)';
+
+  @override
+  String get returnConfirmTitle => 'تأكيد المرتجع';
+
+  @override
+  String get returnConfirmAction => 'حفظ المرتجع';
+
+  @override
+  String get returnChanged =>
+      'تغيّرت هذه الفاتورة في هذه الأثناء. راجع الكميات مرة أخرى.';
+
+  @override
+  String get returnNotFound => 'هذا المرتجع لم يعد موجوداً.';
+
+  @override
+  String get viewReturn => 'مستند المرتجع';
+
+  @override
+  String get continueAction => 'متابعة';
+
+  @override
+  String deleteInvoiceHasReturns(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'يُحذف معها $countString مستند مرتجع خاص بها.',
+      few: 'تُحذف معها $countString مستندات مرتجع خاصة بها.',
+      two: 'يُحذف معها مستندا المرتجع الخاصان بها.',
+      one: 'يُحذف معها مستند المرتجع الخاص بها.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveStatusAll => 'الكل';
+
+  @override
+  String get archiveStatusVoided => 'الملغاة';
+
+  @override
+  String get archiveHasReturns => 'لها مرتجع';
+
+  @override
+  String get archiveNoReturns => 'لا مرتجعات في هذه الفترة.';
+
+  @override
+  String archiveReturnsCount(String count, String total) {
+    return '$count مرتجع · رُدّ $total';
+  }
+
+  @override
+  String get statsNetSales => 'صافي المبيعات';
+
+  @override
+  String get statsSalesBeforeReturns => 'المبيعات قبل المرتجعات';
+
+  @override
+  String statsReturnsCount(String count) {
+    return 'المرتجعات ($count)';
+  }
+
+  @override
+  String get auditInvoiceVoid => 'إلغاء فاتورة';
+
+  @override
+  String get auditInvoiceReturn => 'حفظ مرتجع';
+
+  @override
+  String get auditVoidAgeLimit => 'تغيير مدة السماح بإلغاء الفواتير';
+
+  @override
+  String get auditAdminLockOn =>
+      'تفعيل الرمز لفتح الإعدادات والأرشيف والإحصائيات';
+
+  @override
+  String get auditAdminLockOff =>
+      'إيقاف الرمز لفتح الإعدادات والأرشيف والإحصائيات';
+
+  @override
+  String get adminRequirePinTitle => 'رمز لفتح الإعدادات والأرشيف والإحصائيات';
+
+  @override
+  String get adminRequirePinSubtitle =>
+      'يُطلب الرمز قبل فتح هذه الشاشات الثلاث. البيع لا يطلبه أبداً.';
+
+  @override
+  String get adminLockedMessage => 'هذه الشاشة محمية بالرمز.';
 }

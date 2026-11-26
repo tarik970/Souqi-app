@@ -76,7 +76,10 @@ class _AccountTabState extends ConsumerState<AccountTab> {
         LedgerTypeFilter.all => true,
         LedgerTypeFilter.debts => entry.type == DebtEntryType.debt ||
             entry.type == DebtEntryType.manualDebt,
-        LedgerTypeFilter.payments => entry.type == DebtEntryType.payment,
+        // A refund kept on the account is money in the customer's favour,
+        // like a payment.
+        LedgerTypeFilter.payments => entry.type == DebtEntryType.payment ||
+            entry.type == DebtEntryType.saleReturn,
         LedgerTypeFilter.other => entry.type == DebtEntryType.openingBalance ||
             entry.type == DebtEntryType.adjustment ||
             entry.type == DebtEntryType.reversal,

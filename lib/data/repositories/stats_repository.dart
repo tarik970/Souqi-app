@@ -8,17 +8,30 @@ class PeriodStats {
     required this.invoiceCount,
     required this.totalBaseMinor,
     required this.discountBaseMinor,
+    this.returnCount = 0,
+    this.returnsBaseMinor = 0,
   });
 
   /// The period: [from] inclusive, [to] exclusive.
   final DateTime from;
   final DateTime to;
 
+  /// Invoices of the period that were not voided.
   final int invoiceCount;
 
   /// Sum of each invoice's stored `total_base_minor` — the base-currency
-  /// amount computed at the moment of the sale with that day's rate.
+  /// amount computed at the moment of the sale with that day's rate. Voided
+  /// invoices are not in it; returns are NOT taken off (see
+  /// [netBaseMinor]).
   final int totalBaseMinor;
+
+  /// Return documents DATED in the period — whatever the date of the
+  /// invoice they return from — and what they gave back, in base currency.
+  final int returnCount;
+  final int returnsBaseMinor;
+
+  /// NET SALES: what was sold in the period less what was returned in it.
+  int get netBaseMinor => totalBaseMinor - returnsBaseMinor;
 
   /// Sum of the invoice discounts, each converted with the invoice's OWN
   /// stored rate snapshot.
@@ -147,21 +160,39 @@ class StatsRepository {
       'COALESCE(SUM(${_toBaseSql('i.discount_minor', _pow10(baseDecimals))}), 0) '
       'AS discount '
       'FROM invoices i LEFT JOIN currencies c ON c.code = i.currency_code '
-      'WHERE i.created_at >= ? AND i.created_at < ?',
+      'WHERE i.created_at >= ? AND i.created_at < ? AND $_live',
       [
         from.toUtc().millisecondsSinceEpoch,
         to.toUtc().millisecondsSinceEpoch,
       ],
     );
     final row = rows.first;
+    // Returns count on the day of the RETURN: a sale of last month returned
+    // today is money that left the till today. A range read of
+    // `idx_returns_created`.
+    final returns = (await _db.rawQuery(
+      'SELECT COUNT(*) AS n, COALESCE(SUM(r.refund_base_minor), 0) AS total '
+      'FROM invoice_returns r WHERE r.created_at >= ? AND r.created_at < ?',
+      [
+        from.toUtc().millisecondsSinceEpoch,
+        to.toUtc().millisecondsSinceEpoch,
+      ],
+    ))
+        .first;
     return PeriodStats(
       from: from,
       to: to,
       invoiceCount: (row['n'] as int?) ?? 0,
       totalBaseMinor: (row['total'] as int?) ?? 0,
       discountBaseMinor: (row['discount'] as int?) ?? 0,
+      returnCount: (returns['n'] as int?) ?? 0,
+      returnsBaseMinor: (returns['total'] as int?) ?? 0,
     );
   }
+
+  /// "This invoice counts": it was not voided. `i` is the invoice. A voided
+  /// invoice stays in the archive and is left out of every figure here.
+  static const String _live = 'i.voided_at IS NULL';
 
   /// The same period as [summary], split by the invoice currency.
   Future<List<CurrencyTotal>> byCurrency({
@@ -173,7 +204,7 @@ class StatsRepository {
       'COALESCE(SUM(i.total_minor), 0) AS total, '
       'COALESCE(SUM(i.total_base_minor), 0) AS total_base '
       'FROM invoices i '
-      'WHERE i.created_at >= ? AND i.created_at < ? '
+      'WHERE i.created_at >= ? AND i.created_at < ? AND $_live '
       'GROUP BY i.currency_code ORDER BY total_base DESC',
       [
         from.toUtc().millisecondsSinceEpoch,
@@ -210,32 +241,58 @@ class StatsRepository {
     int limit = topProductsLimit,
     bool renewalsOnly = false,
   }) async {
-    final amount = _toBaseSql('it.line_total_minor', _pow10(baseDecimals));
+    final pow = _pow10(baseDecimals);
+    final amount = _toBaseSql('it.line_total_minor', pow);
+    // The returned share of a line total, with the return's own stored rate
+    // (the invoice's). In the second half below the return is aliased `i`,
+    // so the same conversion reads its rate and currency.
+    final returned = _toBaseSql('it.gross_minor', pow);
     final order = ranking == ProductRanking.sales
         ? 'sales DESC, amount DESC'
         : 'amount DESC, sales DESC';
+    final fromMs = from.toUtc().millisecondsSinceEpoch;
+    final toMs = to.toUtc().millisecondsSinceEpoch;
+    // NET quantities and amounts: the lines sold in the period (by the date
+    // of the sale, voided invoices left out) less the lines returned in it
+    // (by the date of the RETURN). One row per line on either side, then
+    // one GROUP BY — nothing newer than sqlite 3.9.
     final rows = await _db.rawQuery(
-      "SELECT CASE WHEN it.product_id IS NOT NULL THEN 'p' || it.product_id "
-      "ELSE 'n' || it.product_name_norm END AS gkey, "
-      'it.product_id AS product_id, '
+      'SELECT gkey, product_id, '
       // sqlite guarantees that the bare columns of a group containing a
       // MAX() aggregate come from the row that produced that maximum, so the
-      // name shown is the one from the most recent sale in the period.
-      'MAX(i.created_at) AS last_at, it.product_name AS name, '
-      'COUNT(*) AS sales, '
-      'COALESCE(SUM(it.qty_thousandths), 0) AS qty, '
-      'COALESCE(SUM($amount), 0) AS amount '
+      // name shown is the one from the most recent sale in the period (a
+      // returned line carries 0 and never wins).
+      'MAX(last_at) AS last_at, name, '
+      'SUM(sales) AS sales, SUM(qty) AS qty, SUM(amount) AS amount '
+      'FROM ('
+      "SELECT CASE WHEN it.product_id IS NOT NULL THEN 'p' || it.product_id "
+      "ELSE 'n' || it.product_name_norm END AS gkey, "
+      'it.product_id AS product_id, i.created_at AS last_at, '
+      'it.product_name AS name, 1 AS sales, it.qty_thousandths AS qty, '
+      '$amount AS amount '
       'FROM invoice_items it '
       'JOIN invoices i ON i.id = it.invoice_id '
       'LEFT JOIN currencies c ON c.code = i.currency_code '
-      'WHERE i.created_at >= ? AND i.created_at < ? '
+      'WHERE i.created_at >= ? AND i.created_at < ? AND $_live '
       '${renewalsOnly ? "AND it.kind = 'SERVICE' AND $_hasAccount " : ''}'
-      'GROUP BY gkey ORDER BY $order LIMIT ?',
-      [
-        from.toUtc().millisecondsSinceEpoch,
-        to.toUtc().millisecondsSinceEpoch,
-        limit,
-      ],
+      'UNION ALL '
+      "SELECT CASE WHEN it.product_id IS NOT NULL THEN 'p' || it.product_id "
+      "ELSE 'n' || it.product_name_norm END, "
+      'it.product_id, 0, it.product_name, 0, -it.qty_thousandths, '
+      '-($returned) '
+      'FROM invoice_return_items it '
+      'JOIN invoice_returns i ON i.id = it.return_id '
+      'LEFT JOIN currencies c ON c.code = i.currency_code '
+      '${renewalsOnly ? 'JOIN invoices sold ON sold.id = i.invoice_id ' : ''}'
+      'WHERE i.created_at >= ? AND i.created_at < ? '
+      '${renewalsOnly ? "AND it.kind = 'SERVICE' "
+          'AND sold.account_number IS NOT NULL ' : ''}'
+      ') GROUP BY gkey '
+      // What was only RETURNED in the period (and sold before it) is not a
+      // best seller of it; the Returns figure is where that shows.
+      'HAVING SUM(sales) > 0 '
+      'ORDER BY $order LIMIT ?',
+      [fromMs, toMs, fromMs, toMs, limit],
     );
     return [
       for (final row in rows)
@@ -265,6 +322,8 @@ class StatsRepository {
       'SELECT COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total '
       'FROM invoices i '
       'WHERE i.created_at >= ? AND i.created_at < ? AND $_hasAccount '
+      // Neither voided nor taken back by the return of its package.
+      'AND $_live AND i.renewal_undone = 0 '
       'AND EXISTS (SELECT 1 FROM invoice_items it '
       "WHERE it.invoice_id = i.id AND it.kind = 'SERVICE')",
       [
@@ -295,7 +354,7 @@ class StatsRepository {
       'MAX(i.created_at) AS last_at, i.customer_name AS name, '
       'COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total '
       'FROM invoices i '
-      'WHERE i.created_at >= ? AND i.created_at < ? '
+      'WHERE i.created_at >= ? AND i.created_at < ? AND $_live '
       'AND i.customer_name IS NOT NULL '
       'GROUP BY gkey ORDER BY total DESC, n DESC LIMIT ?',
       [

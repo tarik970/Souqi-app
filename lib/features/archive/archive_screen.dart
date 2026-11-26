@@ -9,8 +9,12 @@ import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
 import '../../data/repositories/archive_repository.dart';
 import '../../domain/models/currency.dart';
+import '../../domain/models/invoice_return.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../debts/debt_providers.dart';
+import '../debts/debt_widgets.dart';
+import '../returns/returns_providers.dart';
+import '../security/admin_lock.dart';
 import '../settings/storage_providers.dart';
 import 'archive_providers.dart';
 import 'invoice_detail_screen.dart';
@@ -92,9 +96,17 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final filter = ref.watch(archiveFilterProvider);
-    final list = ref.watch(archiveListProvider);
+    final returns = filter.status == ArchiveStatus.returns;
+    // Not read while the return documents are what is listed.
+    final list = returns
+        ? const AsyncLoading<ArchiveList>()
+        : ref.watch(archiveListProvider);
 
-    return Scaffold(
+    // Behind the PIN when "PIN to open settings, archive and statistics" is
+    // on (see AdminLockGate); with it off the gate is not there at all.
+    return AdminLockGate(
+      title: l10n.navArchive,
+      child: Scaffold(
       appBar: AppBar(
         // "Today" follows the day: see refreshRelativePeriod.
         title: OnOpenAndResume(
@@ -115,11 +127,12 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               ),
               PopupMenuItem<void>(
                 key: const ValueKey('archive-delete-range'),
-                // Deleting is by period. While a search is narrowing the
-                // list, the action would delete something other than what
-                // is on screen, so it is simply not offered.
-                enabled: !filter.hasSearch,
-                child: filter.hasSearch
+                // Deleting is by period. While a search — or the "Voided" /
+                // "Returns" filter — is narrowing the list, the action would
+                // delete something other than what is on screen, so it is
+                // simply not offered.
+                enabled: !filter.isNarrowed,
+                child: filter.isNarrowed
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
@@ -203,27 +216,41 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               ],
             ),
           ),
-          const _MatchSummary(),
-          Expanded(
-            child: list.when(
-              data: (data) => data.entries.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          filter.isEmpty
-                              ? l10n.archiveNoInvoices
-                              : l10n.archiveNoMatches,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    )
-                  : _InvoiceList(data: data),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, stack) => LoadErrorView(e, stack),
-            ),
+          _StatusBar(
+            selected: filter.status,
+            onSelected: (status) =>
+                ref.read(archiveFilterProvider.notifier).setStatus(status),
           ),
+          // "Returns" lists the return documents of the period, not its
+          // invoices; everything else lists invoices.
+          if (returns) ...[
+            const _ReturnsSummary(),
+            const Expanded(child: _ReturnsList()),
+          ] else ...[
+            const _MatchSummary(),
+            Expanded(
+              child: list.when(
+                data: (data) => data.entries.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Text(
+                            filter.isEmpty
+                                ? l10n.archiveNoInvoices
+                                : l10n.archiveNoMatches,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    : _InvoiceList(data: data),
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, stack) => LoadErrorView(e, stack),
+              ),
+            ),
+          ],
         ],
+      ),
       ),
     );
   }
@@ -492,6 +519,136 @@ class _PeriodBar extends StatelessWidget {
   }
 }
 
+/// All / Voided / Returns. Horizontally scrollable, like the periods.
+class _StatusBar extends StatelessWidget {
+  const _StatusBar({required this.selected, required this.onSelected});
+
+  final ArchiveStatus selected;
+  final ValueChanged<ArchiveStatus> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    String label(ArchiveStatus status) => switch (status) {
+          ArchiveStatus.all => l10n.archiveStatusAll,
+          ArchiveStatus.voided => l10n.archiveStatusVoided,
+          ArchiveStatus.returns => l10n.returnsTitle,
+        };
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      child: Row(
+        children: [
+          for (final status in ArchiveStatus.values) ...[
+            if (status != ArchiveStatus.values.first) const SizedBox(width: 8),
+            ChoiceChip(
+              key: ValueKey('archive-status-${status.name}'),
+              label: Text(label(status)),
+              selected: selected == status,
+              onSelected: (_) => onSelected(status),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// "3 returns · 12,000 SYP given back" for the period and the search.
+class _ReturnsSummary extends ConsumerWidget {
+  const _ReturnsSummary();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(appLocaleProvider).languageCode;
+    final summary = ref.watch(archiveReturnsSummaryProvider).value;
+    final base = ref.watch(baseCurrencyProvider).value;
+    if (summary == null || base == null || summary.count == 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Text(
+          key: const ValueKey('archive-returns-summary'),
+          l10n.archiveReturnsCount(
+            formatMinor(summary.count, decimals: 0, locale: locale),
+            formatMinor(
+              summary.totalBaseMinor,
+              decimals: base.decimalPlaces,
+              locale: locale,
+              symbol: base.symbol.isEmpty ? base.code : base.symbol,
+            ),
+          ),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ),
+    );
+  }
+}
+
+/// The return documents of the period, newest first; "Show more" loads the
+/// next ones.
+class _ReturnsList extends ConsumerStatefulWidget {
+  const _ReturnsList();
+
+  @override
+  ConsumerState<_ReturnsList> createState() => _ReturnsListState();
+}
+
+class _ReturnsListState extends ConsumerState<_ReturnsList> {
+  /// The rows on screen stay while a longer list loads.
+  List<InvoiceReturn>? _rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final loaded = ref.watch(archiveReturnsProvider);
+    final limit = ref.watch(archiveReturnsLimitProvider);
+    if (loaded.hasError && loaded.value == null) {
+      return LoadErrorView(loaded.error!, loaded.stackTrace);
+    }
+    if (loaded.value != null) _rows = loaded.value;
+    final rows = _rows;
+    if (rows == null) return const SizedBox.shrink();
+    if (rows.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            l10n.archiveNoReturns,
+            key: const ValueKey('archive-no-returns'),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    final more = rows.length >= limit;
+    return ListView.separated(
+      key: const ValueKey('archive-returns-list'),
+      itemCount: rows.length + (more ? 1 : 0),
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        if (index >= rows.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: OutlinedButton(
+              key: const ValueKey('archive-returns-more'),
+              onPressed: () =>
+                  ref.read(archiveReturnsLimitProvider.notifier).more(),
+              child: Text(l10n.showMore),
+            ),
+          );
+        }
+        return ReturnTile(document: rows[index], showInvoice: true);
+      },
+    );
+  }
+}
+
 /// "12 invoices · 148,000 SYP" for whatever the filters currently match.
 class _MatchSummary extends ConsumerWidget {
   const _MatchSummary();
@@ -604,12 +761,43 @@ class _InvoiceTile extends ConsumerWidget {
             total,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+              // A voided total is money that was not made.
+              color: entry.isVoided
+                  ? theme.colorScheme.outline
+                  : theme.colorScheme.primary,
+              decoration: entry.isVoided ? TextDecoration.lineThrough : null,
             ),
           ),
         ],
       ),
-      subtitle: Text(details, maxLines: 2, overflow: TextOverflow.ellipsis),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(details, maxLines: 2, overflow: TextOverflow.ellipsis),
+          if (entry.isVoided || entry.returnCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  if (entry.isVoided)
+                    DebtBadge(
+                      l10n.invoiceVoidMark,
+                      key: ValueKey('archive-void-${entry.invoiceNo}'),
+                    ),
+                  if (entry.returnCount > 0)
+                    DebtBadge(
+                      l10n.archiveHasReturns,
+                      key: ValueKey('archive-returned-${entry.invoiceNo}'),
+                      alert: false,
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => InvoiceDetailScreen(invoiceId: entry.id),

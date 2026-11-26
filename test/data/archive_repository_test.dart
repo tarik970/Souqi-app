@@ -456,7 +456,11 @@ void main() {
     test('the summary is one aggregate row, not a list of invoices', () {
       final (sql, _) = archive.summaryQuery(ranged);
       expect(sql, contains('COUNT(*)'));
-      expect(sql, contains('SUM(i.total_base_minor)'));
+      // Still one SUM over the stored base totals — since phase 7 with the
+      // voided invoices left out of it (they are counted, not totalled).
+      expect(sql, contains('SUM(CASE WHEN i.voided_at IS NULL'));
+      expect(sql, contains('THEN i.total_base_minor ELSE 0 END)'));
+      expect(sql, isNot(contains('GROUP BY')));
     });
 
     test('the chunk delete picks its ids through the same index', () async {

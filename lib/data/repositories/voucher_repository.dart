@@ -461,6 +461,7 @@ class VoucherRepository {
       statusNote: row['status_note'] as String?,
       soldAt: _date(row['sold_at']),
       invoiceId: row['invoice_id'] as int?,
+      invoiceItemId: row['invoice_item_id'] as int?,
       soldInvoiceNo: row['sold_invoice_no'] as int?,
       soldCustomerName: row['sold_customer_name'] as String?,
       soldAccountNumber: row['sold_account_number'] as String?,
@@ -529,17 +530,6 @@ class VoucherRepository {
       ));
     }
     return codes;
-  }
-
-  Future<({int productId, String productName, String tail})> _identify(
-    Map<String, Object?> row,
-  ) async {
-    final plain = await _plain(row['code_cipher']);
-    return (
-      productId: row['product_id'] as int,
-      productName: row['product_name'] as String,
-      tail: plain == null ? '' : codeTail(plain),
-    );
   }
 
   /// One code IN THE CLEAR, for showing on screen after the PIN. Logged.
@@ -627,59 +617,113 @@ class VoucherRepository {
     DateTime? now,
   }) async {
     final at = now ?? DateTime.now();
-    return _db.transaction((txn) async {
-      final rows = await txn.rawQuery(
-        'SELECT $_viewColumns $_viewFrom WHERE c.id = ? LIMIT 1',
-        [codeId],
-      );
-      if (rows.isEmpty) return false;
-      final row = rows.first;
-      final from = VoucherStatus.fromDb(row['status'] as String);
-      if (from == to) return false;
-      final who = await _identify(row);
-
-      final values = <String, Object?>{
-        'status': to.db,
-        'status_changed_at': _ms(at),
-        'status_note': reason.trim().isEmpty ? null : reason.trim(),
-      };
-      if (to == VoucherStatus.available) {
-        // Back on the shelf as if it had never left.
-        values.addAll(const {
-          'sold_at': null,
-          'invoice_id': null,
-          'invoice_item_id': null,
-          'sold_invoice_no': null,
-          'sold_customer_id': null,
-          'sold_customer_name': null,
-          'sold_account_number': null,
-          'sold_price_base_minor': null,
-          'sold_cost_base_minor': null,
-        });
-      }
-      await txn.update(
-        'voucher_codes',
-        values,
-        where: 'id = ? AND status = ?',
-        whereArgs: [codeId, from.db],
-      );
-      await AuditRepository(txn).log(
-        action,
-        productId: who.productId,
-        productName: who.productName,
-        entityType: 'code',
-        entityId: codeId,
-        details: {
-          'from': from.db,
-          'tail': who.tail,
-          'serial': row['serial'],
-          'invoice_no': row['sold_invoice_no'],
-          'reason': reason.trim(),
-        },
+    return _db.transaction(
+      (txn) => changeStatusIn(
+        txn,
+        cipher: _cipher,
+        codeId: codeId,
+        to: to,
+        action: action,
+        reason: reason,
         at: at,
-      );
-      return true;
-    });
+      ),
+    );
+  }
+
+  /// The SOLD codes of [invoiceId] — the ones a void or a return still has
+  /// to decide about — as (code id, invoice item id).
+  static Future<List<({int id, int? invoiceItemId})>> soldCodesOf(
+    DatabaseExecutor db,
+    int invoiceId,
+  ) async {
+    final rows = await db.rawQuery(
+      'SELECT id, invoice_item_id FROM voucher_codes '
+      "WHERE invoice_id = ? AND status = 'SOLD' ORDER BY id",
+      [invoiceId],
+    );
+    return [
+      for (final row in rows)
+        (id: row['id'] as int, invoiceItemId: row['invoice_item_id'] as int?),
+    ];
+  }
+
+  /// Changes the status of one code and writes its audit line, INSIDE the
+  /// caller's transaction — the way a voided invoice or a return takes its
+  /// cards back together with everything else it undoes, or not at all.
+  ///
+  /// [cipher] is only used for the last digits in the audit line; without
+  /// it (or when the code cannot be read on this device) the line simply
+  /// has none. [details] adds facts to the line (a return number).
+  /// Returns false when the code is gone or already has that status.
+  static Future<bool> changeStatusIn(
+    Transaction txn, {
+    required CodeCipher? cipher,
+    required int codeId,
+    required VoucherStatus to,
+    required AuditAction action,
+    required String reason,
+    required DateTime at,
+    Map<String, Object?> details = const {},
+  }) async {
+    final rows = await txn.rawQuery(
+      'SELECT $_viewColumns $_viewFrom WHERE c.id = ? LIMIT 1',
+      [codeId],
+    );
+    if (rows.isEmpty) return false;
+    final row = rows.first;
+    final from = VoucherStatus.fromDb(row['status'] as String);
+    if (from == to) return false;
+    var tail = '';
+    if (cipher != null) {
+      try {
+        tail = codeTail(await cipher.decrypt(row['code_cipher'] as Uint8List));
+      } on CodeUnreadableException {
+        // Logged without its last digits.
+      }
+    }
+
+    final values = <String, Object?>{
+      'status': to.db,
+      'status_changed_at': _ms(at),
+      'status_note': reason.trim().isEmpty ? null : reason.trim(),
+    };
+    if (to == VoucherStatus.available) {
+      // Back on the shelf as if it had never left.
+      values.addAll(const {
+        'sold_at': null,
+        'invoice_id': null,
+        'invoice_item_id': null,
+        'sold_invoice_no': null,
+        'sold_customer_id': null,
+        'sold_customer_name': null,
+        'sold_account_number': null,
+        'sold_price_base_minor': null,
+        'sold_cost_base_minor': null,
+      });
+    }
+    await txn.update(
+      'voucher_codes',
+      values,
+      where: 'id = ? AND status = ?',
+      whereArgs: [codeId, from.db],
+    );
+    await AuditRepository(txn).log(
+      action,
+      productId: row['product_id'] as int,
+      productName: row['product_name'] as String,
+      entityType: 'code',
+      entityId: codeId,
+      details: {
+        'from': from.db,
+        'tail': tail,
+        'serial': row['serial'],
+        'invoice_no': row['sold_invoice_no'],
+        'reason': reason.trim(),
+        ...details,
+      },
+      at: at,
+    );
+    return true;
   }
 
   /// Voids every expired, unsold code of [productId] (or of one batch) in

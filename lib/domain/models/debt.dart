@@ -26,7 +26,12 @@ enum DebtEntryType {
   adjustment('ADJUSTMENT'),
 
   /// Cancels another entry. Entries are never edited or deleted.
-  reversal('REVERSAL');
+  reversal('REVERSAL'),
+
+  /// The part of a RETURN's refund that was not handed back in cash: taken
+  /// off the customer's debt, or kept as their credit. Always a credit,
+  /// linked to its return document.
+  saleReturn('RETURN');
 
   const DebtEntryType(this.db);
 
@@ -74,6 +79,8 @@ class DebtEntry {
     this.balanceBeforeBaseMinor,
     this.invoiceId,
     this.invoiceNo,
+    this.returnId,
+    this.returnNo,
     this.reversesId,
     this.note,
     required this.createdAt,
@@ -117,6 +124,12 @@ class DebtEntry {
   /// Its number, kept after the invoice itself is deleted.
   final int? invoiceNo;
 
+  /// For a RETURN entry: the live return document, while it is still there…
+  final int? returnId;
+
+  /// …and its number, kept after the document went with its invoice.
+  final int? returnNo;
+
   /// The entry this REVERSAL cancels.
   final int? reversesId;
   final String? note;
@@ -149,7 +162,9 @@ class DebtEntry {
   bool get isEffective => !isReversal && !isReversed;
 
   /// A reversal cannot itself be reversed, and nothing is reversed twice.
-  bool get canBeReversed => isEffective;
+  /// A RETURN entry is half of a document (the return, with its quantities
+  /// and its refund) and cannot be cancelled on its own.
+  bool get canBeReversed => isEffective && type != DebtEntryType.saleReturn;
 
   /// The balance right after a payment — what its receipt prints.
   int? get balanceAfterBaseMinor => balanceBeforeBaseMinor == null
@@ -180,6 +195,8 @@ class DebtEntry {
       balanceBeforeBaseMinor: map['balance_before_base_minor'] as int?,
       invoiceId: map['invoice_id'] as int?,
       invoiceNo: map['invoice_no'] as int?,
+      returnId: map['return_id'] as int?,
+      returnNo: map['return_no'] as int?,
       reversesId: map['reverses_id'] as int?,
       note: map['note'] as String?,
       createdAt: _dateOrNull(map['created_at'])!,

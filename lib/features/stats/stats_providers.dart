@@ -121,6 +121,22 @@ class StatsReport {
         previous: previous.totalBaseMinor,
       );
 
+  /// Something was returned in the period or in the one before it: the
+  /// headline figure is then NET sales, with the returns as their own
+  /// figure beside it.
+  bool get hasReturns => current.returnCount > 0 || previous.returnCount > 0;
+
+  /// Sales less the returns DATED in the period.
+  Comparison get netComparison => Comparison(
+        current: current.netBaseMinor,
+        previous: previous.netBaseMinor,
+      );
+
+  Comparison get returnsComparison => Comparison(
+        current: current.returnsBaseMinor,
+        previous: previous.returnsBaseMinor,
+      );
+
   Comparison get countComparison => Comparison(
         current: current.invoiceCount,
         previous: previous.invoiceCount,

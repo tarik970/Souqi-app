@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/money/money_format.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/number_pad.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/product.dart';
@@ -642,7 +643,7 @@ class _QuantitySheetState extends ConsumerState<QuantitySheet> {
           ],
         ),
         const SizedBox(height: 12),
-        _Keypad(
+        NumberPad(
           locale: locale,
           separatorEnabled: _maxDecimals > 0,
           onDigit: _tapDigit,
@@ -853,87 +854,6 @@ class _CurrencyPicker extends StatelessWidget {
       onChanged: (code) {
         if (code != null) onChanged(code);
       },
-    );
-  }
-}
-
-class _Keypad extends StatelessWidget {
-  const _Keypad({
-    required this.locale,
-    required this.separatorEnabled,
-    required this.onDigit,
-    required this.onSeparator,
-    required this.onBackspace,
-    required this.onClear,
-  });
-
-  final String locale;
-  final bool separatorEnabled;
-  final ValueChanged<String> onDigit;
-  final VoidCallback onSeparator;
-  final VoidCallback onBackspace;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget key(
-      Widget child,
-      VoidCallback? onTap, {
-      VoidCallback? onLongPress,
-      String? id,
-    }) {
-      return Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: SizedBox(
-            height: 54,
-            child: OutlinedButton(
-              key: id == null ? null : ValueKey('keypad-$id'),
-              onPressed: onTap,
-              onLongPress: onLongPress,
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                textStyle: Theme.of(context).textTheme.titleLarge,
-              ),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    }
-
-    Widget digit(String d) => key(
-          Text(localizeDigits(d, locale)),
-          () => onDigit(d),
-          id: d,
-        );
-
-    // A NUMBER PAD IS NEVER MIRRORED: 1 2 3 from left to right in Arabic
-    // too, as on the phone's dialer and every calculator. Without this the
-    // rows follow the app's direction and read 3 2 1.
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Column(
-      children: [
-        Row(children: [digit('1'), digit('2'), digit('3')]),
-        Row(children: [digit('4'), digit('5'), digit('6')]),
-        Row(children: [digit('7'), digit('8'), digit('9')]),
-        Row(children: [
-          key(
-            Text(decimalSeparator(locale)),
-            separatorEnabled ? onSeparator : null,
-            id: 'separator',
-          ),
-          digit('0'),
-          key(
-            const Icon(Icons.backspace_outlined),
-            onBackspace,
-            onLongPress: onClear,
-            id: 'backspace',
-          ),
-        ]),
-      ],
-      ),
     );
   }
 }

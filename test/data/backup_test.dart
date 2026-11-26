@@ -576,7 +576,16 @@ void main() {
     final ahmad = await insertCustomer(old);
     final invoice = await insertInvoice(old, invoiceNo: 1);
     await insertInvoiceItem(old, invoiceId: invoice, productId: sugar);
-    await DebtRepository(old).addManualDebt(customerId: ahmad, amountBaseMinor: 700);
+    // Written as version 5 wrote it: today's repository writes columns (the
+    // return link of version 8) this old table does not have.
+    await old.insert('debt_transactions', {
+      'customer_id': ahmad,
+      'type': 'MANUAL_DEBT',
+      'direction': 1,
+      'amount_base_minor': 700,
+      'created_at': 1000,
+      'recorded_at': 1000,
+    });
     final keys = InMemoryKeyStore();
     final service = BackupService(
       factory: databaseFactoryFfi,

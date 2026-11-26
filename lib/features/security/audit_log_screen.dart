@@ -182,6 +182,11 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.backupPasswordChange => l10n.auditBackupPasswordChange,
       AuditAction.licenseActivate => l10n.auditLicenseActivate,
       AuditAction.barcodeDedup => l10n.auditBarcodeDedup,
+      AuditAction.invoiceVoid => l10n.auditInvoiceVoid,
+      AuditAction.invoiceReturn => l10n.auditInvoiceReturn,
+      AuditAction.voidAgeLimit => l10n.auditVoidAgeLimit,
+      AuditAction.adminLockOn => l10n.auditAdminLockOn,
+      AuditAction.adminLockOff => l10n.auditAdminLockOff,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -218,6 +223,10 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
       AuditAction.backupPasswordChange => Icons.password,
       AuditAction.licenseActivate => Icons.verified_outlined,
       AuditAction.barcodeDedup => Icons.qr_code_2,
+      AuditAction.invoiceVoid => Icons.block,
+      AuditAction.invoiceReturn => Icons.assignment_return_outlined,
+      AuditAction.voidAgeLimit => Icons.event_busy,
+      AuditAction.adminLockOn || AuditAction.adminLockOff => Icons.lock_outline,
       null => Icons.info_outline,
     };
 
@@ -265,8 +274,18 @@ class _AuditTile extends ConsumerWidget {
         ltrIsolate(maskWithTail(details['tail'] as String)),
       if (details['serial'] is String)
         l10n.serialLabel(ltrIsolate(details['serial'] as String)),
+      if (details['return_no'] is int)
+        l10n.returnNoLabel(number(details['return_no'])),
       if (details['invoice_no'] is int)
         l10n.invoiceNoLabel(number(details['invoice_no'])),
+      // The age limit of a void, as it was set (0 = none).
+      if (details['days'] is int)
+        details['days'] == 0
+            ? l10n.voidAgeNoLimit
+            : l10n.daysCount(details['days'] as int),
+      // The card or line account whose renewal dates a void put back.
+      if (details['account'] is String)
+        ltrIsolate(details['account'] as String),
       if (details['folder'] is String)
         l10n.auditDetailFolder(details['folder'] as String),
       // Bulk price changes and backups.

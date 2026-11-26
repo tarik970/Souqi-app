@@ -103,6 +103,17 @@ abstract final class SettingsKeys {
   /// Epoch milliseconds of the last retention sweep. The sweep runs on app
   /// start at most once a day, and this is what 'already today' is read from.
   static const autoDeleteLastRunAt = 'auto_delete_last_run_at';
+
+  /// An invoice can be voided while it is at most this many days old
+  /// (default 30); '0' = no limit. Changed by the owner, behind the PIN.
+  static const voidMaxAgeDays = 'void_max_age_days';
+
+  /// Ask for the PIN before Settings, the Archive and the Statistics open
+  /// (off by default). One session for the three, with the rules of every
+  /// PIN session: it locks again after the "lock again after" time and at
+  /// once in the background.
+  static const adminRequirePin = 'admin_require_pin';
+
   /// `pbkdf2-sha256$<iterations>$<base64>`; '' = no PIN. See `pin_hash.dart`.
   static const pinHash = 'pin_hash';
   static const pinSalt = 'pin_salt'; // base64
@@ -277,6 +288,8 @@ abstract final class SettingsKeys {
     lastNewItemUnitId: '',
     autoDeleteDays: '0',
     autoDeleteLastRunAt: '0',
+    voidMaxAgeDays: '30',
+    adminRequirePin: '0',
     pinHash: '',
     pinSalt: '',
     pinFailedAttempts: '0',

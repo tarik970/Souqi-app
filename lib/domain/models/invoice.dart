@@ -187,9 +187,24 @@ class Invoice {
     this.creditUsedMinor,
     this.prevBalanceBaseMinor,
     this.newBalanceBaseMinor,
+    this.voidedAt,
+    this.voidReason,
   });
 
   final int? id;
+
+  // --- Void ----------------------------------------------------------------
+  // A voided invoice is never deleted: it keeps its number and its items and
+  // only says that it no longer counts (statistics, reports and totals leave
+  // it out). Written by `InvoiceCorrectionRepository.voidInvoice` alone.
+
+  /// When the invoice was voided; null on a live invoice.
+  final DateTime? voidedAt;
+
+  /// Why, as it was chosen or typed.
+  final String? voidReason;
+
+  bool get isVoided => voidedAt != null;
 
   /// 0 in a draft; the repository assigns the sequential number on save.
   final int invoiceNo;
@@ -361,6 +376,8 @@ class Invoice {
     int? creditUsedMinor,
     int? prevBalanceBaseMinor,
     int? newBalanceBaseMinor,
+    DateTime? voidedAt,
+    String? voidReason,
   }) =>
       Invoice(
         id: id ?? this.id,
@@ -388,6 +405,8 @@ class Invoice {
         creditUsedMinor: creditUsedMinor ?? this.creditUsedMinor,
         prevBalanceBaseMinor: prevBalanceBaseMinor ?? this.prevBalanceBaseMinor,
         newBalanceBaseMinor: newBalanceBaseMinor ?? this.newBalanceBaseMinor,
+        voidedAt: voidedAt ?? this.voidedAt,
+        voidReason: voidReason ?? this.voidReason,
       );
 
   /// Row for the `invoices` table. [invoiceNo] is passed separately because
@@ -485,6 +504,13 @@ class Invoice {
       creditUsedMinor: map['credit_used_minor'] as int?,
       prevBalanceBaseMinor: map['prev_balance_base_minor'] as int?,
       newBalanceBaseMinor: map['new_balance_base_minor'] as int?,
+      voidedAt: map['voided_at'] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(
+              map['voided_at'] as int,
+              isUtc: true,
+            ),
+      voidReason: map['void_reason'] as String?,
     );
   }
 }

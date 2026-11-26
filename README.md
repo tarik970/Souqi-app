@@ -217,9 +217,11 @@ projects (`license_codec.dart`, `base32.dart`, `license_vectors.json`); never
 change a field or a feature bit in one without the other
 (`dart run tool/check_shared.dart` in the key generator compares them).
 
-`developerWhatsApp` in `lib/config/support.dart`: put your number there
-(`9639XXXXXXXX`) and "Send on WhatsApp" on the activation screen opens your
-chat with the request code typed in.
+`developerWhatsApp` in `lib/config/support.dart` is still the placeholder
+`+963XXXXXXXXX`: replace the X's with your number (a `+`, spaces and dashes
+are fine) and "Send on WhatsApp" on the activation screen opens your chat
+with the request code typed in. While it holds X's the app treats it as "no
+number" and lets the shop choose the chat (`developerWhatsAppNumber`).
 
 ## Feature flags
 
@@ -248,7 +250,7 @@ not a flag: it only changes defaults and what is shown first.
 
 ## Database versions
 
-The schema is at **version 7**. Each version is one class in
+The schema is at **version 8**. Each version is one class in
 `lib/data/db/migrations/`, listed in `AppDatabase.migrations`.
 
 1. **A schema change is always a new version step**, added at the end.
@@ -272,8 +274,14 @@ The schema is at **version 7**. Each version is one class in
    thousandths, rates are two INTEGERs. A currency's decimal places are
    frozen once anything is stored in it.
 8. The debt ledger is append-only: its rows are never updated or deleted
-   (triggers refuse), a correction is a REVERSAL entry.
-9. The background engine (the daily job) opens the database with
+   (triggers refuse), a correction is a REVERSAL entry. The one change an
+   entry may see is a link being cleared (`invoice_id`, `return_id`) when
+   its invoice is deleted.
+9. An invoice is never deleted to fix a mistake: it is VOIDED
+   (`invoices.voided_at`, counted nowhere, still in the archive) or items
+   are RETURNED (`invoice_returns`, own counter `return_no`). Every query
+   that counts sales has `voided_at IS NULL`; a new one must too.
+10. The background engine (the daily job) opens the database with
    `AppDatabase.open(ownConnection: true)`. The ordinary open would hand it
    the app's own connection — sqflite keeps one per process — and closing it
    there would close it for the app.
@@ -289,6 +297,7 @@ What each version did:
 | 5 | The debt ledger rebuilt (types, direction, receipts, never-edited triggers); credit limits |
 | 6 | The undo record of a bulk price change |
 | 7 | `products.barcode` unique (duplicates cleared, logged as `BARCODE_DEDUP`); short codes stored the way they are looked up |
+| 8 | Void and returns: `invoices.voided_at` / `void_reason` and the renewal dates before the sale; `invoice_returns` + `invoice_return_items`; the ledger rebuilt once more for the RETURN type (`return_id`, `return_no`), every row and id kept |
 
 ## Printers
 

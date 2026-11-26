@@ -12,7 +12,9 @@ import '../debts/report/debt_report_settings_screen.dart';
 import '../invoice/invoice_settings_screen.dart';
 import '../license/license_providers.dart';
 import '../license/license_screen.dart';
+import '../returns/void_settings.dart';
 import '../sale/sale_providers.dart';
+import '../security/admin_lock.dart';
 import '../security/pin_session.dart';
 import '../security/security_settings.dart';
 import '../setup/setup_screen.dart';
@@ -67,7 +69,11 @@ class SettingsScreen extends ConsumerWidget {
     final shopType = ref.watch(shopTypeProvider).value ?? shopTypeGrocery;
     final sale = ref.watch(saleSettingsProvider).value ?? const SaleSettings();
 
-    return Scaffold(
+    // Behind the PIN when "PIN to open settings, archive and statistics" is
+    // on (see AdminLockGate); with it off the gate is not there at all.
+    return AdminLockGate(
+      title: l10n.navSettings,
+      child: Scaffold(
       appBar: AppBar(title: Text(l10n.navSettings)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -222,6 +228,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const RetentionTile(),
+          const VoidAgeLimitTile(),
           const Divider(),
           if (featureOn(Feature.customers) && featureOn(Feature.accounts)) ...[
             Padding(
@@ -248,6 +255,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const RecoveryMissingBanner(),
           const PinSettingsTile(),
+          const AdminRequirePinTile(),
           const AuditLogTile(),
           const PinAutoLockTile(),
           const Divider(),
@@ -290,6 +298,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

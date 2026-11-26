@@ -121,6 +121,7 @@ class VoucherCodeView {
     this.statusNote,
     this.soldAt,
     this.invoiceId,
+    this.invoiceItemId,
     this.soldInvoiceNo,
     this.soldCustomerName,
     this.soldAccountNumber,
@@ -130,6 +131,10 @@ class VoucherCodeView {
   final int productId;
   final String productName;
   final int batchId;
+
+  /// The invoice LINE that sold it, while that invoice still exists — which
+  /// is how a return finds the cards of the line being returned.
+  final int? invoiceItemId;
 
   /// "•••• •••• 3456".
   final String masked;
@@ -346,7 +351,22 @@ enum AuditAction {
 
   /// Written by the version-7 migration when it found the same barcode on
   /// several products and cleared it on all but one (MigrationV7).
-  barcodeDedup('BARCODE_DEDUP');
+  barcodeDedup('BARCODE_DEDUP'),
+
+  /// An invoice voided (phase 7): its number, total and reason, what was
+  /// reversed on the customer's account and what became of its card codes.
+  invoiceVoid('INVOICE_VOID'),
+
+  /// A return saved: the invoice, the return number, the refund and how it
+  /// was given back.
+  invoiceReturn('INVOICE_RETURN'),
+
+  /// The "void invoices up to N days old" setting was changed.
+  voidAgeLimit('VOID_AGE_LIMIT'),
+
+  /// "PIN to open settings, archive and statistics" turned on or off.
+  adminLockOn('ADMIN_LOCK_ON'),
+  adminLockOff('ADMIN_LOCK_OFF');
 
   const AuditAction(this.db);
 

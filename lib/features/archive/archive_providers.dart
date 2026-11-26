@@ -53,6 +53,10 @@ class ArchiveFilterNotifier extends Notifier<ArchiveFilter> {
     );
   }
 
+  /// All invoices, only the voided ones, or the return documents.
+  void setStatus(ArchiveStatus status) =>
+      state = state.copyWith(status: status);
+
   void setProductQuery(String query) =>
       state = state.copyWith(productQuery: query);
 

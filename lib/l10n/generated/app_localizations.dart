@@ -7074,6 +7074,474 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{entered} is very different from the current rate ({current}). A comma or a dot is read as a decimal point: type 13500, not 13,500. If {entered} is right, tap Save again.'**
   String rateSuspicious(String entered, String current);
+
+  /// No description provided for @invoiceVoidMark.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID'**
+  String get invoiceVoidMark;
+
+  /// No description provided for @invoiceVoidedOnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided on'**
+  String get invoiceVoidedOnLabel;
+
+  /// No description provided for @invoiceVoidedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided on {date}'**
+  String invoiceVoidedOn(String date);
+
+  /// No description provided for @invoiceVoidedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice voided'**
+  String get invoiceVoidedSnack;
+
+  /// No description provided for @voidInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Void invoice'**
+  String get voidInvoice;
+
+  /// No description provided for @voidInvoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void invoice {no}?'**
+  String voidInvoiceTitle(String no);
+
+  /// No description provided for @voidReasonQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Why is it being voided?'**
+  String get voidReasonQuestion;
+
+  /// No description provided for @voidReasonWrongItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong items'**
+  String get voidReasonWrongItems;
+
+  /// No description provided for @voidReasonWrongPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong price'**
+  String get voidReasonWrongPrice;
+
+  /// No description provided for @voidReasonCustomerCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer cancelled'**
+  String get voidReasonCustomerCancelled;
+
+  /// No description provided for @voidReasonDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get voidReasonDuplicate;
+
+  /// No description provided for @voidReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get voidReasonOther;
+
+  /// No description provided for @voidCodesQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Its card code} other{Its {count} card codes}}'**
+  String voidCodesQuestion(int count);
+
+  /// No description provided for @voidCodesVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Void the codes'**
+  String get voidCodesVoid;
+
+  /// No description provided for @voidCodesToStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Return them to stock'**
+  String get voidCodesToStock;
+
+  /// No description provided for @voidCodesVoidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For cards that were printed or handed over: they can never be sold again.'**
+  String get voidCodesVoidHint;
+
+  /// No description provided for @voidCodesToStockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only if the customer never received them: they go back on sale.'**
+  String get voidCodesToStockHint;
+
+  /// No description provided for @voidConfirmIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'This is what will happen:'**
+  String get voidConfirmIntro;
+
+  /// No description provided for @voidEffectKept.
+  ///
+  /// In en, this message translates to:
+  /// **'The invoice stays in the archive, marked VOID. Its number is never used again.'**
+  String get voidEffectKept;
+
+  /// No description provided for @voidEffectDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'The debt of {amount} is reversed on the account of {customer}.'**
+  String voidEffectDebt(String amount, String customer);
+
+  /// No description provided for @voidEffectCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} taken from the customer\'s credit balance is given back to it.'**
+  String voidEffectCredit(String amount);
+
+  /// No description provided for @voidEffectCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Give {amount} back to the customer.'**
+  String voidEffectCash(String amount);
+
+  /// No description provided for @voidEffectCodesVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 card code is voided.} other{{count} card codes are voided.}}'**
+  String voidEffectCodesVoid(int count);
+
+  /// No description provided for @voidEffectCodesStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 card code goes back to stock.} other{{count} card codes go back to stock.}}'**
+  String voidEffectCodesStock(int count);
+
+  /// No description provided for @voidEffectRenewal.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {account}: the renewal is undone. It is due again on {date}.'**
+  String voidEffectRenewal(String account, String date);
+
+  /// No description provided for @voidEffectRenewalNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {account}: the renewal is undone. It has no due date again.'**
+  String voidEffectRenewalNone(String account);
+
+  /// No description provided for @voidEffectRenewalKept.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {account}: a later renewal is in force, so its dates stay as they are.'**
+  String voidEffectRenewalKept(String account);
+
+  /// No description provided for @voidAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice is already void.'**
+  String get voidAlready;
+
+  /// No description provided for @voidHasReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice has returns. Return what is left of it instead of voiding it.'**
+  String get voidHasReturns;
+
+  /// No description provided for @voidTooOld.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{This invoice is more than 1 day old} other{This invoice is more than {days} days old}} and can no longer be voided. The limit is in Settings → Archive.'**
+  String voidTooOld(int days);
+
+  /// No description provided for @pinReasonVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to void an invoice.'**
+  String get pinReasonVoid;
+
+  /// No description provided for @pinReasonReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to save a return.'**
+  String get pinReasonReturn;
+
+  /// No description provided for @pinReasonVoidAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to change the age limit for voiding invoices.'**
+  String get pinReasonVoidAge;
+
+  /// No description provided for @pinReasonAdminAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the PIN to open settings, the archive and statistics.'**
+  String get pinReasonAdminAccess;
+
+  /// No description provided for @settingVoidAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Voiding invoices'**
+  String get settingVoidAge;
+
+  /// No description provided for @settingVoidAgeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An invoice can be voided while it is no older than this. Returns have no limit.'**
+  String get settingVoidAgeHint;
+
+  /// No description provided for @voidAgeNoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'No limit'**
+  String get voidAgeNoLimit;
+
+  /// No description provided for @returnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get returnTitle;
+
+  /// No description provided for @returnsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns'**
+  String get returnsTitle;
+
+  /// No description provided for @returnNoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Return no. {no}'**
+  String returnNoLabel(String no);
+
+  /// No description provided for @returnFromInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'From invoice {no}'**
+  String returnFromInvoice(String no);
+
+  /// No description provided for @returnItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Return items'**
+  String get returnItems;
+
+  /// No description provided for @returnItemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return items'**
+  String get returnItemsTitle;
+
+  /// No description provided for @returnItemsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice no. {no} — tap a line and type how much comes back.'**
+  String returnItemsHint(String no);
+
+  /// No description provided for @returnNothingLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything on this invoice was already returned.'**
+  String get returnNothingLeft;
+
+  /// No description provided for @returnAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Return all'**
+  String get returnAll;
+
+  /// No description provided for @returnLineLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold {sold} · Returnable {left}'**
+  String returnLineLeft(String sold, String left);
+
+  /// No description provided for @returnLineDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold {sold} · fully returned'**
+  String returnLineDone(String sold);
+
+  /// No description provided for @returnRefundTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund total'**
+  String get returnRefundTotal;
+
+  /// No description provided for @returnRefundMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund method'**
+  String get returnRefundMethod;
+
+  /// No description provided for @refundMethodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get refundMethodCash;
+
+  /// No description provided for @refundMethodDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Off the customer\'s debt'**
+  String get refundMethodDebt;
+
+  /// No description provided for @refundMethodCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer credit'**
+  String get refundMethodCredit;
+
+  /// No description provided for @refundCashBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back in cash'**
+  String get refundCashBack;
+
+  /// No description provided for @returnReasonOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get returnReasonOptional;
+
+  /// No description provided for @returnConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the return'**
+  String get returnConfirmTitle;
+
+  /// No description provided for @returnConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save return'**
+  String get returnConfirmAction;
+
+  /// No description provided for @returnChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice changed in the meantime. Check the quantities again.'**
+  String get returnChanged;
+
+  /// No description provided for @returnNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This return no longer exists.'**
+  String get returnNotFound;
+
+  /// No description provided for @viewReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Return document'**
+  String get viewReturn;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueAction;
+
+  /// No description provided for @deleteInvoiceHasReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Its return document is deleted with it.} other{Its {count} return documents are deleted with it.}}'**
+  String deleteInvoiceHasReturns(int count);
+
+  /// No description provided for @archiveStatusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get archiveStatusAll;
+
+  /// No description provided for @archiveStatusVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get archiveStatusVoided;
+
+  /// No description provided for @archiveHasReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Has returns'**
+  String get archiveHasReturns;
+
+  /// No description provided for @archiveNoReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'No returns in this period.'**
+  String get archiveNoReturns;
+
+  /// No description provided for @archiveReturnsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} returns · {total} given back'**
+  String archiveReturnsCount(String count, String total);
+
+  /// No description provided for @statsNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales'**
+  String get statsNetSales;
+
+  /// No description provided for @statsSalesBeforeReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales before returns'**
+  String get statsSalesBeforeReturns;
+
+  /// No description provided for @statsReturnsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns ({count})'**
+  String statsReturnsCount(String count);
+
+  /// No description provided for @auditInvoiceVoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice voided'**
+  String get auditInvoiceVoid;
+
+  /// No description provided for @auditInvoiceReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Return saved'**
+  String get auditInvoiceReturn;
+
+  /// No description provided for @auditVoidAgeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Void age limit changed'**
+  String get auditVoidAgeLimit;
+
+  /// No description provided for @auditAdminLockOn.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN for settings, archive and statistics turned on'**
+  String get auditAdminLockOn;
+
+  /// No description provided for @auditAdminLockOff.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN for settings, archive and statistics turned off'**
+  String get auditAdminLockOff;
+
+  /// No description provided for @adminRequirePinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN to open settings, archive and statistics'**
+  String get adminRequirePinTitle;
+
+  /// No description provided for @adminRequirePinSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for the PIN before these three open. Selling never asks.'**
+  String get adminRequirePinSubtitle;
+
+  /// No description provided for @adminLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This screen is protected by the PIN.'**
+  String get adminLockedMessage;
 }
 
 class _AppLocalizationsDelegate

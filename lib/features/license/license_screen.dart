@@ -80,10 +80,13 @@ class _LicenseScreenState extends ConsumerState<LicenseScreen> {
             ? packages.single
             : await askWhatsAppPackage(context, packages);
         if (package == null) return;
-        if (developerWhatsApp.isNotEmpty) {
+        // Only a real number opens the developer's chat: while the constant
+        // is empty or still a placeholder, the shop picks the chat itself.
+        final developer = developerWhatsAppNumber;
+        if (developer.isNotEmpty) {
           opened = await bridge.openWhatsAppChat(
             package: package,
-            internationalPhone: developerWhatsApp,
+            internationalPhone: developer,
             text: text,
           );
         }

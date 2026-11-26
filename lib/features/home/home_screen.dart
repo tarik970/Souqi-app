@@ -19,6 +19,7 @@ import '../debts/debtors_screen.dart';
 import '../license/license_gate.dart';
 import '../products/products_screen.dart';
 import '../sale/sale_screen.dart';
+import '../security/admin_lock.dart';
 import '../settings/settings_screen.dart';
 import '../setup/setup_screen.dart';
 import '../stats/stats_screen.dart';
@@ -116,6 +117,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _push(WidgetBuilder builder) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: builder));
 
+  /// The three tiles behind "PIN to open settings, archive and statistics".
+  static const Set<String> _adminTiles = {'archive', 'stats', 'settings'};
+
+  /// Opens a tile. With that setting on, the PIN comes first for the three
+  /// — unless their session is still unlocked. With it off (as read when
+  /// the home was built) the tile opens at once, exactly as before.
+  Future<void> _open(_NavItem item) async {
+    if (_adminTiles.contains(item.id) &&
+        ref.read(adminRequirePinProvider).value != false) {
+      if (!await requireAdminAccess(context) || !mounted) return;
+    }
+    _push(item.builder);
+  }
+
   void _openCustomer(CustomerHit hit) => _push(
         (_) => CustomerDetailScreen(customerId: hit.customer.id!),
       );
@@ -140,6 +155,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 false));
     final query = _query.trim();
     final debtOn = featureOn(Feature.debt);
+    // Read here so that a tap on Settings, Archive or Statistics already
+    // knows whether the PIN stands in front of them.
+    ref.watch(adminRequirePinProvider);
 
     // Every destination this build has, by id; the order comes after.
     final byId = <String, _NavItem>{
@@ -238,7 +256,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             physics: const NeverScrollableScrollPhysics(),
             children: [
               for (final item in items)
-                _NavCard(item: item, onTap: () => _push(item.builder)),
+                _NavCard(item: item, onTap: () => _open(item)),
             ],
           ),
         ),

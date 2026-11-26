@@ -10,6 +10,10 @@ class CounterRepository {
   /// Payment receipts ("سند قبض") of the debt ledger.
   static const receiptNo = 'receipt_no';
 
+  /// Return documents ("مرتجع") — their own sequence, apart from the
+  /// invoices'.
+  static const returnNo = 'return_no';
+
   /// Increments [name] and returns the new value.
   ///
   /// MUST be called with the enclosing transaction's executor when the new

@@ -12,6 +12,7 @@ import '../../data/repositories/stats_repository.dart';
 import '../../domain/models/currency.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../debts/debt_stats_card.dart';
+import '../security/admin_lock.dart';
 import 'stats_providers.dart';
 
 /// Sales statistics for a period, against the period before it.
@@ -37,7 +38,11 @@ class StatsScreen extends ConsumerWidget {
     final period = ref.watch(statsPeriodProvider);
     final report = ref.watch(statsReportProvider);
 
-    return Scaffold(
+    // Behind the PIN when "PIN to open settings, archive and statistics" is
+    // on (see AdminLockGate); with it off the gate is not there at all.
+    return AdminLockGate(
+      title: l10n.navStats,
+      child: Scaffold(
       appBar: AppBar(
         // "Today" follows the day: see refreshRelativePeriod.
         title: OnOpenAndResume(
@@ -73,6 +78,7 @@ class StatsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -160,14 +166,33 @@ class _Report extends ConsumerWidget {
             ],
           ),
         ),
+        // NET SALES = sales − returns, the returns counted on the day they
+        // were made. Without any return the two are the same number and the
+        // card keeps its old name. Voided invoices are in neither.
         _StatCard(
           keyName: 'stats-total',
-          label: l10n.statsTotalSales,
-          value: money(report.current.totalBaseMinor),
-          comparison: report.totalComparison,
+          label: report.hasReturns ? l10n.statsNetSales : l10n.statsTotalSales,
+          value: money(report.current.netBaseMinor),
+          comparison: report.netComparison,
           format: money,
           emphasize: true,
         ),
+        if (report.hasReturns) ...[
+          _StatCard(
+            keyName: 'stats-gross',
+            label: l10n.statsSalesBeforeReturns,
+            value: money(report.current.totalBaseMinor),
+            comparison: report.totalComparison,
+            format: money,
+          ),
+          _StatCard(
+            keyName: 'stats-returns',
+            label: l10n.statsReturnsCount(count(report.current.returnCount)),
+            value: money(report.current.returnsBaseMinor),
+            comparison: report.returnsComparison,
+            format: money,
+          ),
+        ],
         _StatCard(
           keyName: 'stats-count',
           label: l10n.statsInvoiceCount,

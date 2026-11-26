@@ -270,6 +270,7 @@ class CustomerInvoice {
     required this.itemCount,
     this.firstItemName,
     this.accountNumber,
+    this.isVoided = false,
   });
 
   final int id;
@@ -278,6 +279,9 @@ class CustomerInvoice {
   final String currencyCode;
   final int totalMinor;
   final int itemCount;
+
+  /// The invoice was voided: listed, marked, and left out of the totals.
+  final bool isVoided;
 
   /// The first item sold — for a renewal, the package.
   final String? firstItemName;
@@ -297,6 +301,7 @@ class CustomerInvoice {
         itemCount: (row['item_count'] as int?) ?? 0,
         firstItemName: row['first_item'] as String?,
         accountNumber: _blankToNull(row['account_number'] as String?),
+        isVoided: row['voided_at'] != null,
       );
 }
 

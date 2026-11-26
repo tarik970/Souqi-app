@@ -415,13 +415,20 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   ),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
+                    // A voided invoice is listed, struck through, and left
+                    // out of the totals above.
+                    color: invoice.isVoided
+                        ? theme.colorScheme.outline
+                        : theme.colorScheme.primary,
+                    decoration:
+                        invoice.isVoided ? TextDecoration.lineThrough : null,
                   ),
                 ),
               ],
             ),
             subtitle: Text(
               [
+                if (invoice.isVoided) l10n.invoiceVoidMark,
                 DateFormat.yMd(locale)
                     .add_jm()
                     .format(invoice.createdAt.toLocal()),

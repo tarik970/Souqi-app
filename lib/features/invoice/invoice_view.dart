@@ -173,6 +173,17 @@ class InvoiceView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // A VOIDED invoice says so before anything else, on the
+                  // screen, on every reprint and on every share: the paper
+                  // is a record of a sale that no longer counts.
+                  if (invoice.isVoided) ...[
+                    PaperVoidMark(
+                      label: l10n.invoiceVoidMark,
+                      style: bold,
+                      base: base,
+                    ),
+                    SizedBox(height: gap),
+                  ],
                   if (isCopy) ...[
                     PaperCopyMark(label: l10n.invoiceCopyMark, style: bold, base: base),
                     SizedBox(height: gap),
@@ -201,6 +212,18 @@ class InvoiceView extends StatelessWidget {
                     Text(header, textAlign: TextAlign.center),
                   if (hasHeader) rule,
                   ...meta,
+                  if (invoice.isVoided)
+                    PaperPair(
+                      label: l10n.invoiceVoidedOnLabel,
+                      gap: gap,
+                      value: Text(
+                        formatInvoiceDateTime(
+                          invoice.voidedAt!,
+                          locale: s.language,
+                        ),
+                        textDirection: TextDirection.ltr,
+                      ),
+                    ),
                   if (meta.isNotEmpty) rule,
                   for (final item in invoice.items)
                     _ItemBlock(
@@ -611,6 +634,52 @@ class PaperCopyMark extends StatelessWidget {
           style: style.copyWith(
             fontSize: base * 1.1,
             letterSpacing: base * 0.15,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "VOID / ملغاة" stamp of a voided invoice: a heavy double box with the
+/// word large and letter-spaced, across the top of the paper. Black lines
+/// only, like [PaperCopyMark] — a thermal head has no grey — and heavier
+/// than it, so the two are told apart at a glance when a voided invoice is
+/// reprinted and carries both.
+class PaperVoidMark extends StatelessWidget {
+  const PaperVoidMark({
+    super.key,
+    required this.label,
+    required this.style,
+    required this.base,
+  });
+
+  final String label;
+  final TextStyle style;
+  final double base;
+
+  @override
+  Widget build(BuildContext context) {
+    final line = base >= 28 ? 4.0 : 3.0;
+    return DecoratedBox(
+      key: const ValueKey('paper-void-mark'),
+      decoration: BoxDecoration(border: Border.all(color: _ink, width: line)),
+      child: Padding(
+        padding: EdgeInsets.all(line),
+        child: DecoratedBox(
+          decoration:
+              BoxDecoration(border: Border.all(color: _ink, width: line / 2)),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: base * 0.25),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: style.copyWith(
+                fontSize: base * 1.6,
+                height: 1.2,
+                letterSpacing: base * 0.2,
+              ),
+            ),
           ),
         ),
       ),

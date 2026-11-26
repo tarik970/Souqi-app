@@ -15,6 +15,8 @@ class ArchiveEntry {
     required this.totalBaseMinor,
     this.customerName,
     required this.itemCount,
+    this.isVoided = false,
+    this.returnCount = 0,
   });
 
   final int id;
@@ -26,7 +28,15 @@ class ArchiveEntry {
   final String? customerName;
   final int itemCount;
 
+  /// The invoice was voided: listed with its "VOID" mark, counted nowhere.
+  final bool isVoided;
+
+  /// How many return documents were made from it.
+  final int returnCount;
+
   static ArchiveEntry fromRow(Map<String, Object?> row) => ArchiveEntry(
+        isVoided: row['voided_at'] != null,
+        returnCount: (row['return_count'] as int?) ?? 0,
         id: row['id'] as int,
         invoiceNo: row['invoice_no'] as int,
         createdAt: DateTime.fromMillisecondsSinceEpoch(
@@ -55,6 +65,19 @@ class ArchiveCursor {
 /// The date-range buttons of the archive and the statistics screen.
 enum ArchivePeriod { all, today, yesterday, thisWeek, thisMonth, custom }
 
+/// What the archive lists: every invoice, the voided ones, or the return
+/// documents.
+enum ArchiveStatus {
+  all,
+
+  /// Only invoices that were voided.
+  voided,
+
+  /// The RETURN documents of the period (by the date of the return). For a
+  /// query that is about invoices, this means "invoices that have returns".
+  returns,
+}
+
 /// The archive's filters. Every field is optional and they combine with AND.
 class ArchiveFilter {
   const ArchiveFilter({
@@ -64,7 +87,11 @@ class ArchiveFilter {
     this.productQuery = '',
     this.customerQuery = '',
     this.preset = ArchivePeriod.all,
+    this.status = ArchiveStatus.all,
   });
+
+  /// All / Voided / Returns.
+  final ArchiveStatus status;
 
   /// Inclusive lower bound / exclusive upper bound on `created_at`.
   final DateTime? from;
@@ -83,7 +110,8 @@ class ArchiveFilter {
   /// in [from] / [to]; this only remembers the user's choice.
   final ArchivePeriod preset;
 
-  bool get isEmpty => from == null && to == null && !hasSearch;
+  bool get isEmpty =>
+      from == null && to == null && !hasSearch && status == ArchiveStatus.all;
 
   /// Whether a typed search is narrowing the list: a product, a customer or
   /// an invoice number.
@@ -91,6 +119,11 @@ class ArchiveFilter {
       invoiceNo != null ||
       productQuery.trim().isEmpty == false ||
       customerQuery.trim().isEmpty == false;
+
+  /// The list shows less than its period holds: a search, or the "Voided" /
+  /// "Returns" filter. Deleting by period is not offered then — it would
+  /// delete something other than what is on screen.
+  bool get isNarrowed => hasSearch || status != ArchiveStatus.all;
 
   /// Just the period.
   ///
@@ -108,6 +141,7 @@ class ArchiveFilter {
     String? productQuery,
     String? customerQuery,
     ArchivePeriod? preset,
+    ArchiveStatus? status,
   }) =>
       ArchiveFilter(
         from: from != null ? from() : this.from,
@@ -116,6 +150,7 @@ class ArchiveFilter {
         productQuery: productQuery ?? this.productQuery,
         customerQuery: customerQuery ?? this.customerQuery,
         preset: preset ?? this.preset,
+        status: status ?? this.status,
       );
 
   @override
@@ -126,7 +161,8 @@ class ArchiveFilter {
       other.invoiceNo == invoiceNo &&
       other.productQuery == productQuery &&
       other.customerQuery == customerQuery &&
-      other.preset == preset;
+      other.preset == preset &&
+      other.status == status;
 
   @override
   int get hashCode => Object.hash(
@@ -136,6 +172,7 @@ class ArchiveFilter {
         productQuery,
         customerQuery,
         preset,
+        status,
       );
 }
 
@@ -195,9 +232,11 @@ class ArchiveRepository {
     }
     final rows = await _db.rawQuery(
       'SELECT i.id, i.invoice_no, i.created_at, i.currency_code, '
-      'i.total_minor, i.total_base_minor, i.customer_name, '
+      'i.total_minor, i.total_base_minor, i.customer_name, i.voided_at, '
       '(SELECT COUNT(*) FROM invoice_items it WHERE it.invoice_id = i.id) '
-      'AS item_count '
+      'AS item_count, '
+      '(SELECT COUNT(*) FROM invoice_returns rt WHERE rt.invoice_id = i.id) '
+      'AS return_count '
       'FROM invoices i '
       '${where.isEmpty ? '' : 'WHERE ${where.join(' AND ')} '}'
       'ORDER BY i.created_at DESC, i.id DESC LIMIT ?',
@@ -210,11 +249,16 @@ class ArchiveRepository {
   /// confirmation: a count and a sum straight out of sqlite over
   /// `idx_invoices_created`. No invoice row is ever read into Dart for it.
   ///
+  ///
+  /// The COUNT is every invoice that matches — it is what a delete removes.
+  /// The TOTAL leaves the voided ones out: a voided invoice sold nothing.
+  ///
   /// Returned as text so a test can EXPLAIN exactly what runs.
   (String, List<Object?>) summaryQuery(ArchiveFilter filter) {
     final (where, args) = _where(filter);
     return (
-      'SELECT COUNT(*) AS n, COALESCE(SUM(i.total_base_minor), 0) AS total '
+      'SELECT COUNT(*) AS n, COALESCE(SUM(CASE WHEN i.voided_at IS NULL '
+      'THEN i.total_base_minor ELSE 0 END), 0) AS total '
       'FROM invoices i '
       '${where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}'}',
       args,
@@ -373,6 +417,15 @@ class ArchiveRepository {
     if (invoiceNo != null) {
       where.add('i.invoice_no = ?');
       args.add(invoiceNo);
+    }
+    switch (filter.status) {
+      case ArchiveStatus.all:
+        break;
+      case ArchiveStatus.voided:
+        where.add('i.voided_at IS NOT NULL');
+      case ArchiveStatus.returns:
+        where.add('EXISTS (SELECT 1 FROM invoice_returns rt '
+            'WHERE rt.invoice_id = i.id)');
     }
 
     // Products are searched through the ITEMS' normalized snapshots, so an

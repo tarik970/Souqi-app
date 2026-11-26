@@ -160,6 +160,8 @@ class DebtRepository {
     int? balanceBeforeBaseMinor,
     int? invoiceId,
     int? invoiceNo,
+    int? returnId,
+    int? returnNo,
     int? reversesId,
     String? note,
     required DateTime createdAt,
@@ -184,6 +186,8 @@ class DebtRepository {
       'balance_before_base_minor': balanceBeforeBaseMinor,
       'invoice_id': invoiceId,
       'invoice_no': invoiceNo,
+      'return_id': returnId,
+      'return_no': returnNo,
       'reverses_id': reversesId,
       'note': _blankToNull(note),
       'created_at': _ms(createdAt),
@@ -485,20 +489,7 @@ class DebtRepository {
       if (rows.isEmpty) throw NotReversibleException(entryId);
       final entry = DebtEntry.fromMap(rows.first);
       if (!entry.canBeReversed) throw NotReversibleException(entryId);
-      final reversalId = await _insert(
-        txn,
-        customerId: entry.customerId,
-        type: DebtEntryType.reversal,
-        direction: -entry.direction,
-        amountBaseMinor: entry.amountBaseMinor,
-        origAmountMinor: entry.origAmountMinor,
-        origCurrencyCode: entry.origCurrencyCode,
-        origRate: entry.origRate,
-        reversesId: entry.id,
-        note: why,
-        createdAt: now,
-        recordedAt: now,
-      );
+      final reversalId = await postReversal(txn, entry, reason: why, at: now);
       await AuditRepository(txn).log(
         AuditAction.debtReversal,
         entityType: 'debt_entry',
@@ -516,6 +507,89 @@ class DebtRepository {
     });
     return (await entryById(id))!;
   }
+
+  /// Writes the REVERSAL of [entry] — the same amount the other way,
+  /// pointing at it — and returns its id. The row only: the caller owns the
+  /// transaction, has checked that [entry] is still effective, and writes
+  /// the audit line that says why ([reverse] here; voiding an invoice in
+  /// `InvoiceCorrectionRepository`).
+  static Future<int> postReversal(
+    DatabaseExecutor txn,
+    DebtEntry entry, {
+    required String reason,
+    required DateTime at,
+  }) =>
+      _insert(
+        txn,
+        customerId: entry.customerId,
+        type: DebtEntryType.reversal,
+        direction: -entry.direction,
+        amountBaseMinor: entry.amountBaseMinor,
+        origAmountMinor: entry.origAmountMinor,
+        origCurrencyCode: entry.origCurrencyCode,
+        origRate: entry.origRate,
+        reversesId: entry.id,
+        note: reason,
+        createdAt: at,
+        recordedAt: at,
+      );
+
+  /// The DEBT entry the sale of [invoiceId] left on its customer's account,
+  /// while it still counts; null when the sale left none, or when that
+  /// entry was already cancelled by a reversal.
+  static Future<DebtEntry?> saleEntryOf(
+    DatabaseExecutor db,
+    int invoiceId,
+  ) async {
+    final rows = await db.rawQuery(
+      "SELECT t.* FROM debt_transactions t WHERE t.invoice_id = ? "
+      "AND t.type = 'DEBT' AND ${_notReversed('t')} "
+      'ORDER BY t.id ASC LIMIT 1',
+      [invoiceId],
+    );
+    return rows.isEmpty ? null : DebtEntry.fromMap(rows.first);
+  }
+
+  /// What [customerId] owes (positive) or is owed, read on [db] — for a
+  /// caller that is inside its own transaction.
+  static Future<int> balanceIn(DatabaseExecutor db, int customerId) =>
+      _balance(db, customerId);
+
+  /// Writes the RETURN entry of a return document: the part of its refund
+  /// that stays on the customer's account — a credit of [amountBaseMinor],
+  /// linked to the document and to the invoice it returns from. The row
+  /// only; the caller owns the transaction and the audit line.
+  static Future<int> postReturn(
+    DatabaseExecutor txn, {
+    required int customerId,
+    required int amountBaseMinor,
+    int? origAmountMinor,
+    String? origCurrencyCode,
+    RateFraction? origRate,
+    required int invoiceId,
+    required int invoiceNo,
+    required int returnId,
+    required int returnNo,
+    String? note,
+    required DateTime at,
+  }) =>
+      _insert(
+        txn,
+        customerId: customerId,
+        type: DebtEntryType.saleReturn,
+        direction: -1,
+        amountBaseMinor: amountBaseMinor,
+        origAmountMinor: origAmountMinor,
+        origCurrencyCode: origCurrencyCode,
+        origRate: origRate,
+        invoiceId: invoiceId,
+        invoiceNo: invoiceNo,
+        returnId: returnId,
+        returnNo: returnNo,
+        note: note,
+        createdAt: at,
+        recordedAt: at,
+      );
 
   // ---- Sales -------------------------------------------------------------
 

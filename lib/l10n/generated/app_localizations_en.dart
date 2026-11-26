@@ -4170,4 +4170,342 @@ class AppLocalizationsEn extends AppLocalizations {
   String rateSuspicious(String entered, String current) {
     return '$entered is very different from the current rate ($current). A comma or a dot is read as a decimal point: type 13500, not 13,500. If $entered is right, tap Save again.';
   }
+
+  @override
+  String get invoiceVoidMark => 'VOID';
+
+  @override
+  String get invoiceVoidedOnLabel => 'Voided on';
+
+  @override
+  String invoiceVoidedOn(String date) {
+    return 'Voided on $date';
+  }
+
+  @override
+  String get invoiceVoidedSnack => 'Invoice voided';
+
+  @override
+  String get voidInvoice => 'Void invoice';
+
+  @override
+  String voidInvoiceTitle(String no) {
+    return 'Void invoice $no?';
+  }
+
+  @override
+  String get voidReasonQuestion => 'Why is it being voided?';
+
+  @override
+  String get voidReasonWrongItems => 'Wrong items';
+
+  @override
+  String get voidReasonWrongPrice => 'Wrong price';
+
+  @override
+  String get voidReasonCustomerCancelled => 'Customer cancelled';
+
+  @override
+  String get voidReasonDuplicate => 'Duplicate';
+
+  @override
+  String get voidReasonOther => 'Other';
+
+  @override
+  String voidCodesQuestion(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Its $countString card codes',
+      one: 'Its card code',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get voidCodesVoid => 'Void the codes';
+
+  @override
+  String get voidCodesToStock => 'Return them to stock';
+
+  @override
+  String get voidCodesVoidHint =>
+      'For cards that were printed or handed over: they can never be sold again.';
+
+  @override
+  String get voidCodesToStockHint =>
+      'Only if the customer never received them: they go back on sale.';
+
+  @override
+  String get voidConfirmIntro => 'This is what will happen:';
+
+  @override
+  String get voidEffectKept =>
+      'The invoice stays in the archive, marked VOID. Its number is never used again.';
+
+  @override
+  String voidEffectDebt(String amount, String customer) {
+    return 'The debt of $amount is reversed on the account of $customer.';
+  }
+
+  @override
+  String voidEffectCredit(String amount) {
+    return '$amount taken from the customer\'s credit balance is given back to it.';
+  }
+
+  @override
+  String voidEffectCash(String amount) {
+    return 'Give $amount back to the customer.';
+  }
+
+  @override
+  String voidEffectCodesVoid(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString card codes are voided.',
+      one: '1 card code is voided.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String voidEffectCodesStock(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString card codes go back to stock.',
+      one: '1 card code goes back to stock.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String voidEffectRenewal(String account, String date) {
+    return 'Account $account: the renewal is undone. It is due again on $date.';
+  }
+
+  @override
+  String voidEffectRenewalNone(String account) {
+    return 'Account $account: the renewal is undone. It has no due date again.';
+  }
+
+  @override
+  String voidEffectRenewalKept(String account) {
+    return 'Account $account: a later renewal is in force, so its dates stay as they are.';
+  }
+
+  @override
+  String get voidAlready => 'This invoice is already void.';
+
+  @override
+  String get voidHasReturns =>
+      'This invoice has returns. Return what is left of it instead of voiding it.';
+
+  @override
+  String voidTooOld(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'This invoice is more than $daysString days old',
+      one: 'This invoice is more than 1 day old',
+    );
+    return '$_temp0 and can no longer be voided. The limit is in Settings → Archive.';
+  }
+
+  @override
+  String get pinReasonVoid => 'Enter the PIN to void an invoice.';
+
+  @override
+  String get pinReasonReturn => 'Enter the PIN to save a return.';
+
+  @override
+  String get pinReasonVoidAge =>
+      'Enter the PIN to change the age limit for voiding invoices.';
+
+  @override
+  String get pinReasonAdminAccess =>
+      'Enter the PIN to open settings, the archive and statistics.';
+
+  @override
+  String get settingVoidAge => 'Voiding invoices';
+
+  @override
+  String get settingVoidAgeHint =>
+      'An invoice can be voided while it is no older than this. Returns have no limit.';
+
+  @override
+  String get voidAgeNoLimit => 'No limit';
+
+  @override
+  String get returnTitle => 'Return';
+
+  @override
+  String get returnsTitle => 'Returns';
+
+  @override
+  String returnNoLabel(String no) {
+    return 'Return no. $no';
+  }
+
+  @override
+  String returnFromInvoice(String no) {
+    return 'From invoice $no';
+  }
+
+  @override
+  String get returnItems => 'Return items';
+
+  @override
+  String get returnItemsTitle => 'Return items';
+
+  @override
+  String returnItemsHint(String no) {
+    return 'Invoice no. $no — tap a line and type how much comes back.';
+  }
+
+  @override
+  String get returnNothingLeft =>
+      'Everything on this invoice was already returned.';
+
+  @override
+  String get returnAll => 'Return all';
+
+  @override
+  String returnLineLeft(String sold, String left) {
+    return 'Sold $sold · Returnable $left';
+  }
+
+  @override
+  String returnLineDone(String sold) {
+    return 'Sold $sold · fully returned';
+  }
+
+  @override
+  String get returnRefundTotal => 'Refund total';
+
+  @override
+  String get returnRefundMethod => 'Refund method';
+
+  @override
+  String get refundMethodCash => 'Cash';
+
+  @override
+  String get refundMethodDebt => 'Off the customer\'s debt';
+
+  @override
+  String get refundMethodCredit => 'Customer credit';
+
+  @override
+  String get refundCashBack => 'Back in cash';
+
+  @override
+  String get returnReasonOptional => 'Reason (optional)';
+
+  @override
+  String get returnConfirmTitle => 'Confirm the return';
+
+  @override
+  String get returnConfirmAction => 'Save return';
+
+  @override
+  String get returnChanged =>
+      'This invoice changed in the meantime. Check the quantities again.';
+
+  @override
+  String get returnNotFound => 'This return no longer exists.';
+
+  @override
+  String get viewReturn => 'Return document';
+
+  @override
+  String get continueAction => 'Continue';
+
+  @override
+  String deleteInvoiceHasReturns(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Its $countString return documents are deleted with it.',
+      one: 'Its return document is deleted with it.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveStatusAll => 'All';
+
+  @override
+  String get archiveStatusVoided => 'Voided';
+
+  @override
+  String get archiveHasReturns => 'Has returns';
+
+  @override
+  String get archiveNoReturns => 'No returns in this period.';
+
+  @override
+  String archiveReturnsCount(String count, String total) {
+    return '$count returns · $total given back';
+  }
+
+  @override
+  String get statsNetSales => 'Net sales';
+
+  @override
+  String get statsSalesBeforeReturns => 'Sales before returns';
+
+  @override
+  String statsReturnsCount(String count) {
+    return 'Returns ($count)';
+  }
+
+  @override
+  String get auditInvoiceVoid => 'Invoice voided';
+
+  @override
+  String get auditInvoiceReturn => 'Return saved';
+
+  @override
+  String get auditVoidAgeLimit => 'Void age limit changed';
+
+  @override
+  String get auditAdminLockOn =>
+      'PIN for settings, archive and statistics turned on';
+
+  @override
+  String get auditAdminLockOff =>
+      'PIN for settings, archive and statistics turned off';
+
+  @override
+  String get adminRequirePinTitle =>
+      'PIN to open settings, archive and statistics';
+
+  @override
+  String get adminRequirePinSubtitle =>
+      'Ask for the PIN before these three open. Selling never asks.';
+
+  @override
+  String get adminLockedMessage => 'This screen is protected by the PIN.';
 }

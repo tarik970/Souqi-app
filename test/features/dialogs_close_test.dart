@@ -65,6 +65,11 @@ import 'package:souqi/features/backup/backup_screen.dart';
 import 'package:souqi/features/license/license_gate.dart';
 import 'package:souqi/features/license/license_screen.dart';
 import 'package:souqi/features/products/bulk_price_screen.dart';
+import 'package:souqi/data/repositories/invoice_correction_repository.dart';
+import 'package:souqi/domain/models/invoice_return.dart';
+import 'package:souqi/features/returns/return_items_screen.dart';
+import 'package:souqi/features/returns/return_screen.dart';
+import 'package:souqi/features/returns/void_flow.dart';
 import 'package:souqi/features/sale/new_barcode_item_dialog.dart';
 import 'package:souqi/l10n/generated/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -1552,6 +1557,138 @@ void main() {
       isPage: true,
       after: (tester) async =>
           expect(find.byType(SettingsScreen), findsOneWidget),
+    ),
+    // ---- Voiding an invoice and returns (phase 7) -------------------------
+    Closable(
+      'void-invoice reason dialog',
+      home: host((context) => showDialog<VoidChoice>(
+            context: context,
+            builder: (_) =>
+                const VoidReasonDialog(invoiceNo: '152', soldCodes: 2),
+          )),
+      open: openHost,
+      shown: find.byType(VoidReasonDialog),
+      button: cancel,
+    ),
+    Closable(
+      'void-invoice reason dialog, typing another reason',
+      home: host((context) => showDialog<VoidChoice>(
+            context: context,
+            builder: (_) => const VoidReasonDialog(invoiceNo: '152'),
+          )),
+      open: (tester) async {
+        await openHost(tester);
+        await tester.tap(find.byKey(const ValueKey('void-reason-other')));
+        await settle(tester, 8);
+      },
+      shown: find.byType(VoidReasonDialog),
+      button: cancel,
+      keyboard: true,
+    ),
+    Closable(
+      'void-invoice reason dialog, from the invoice screen',
+      home: const InvoiceDetailScreen(invoiceId: 1),
+      seed: archivedSale,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('invoice-void')));
+        await animated(tester);
+      },
+      shown: find.byType(VoidReasonDialog),
+      button: cancel,
+      // Backed out of: the invoice is as it was.
+      after: (tester) async {
+        expect(find.byType(InvoiceDetailScreen), findsOneWidget);
+        final rows = await tester.runAsync(() => database.db.query('invoices'));
+        expect(rows!.single['voided_at'], isNull);
+      },
+    ),
+    Closable(
+      'void-invoice confirmation',
+      home: host((context) => showDialog<bool>(
+            context: context,
+            builder: (_) => VoidConfirmDialog(
+              plan: VoidPlan(
+                invoice: sypInvoice(),
+                maxAgeDays: 30,
+                debtBaseMinor: 5000,
+                soldCodes: 2,
+              ),
+              choice: const VoidChoice(reason: 'Duplicate'),
+            ),
+          )),
+      open: openHost,
+      shown: find.byType(VoidConfirmDialog),
+      button: cancel,
+    ),
+    Closable(
+      'return-items page, from the invoice screen',
+      home: const InvoiceDetailScreen(invoiceId: 1),
+      seed: archivedSale,
+      open: (tester) async {
+        await tester.tap(find.byKey(const ValueKey('invoice-return')));
+        await animated(tester);
+      },
+      shown: find.byType(ReturnItemsScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+      after: (tester) async =>
+          expect(find.byType(InvoiceDetailScreen), findsOneWidget),
+    ),
+    for (final focused in [false, true])
+      Closable(
+        focused
+            ? 'return confirmation dialog with the reason field focused'
+            : 'return confirmation dialog',
+        home: const ReturnItemsScreen(invoiceId: 1),
+        seed: archivedSale,
+        open: (tester) async {
+          await tester.tap(find.byKey(const ValueKey('keypad-1')));
+          await settle(tester, 4);
+          await tester.tap(find.byKey(const ValueKey('return-continue')));
+          await animated(tester);
+          if (focused) {
+            await tester.tap(find.byKey(const ValueKey('return-reason')));
+            await settle(tester, 4);
+          }
+        },
+        shown: find.byType(ReturnConfirmDialog),
+        button: cancel,
+        keyboard: focused,
+        // Backed out of: nothing was returned, and the screen is still
+        // there with what was typed.
+        after: (tester) async {
+          expect(find.byType(ReturnItemsScreen), findsOneWidget);
+          final rows = await tester
+              .runAsync(() => database.db.query('invoice_returns'));
+          expect(rows, isEmpty);
+        },
+      ),
+    Closable(
+      'return document, from the returns of an invoice',
+      home: const InvoiceDetailScreen(invoiceId: 1),
+      seed: (database) async {
+        await archivedSale(database);
+        await InvoiceCorrectionRepository(database.db).saveReturn(
+          const ReturnDraft(
+            invoiceId: 1,
+            lines: [
+              ReturnLineRequest(invoiceItemId: 1, qtyThousandths: 500),
+            ],
+          ),
+        );
+      },
+      open: (tester) async {
+        final tile = find.byKey(const ValueKey('return-tile-1'));
+        await tester.ensureVisible(tile);
+        await settle(tester, 2);
+        await tester.tap(tile);
+        await animated(tester);
+      },
+      shown: find.byType(ReturnScreen),
+      button: find.byType(BackButton),
+      isPage: true,
+      after: (tester) async =>
+          expect(find.byType(InvoiceDetailScreen), findsOneWidget),
     ),
   ];
 

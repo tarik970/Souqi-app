@@ -2244,5 +2244,187 @@
       "entered": {"type": "String"},
       "current": {"type": "String"}
     }
-  }
+  },
+  "invoiceVoidMark": "VOID",
+  "invoiceVoidedOnLabel": "Voided on",
+  "invoiceVoidedOn": "Voided on {date}",
+  "@invoiceVoidedOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "invoiceVoidedSnack": "Invoice voided",
+  "voidInvoice": "Void invoice",
+  "voidInvoiceTitle": "Void invoice {no}?",
+  "@voidInvoiceTitle": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "voidReasonQuestion": "Why is it being voided?",
+  "voidReasonWrongItems": "Wrong items",
+  "voidReasonWrongPrice": "Wrong price",
+  "voidReasonCustomerCancelled": "Customer cancelled",
+  "voidReasonDuplicate": "Duplicate",
+  "voidReasonOther": "Other",
+  "voidCodesQuestion": "{count, plural, =1{Its card code} other{Its {count} card codes}}",
+  "@voidCodesQuestion": {
+    "placeholders": {
+      "count": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "voidCodesVoid": "Void the codes",
+  "voidCodesToStock": "Return them to stock",
+  "voidCodesVoidHint": "For cards that were printed or handed over: they can never be sold again.",
+  "voidCodesToStockHint": "Only if the customer never received them: they go back on sale.",
+  "voidConfirmIntro": "This is what will happen:",
+  "voidEffectKept": "The invoice stays in the archive, marked VOID. Its number is never used again.",
+  "voidEffectDebt": "The debt of {amount} is reversed on the account of {customer}.",
+  "@voidEffectDebt": {
+    "placeholders": {
+      "amount": {"type": "String"},
+      "customer": {"type": "String"}
+    }
+  },
+  "voidEffectCredit": "{amount} taken from the customer's credit balance is given back to it.",
+  "@voidEffectCredit": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "voidEffectCash": "Give {amount} back to the customer.",
+  "@voidEffectCash": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "voidEffectCodesVoid": "{count, plural, =1{1 card code is voided.} other{{count} card codes are voided.}}",
+  "@voidEffectCodesVoid": {
+    "placeholders": {
+      "count": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "voidEffectCodesStock": "{count, plural, =1{1 card code goes back to stock.} other{{count} card codes go back to stock.}}",
+  "@voidEffectCodesStock": {
+    "placeholders": {
+      "count": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "voidEffectRenewal": "Account {account}: the renewal is undone. It is due again on {date}.",
+  "@voidEffectRenewal": {
+    "placeholders": {
+      "account": {"type": "String"},
+      "date": {"type": "String"}
+    }
+  },
+  "voidEffectRenewalNone": "Account {account}: the renewal is undone. It has no due date again.",
+  "@voidEffectRenewalNone": {
+    "placeholders": {
+      "account": {"type": "String"}
+    }
+  },
+  "voidEffectRenewalKept": "Account {account}: a later renewal is in force, so its dates stay as they are.",
+  "@voidEffectRenewalKept": {
+    "placeholders": {
+      "account": {"type": "String"}
+    }
+  },
+  "voidAlready": "This invoice is already void.",
+  "voidHasReturns": "This invoice has returns. Return what is left of it instead of voiding it.",
+  "voidTooOld": "{days, plural, =1{This invoice is more than 1 day old} other{This invoice is more than {days} days old}} and can no longer be voided. The limit is in Settings → Archive.",
+  "@voidTooOld": {
+    "placeholders": {
+      "days": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "pinReasonVoid": "Enter the PIN to void an invoice.",
+  "pinReasonReturn": "Enter the PIN to save a return.",
+  "pinReasonVoidAge": "Enter the PIN to change the age limit for voiding invoices.",
+  "pinReasonAdminAccess": "Enter the PIN to open settings, the archive and statistics.",
+  "settingVoidAge": "Voiding invoices",
+  "settingVoidAgeHint": "An invoice can be voided while it is no older than this. Returns have no limit.",
+  "voidAgeNoLimit": "No limit",
+  "returnTitle": "Return",
+  "returnsTitle": "Returns",
+  "returnNoLabel": "Return no. {no}",
+  "@returnNoLabel": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "returnFromInvoice": "From invoice {no}",
+  "@returnFromInvoice": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "returnItems": "Return items",
+  "returnItemsTitle": "Return items",
+  "returnItemsHint": "Invoice no. {no} — tap a line and type how much comes back.",
+  "@returnItemsHint": {
+    "placeholders": {
+      "no": {"type": "String"}
+    }
+  },
+  "returnNothingLeft": "Everything on this invoice was already returned.",
+  "returnAll": "Return all",
+  "returnLineLeft": "Sold {sold} · Returnable {left}",
+  "@returnLineLeft": {
+    "placeholders": {
+      "sold": {"type": "String"},
+      "left": {"type": "String"}
+    }
+  },
+  "returnLineDone": "Sold {sold} · fully returned",
+  "@returnLineDone": {
+    "placeholders": {
+      "sold": {"type": "String"}
+    }
+  },
+  "returnRefundTotal": "Refund total",
+  "returnRefundMethod": "Refund method",
+  "refundMethodCash": "Cash",
+  "refundMethodDebt": "Off the customer's debt",
+  "refundMethodCredit": "Customer credit",
+  "refundCashBack": "Back in cash",
+  "returnReasonOptional": "Reason (optional)",
+  "returnConfirmTitle": "Confirm the return",
+  "returnConfirmAction": "Save return",
+  "returnChanged": "This invoice changed in the meantime. Check the quantities again.",
+  "returnNotFound": "This return no longer exists.",
+  "viewReturn": "Return document",
+  "continueAction": "Continue",
+  "deleteInvoiceHasReturns": "{count, plural, =1{Its return document is deleted with it.} other{Its {count} return documents are deleted with it.}}",
+  "@deleteInvoiceHasReturns": {
+    "placeholders": {
+      "count": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "archiveStatusAll": "All",
+  "archiveStatusVoided": "Voided",
+  "archiveHasReturns": "Has returns",
+  "archiveNoReturns": "No returns in this period.",
+  "archiveReturnsCount": "{count} returns · {total} given back",
+  "@archiveReturnsCount": {
+    "placeholders": {
+      "count": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "statsNetSales": "Net sales",
+  "statsSalesBeforeReturns": "Sales before returns",
+  "statsReturnsCount": "Returns ({count})",
+  "@statsReturnsCount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "auditInvoiceVoid": "Invoice voided",
+  "auditInvoiceReturn": "Return saved",
+  "auditVoidAgeLimit": "Void age limit changed",
+  "auditAdminLockOn": "PIN for settings, archive and statistics turned on",
+  "auditAdminLockOff": "PIN for settings, archive and statistics turned off",
+  "adminRequirePinTitle": "PIN to open settings, archive and statistics",
+  "adminRequirePinSubtitle": "Ask for the PIN before these three open. Selling never asks.",
+  "adminLockedMessage": "This screen is protected by the PIN."
 }

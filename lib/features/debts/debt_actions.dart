@@ -11,6 +11,7 @@ import '../archive/invoice_detail_screen.dart';
 import '../customers/contact_actions.dart';
 import '../invoice/invoice_providers.dart';
 import '../license/license_gate.dart';
+import '../returns/return_screen.dart';
 import '../security/pin_dialogs.dart';
 import 'debt_providers.dart';
 import 'debt_text.dart';
@@ -331,6 +332,22 @@ class _EntrySheet extends ConsumerWidget {
               },
               icon: const Icon(Icons.receipt_long_outlined),
               label: Text(l10n.openInvoice),
+            ),
+          // A refund kept on the account: its return document, while the
+          // invoice it came from is still in the archive.
+          if (entry.type == DebtEntryType.saleReturn && entry.returnId != null)
+            OutlinedButton.icon(
+              key: const ValueKey('entry-open-return'),
+              onPressed: () {
+                navigator.pop();
+                navigator.push(MaterialPageRoute<void>(
+                  // Opened again from the ledger: every output is a copy.
+                  builder: (_) =>
+                      ReturnScreen(returnId: entry.returnId!, copy: true),
+                ));
+              },
+              icon: const Icon(Icons.assignment_return_outlined),
+              label: Text(l10n.viewReturn),
             ),
           if (entry.type == DebtEntryType.payment)
             OutlinedButton.icon(

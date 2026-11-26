@@ -34,6 +34,7 @@ class ProductRepository {
       FROM invoice_items ii
       JOIN invoices i ON i.id = ii.invoice_id
      WHERE ii.product_id IS NOT NULL AND i.created_at >= ?
+       AND i.voided_at IS NULL
      GROUP BY ii.product_id''';
 
   int _windowStart(DateTime? now) => (now ?? DateTime.now())

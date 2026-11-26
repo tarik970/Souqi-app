@@ -10,6 +10,7 @@ import '../data/repositories/audit_repository.dart';
 import '../data/repositories/currency_repository.dart';
 import '../data/repositories/customer_repository.dart';
 import '../data/repositories/debt_repository.dart';
+import '../data/repositories/invoice_correction_repository.dart';
 import '../data/repositories/invoice_repository.dart';
 import '../data/repositories/pin_repository.dart';
 import '../data/repositories/price_change_repository.dart';
@@ -105,6 +106,19 @@ final invoiceRepositoryProvider = Provider<InvoiceRepository>(
     codeCipher:
         featureOn(Feature.vouchers) ? ref.watch(codeCipherProvider) : null,
     // The license is checked again before every sale is saved.
+    guard: ref.watch(licenseServiceProvider),
+  ),
+);
+
+/// Voiding an invoice and returns (phase 7). Like a sale: the card codes
+/// only come into it while their feature is on, and the license is checked
+/// again before anything is written.
+final invoiceCorrectionRepositoryProvider =
+    Provider<InvoiceCorrectionRepository>(
+  (ref) => InvoiceCorrectionRepository(
+    ref.watch(databaseProvider).db,
+    codeCipher:
+        featureOn(Feature.vouchers) ? ref.watch(codeCipherProvider) : null,
     guard: ref.watch(licenseServiceProvider),
   ),
 );

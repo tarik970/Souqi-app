@@ -79,7 +79,25 @@ class InvoiceRepository {
         );
       }
       final invoiceNo = await _counters.next(txn, CounterRepository.invoiceNo);
-      final id = await txn.insert('invoices', draft.toRow(invoiceNo: invoiceNo));
+      // What the account's dates are BEFORE this sale renews it, kept on
+      // the invoice: voiding it (or returning the package) puts them back.
+      final renewalBefore = draft.renewsAccount
+          ? await txn.query(
+              'customer_accounts',
+              columns: ['last_renewal_at', 'next_due_at'],
+              where: 'id = ?',
+              whereArgs: [draft.accountId],
+              limit: 1,
+            )
+          : const <Map<String, Object?>>[];
+      final id = await txn.insert('invoices', {
+        ...draft.toRow(invoiceNo: invoiceNo),
+        if (renewalBefore.isNotEmpty) ...{
+          'renewal_prev_stored': 1,
+          'prev_last_renewal_at': renewalBefore.first['last_renewal_at'],
+          'prev_next_due_at': renewalBefore.first['next_due_at'],
+        },
+      });
       if (ledger != null) {
         await DebtRepository.postSale(
           txn,
