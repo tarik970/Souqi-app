@@ -6,8 +6,11 @@ import '../../config/features.dart';
 import '../../core/platform/external_action_bridge.dart';
 import '../../core/platform/native_bridge.dart';
 import '../../core/providers.dart';
+import '../../data/repositories/audit_repository.dart';
+import '../../data/repositories/settings_repository.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice_settings.dart';
+import '../../domain/models/voucher.dart';
 import '../license/license_providers.dart';
 import '../security/pin_session.dart';
 
@@ -62,6 +65,42 @@ class InvoiceSettingsNotifier extends AsyncNotifier<InvoiceSettings> {
     return _writes = _writes
         .catchError((Object _) {})
         .then((_) => repository.setMany(changed));
+  }
+
+  /// [set] for a change that is written to the audit log: the changed keys
+  /// and the log line land in ONE transaction — a change that failed leaves
+  /// no line saying it happened, and one that went through cannot lose its
+  /// line. Used for the payment QR (where customers send money).
+  ///
+  /// [update] is applied to the settings as they are NOW, so a change made
+  /// elsewhere while a PIN dialog or a picker was open is not undone.
+  Future<void> changeAudited(
+    InvoiceSettings Function(InvoiceSettings current) update, {
+    required AuditAction action,
+    Map<String, Object?> details = const {},
+  }) {
+    final current = state.value;
+    if (current == null) return _writes;
+    final before = current.toMap();
+    final next = update(current);
+    state = AsyncData(next);
+    final changed = <String, String>{
+      for (final entry in next.toMap().entries)
+        if (before[entry.key] != entry.value) entry.key: entry.value,
+    };
+    final db = ref.read(databaseProvider).db;
+    final write = _writes.catchError((Object _) {}).then(
+          (_) => db.transaction((txn) async {
+            await SettingsRepository(txn).setMany(changed);
+            await AuditRepository(txn).log(action, details: details);
+          }),
+        );
+    _writes = write;
+    return write.catchError((Object error, StackTrace stack) {
+      // Nothing was written: the screen goes back to what IS stored.
+      if (identical(state.value, next)) state = AsyncData(current);
+      Error.throwWithStackTrace(error, stack);
+    });
   }
 
   /// Convenience for `set(update(current))`. No-op until the first load.

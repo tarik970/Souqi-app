@@ -226,6 +226,41 @@ abstract final class SettingsKeys {
   /// a trial that is used up stays used up after a restore.
   static const licenseState = 'license_state';
 
+  // The payment QR ("رمز الدفع") printed after the totals. Changing what it
+  // says goes behind the PIN and into the audit log (it is where customers
+  // send money); see lib/features/invoice/payment_qr_settings.dart.
+  static const paymentQrEnabled = 'payment_qr_enabled';
+
+  /// The text read out of the shop's QR image: the code is drawn again from
+  /// it at print time. '' when the image could not be read.
+  static const paymentQrText = 'payment_qr_text';
+
+  /// The fallback: the image itself, cropped and made black and white, as a
+  /// base64 PNG — only when its code could not be read and the owner chose
+  /// "use the image as is". Like the logo, it travels with backups.
+  static const paymentQrImageBase64 = 'payment_qr_image_base64';
+
+  /// The line above the code. NO DEFAULT on purpose: absent means "Scan to
+  /// pay" in the invoice language; '' means no line.
+  static const paymentQrCaption = 'payment_qr_caption';
+
+  /// The line under the code (bank name, account holder); '' = none.
+  static const paymentQrNote = 'payment_qr_note';
+
+  /// ALWAYS / UNPAID (only when something is left to pay).
+  static const paymentQrWhen = 'payment_qr_when';
+  static const paymentQrOnReceipts = 'payment_qr_on_receipts';
+  static const paymentQrOnStatements = 'payment_qr_on_statements';
+
+  // Contact numbers: up to three "name: phone" lines.
+  static const contactsEnabled = 'contacts_enabled';
+
+  /// JSON list `[{"name": "...", "phone": "..."}]`, in print order.
+  static const contacts = 'contacts';
+
+  /// HEADER (under the header) / FOOTER (above the footer).
+  static const contactsPosition = 'contacts_position';
+
   /// Settings that belong to the DEVICE, not to the shop's data: a backup
   /// does not carry them and a restore does not replace them.
   static const List<String> deviceBoundKeys = [licenseCode];
@@ -320,5 +355,15 @@ abstract final class SettingsKeys {
     backupAutoKeepDays: '7',
     backupAutoEnabledAt: '0',
     backupLastAt: '0',
+    paymentQrEnabled: '0',
+    paymentQrText: '',
+    paymentQrImageBase64: '',
+    paymentQrNote: '',
+    paymentQrWhen: 'ALWAYS',
+    paymentQrOnReceipts: '0',
+    paymentQrOnStatements: '1',
+    contactsEnabled: '0',
+    contacts: '[]',
+    contactsPosition: 'HEADER',
   };
 }

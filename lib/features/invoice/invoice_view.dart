@@ -10,10 +10,13 @@ import '../../core/utils/voucher_format.dart';
 import '../../domain/models/cart.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/invoice.dart';
+import '../../domain/models/invoice_extras.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../domain/models/voucher.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'contact_lines.dart';
 import 'invoice_text.dart';
+import 'payment_qr.dart';
 
 const _ink = Color(0xFF000000);
 const _paper = Color(0xFFFFFFFF);
@@ -156,7 +159,18 @@ class InvoiceView extends StatelessWidget {
         ),
     ];
 
-    final hasHeader = logo != null || shopName.isNotEmpty || header.isNotEmpty;
+    final contacts = s.printedContacts;
+    final contactsOnTop =
+        contacts.isNotEmpty && s.contactsPosition == ContactsPosition.header;
+    final contactsAtFoot =
+        contacts.isNotEmpty && s.contactsPosition == ContactsPosition.footer;
+    final contactLines = contacts.isEmpty
+        ? null
+        : PaperContactLines(contacts: contacts, language: s.language, gap: gap);
+    final hasHeader = logo != null ||
+        shopName.isNotEmpty ||
+        header.isNotEmpty ||
+        contactsOnTop;
 
     return MediaQuery(
       // Fresh data: no text scaling, no bold-text override from the phone.
@@ -210,6 +224,7 @@ class InvoiceView extends StatelessWidget {
                     ),
                   if (header.isNotEmpty)
                     Text(header, textAlign: TextAlign.center),
+                  if (contactsOnTop) contactLines!,
                   if (hasHeader) rule,
                   ...meta,
                   if (invoice.isVoided)
@@ -311,10 +326,16 @@ class InvoiceView extends StatelessWidget {
                         showQr: s.printCodeQr,
                       ),
                     ],
-                  if (footer.isNotEmpty) ...[
+                  // The payment QR: after the totals (and the cards), before
+                  // the footer.
+                  if (paymentQrOnInvoice(s, invoice)) ...[
                     rule,
-                    Text(footer, textAlign: TextAlign.center),
+                    PaymentQrBlock(settings: s, base: base),
                   ],
+                  if (contactsAtFoot || footer.isNotEmpty) rule,
+                  if (contactsAtFoot) contactLines!,
+                  if (footer.isNotEmpty)
+                    Text(footer, textAlign: TextAlign.center),
                   if (s.showPoweredBy)
                     Padding(
                       padding: EdgeInsets.only(top: gap),

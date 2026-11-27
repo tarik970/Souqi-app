@@ -4517,4 +4517,174 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminLockedMessage => 'هذه الشاشة محمية بالرمز.';
+
+  @override
+  String get paymentQrSection => 'رمز الدفع';
+
+  @override
+  String get paymentQrSwitch => 'طباعة رمز الدفع';
+
+  @override
+  String get paymentQrSwitchHint =>
+      'رمز QR يمسحه الزبون ليرسل لك المال: رمز البنك أو المحفظة أو تطبيق الدفع.';
+
+  @override
+  String get paymentQrReplace => 'استبدال';
+
+  @override
+  String get paymentQrRemove => 'إزالة';
+
+  @override
+  String get paymentQrFromText =>
+      'تمت قراءته من الصورة: يُطبع رمزاً نظيفاً وواضحاً';
+
+  @override
+  String get paymentQrFromImage => 'الصورة كما هي: قد لا تُقرأ';
+
+  @override
+  String get paymentQrTooDense =>
+      'هذا الرمز يحمل نصاً طويلاً: مربعاته تخرج صغيرة جداً على هذا الورق وقد لا يُقرأ.';
+
+  @override
+  String get paymentQrSourceTitle => 'أين رمز QR؟';
+
+  @override
+  String get paymentQrSourceGallery => 'معرض الصور';
+
+  @override
+  String get paymentQrSourceFile => 'الملفات';
+
+  @override
+  String get paymentQrSourceCamera => 'التقاط صورة';
+
+  @override
+  String get paymentQrConfirmTitle => 'استخدام رمز الدفع هذا؟';
+
+  @override
+  String get paymentQrConfirmHint => 'هكذا سيُطبع. يحتوي الرمز على:';
+
+  @override
+  String get paymentQrUse => 'استخدام هذا الرمز';
+
+  @override
+  String get paymentQrNotReadTitle => 'تعذّرت قراءة رمز QR';
+
+  @override
+  String get paymentQrNotReadBody =>
+      'تعذّرت قراءة رمز QR من هذه الصورة. جرّب صورة أوضح فيها الرمز كاملاً، أو استخدم الصورة كما هي.';
+
+  @override
+  String get paymentQrUseImage => 'استخدام الصورة كما هي';
+
+  @override
+  String get paymentQrUseImageWarning =>
+      'ستُطبع بالأبيض والأسود فقط وقد لا تُقرأ. جرّبها بالهاتف قبل الاعتماد عليها.';
+
+  @override
+  String get paymentQrChooseAnother => 'اختيار صورة أخرى';
+
+  @override
+  String get paymentQrNotAnImage => 'هذا الملف ليس صورة.';
+
+  @override
+  String get paymentQrPickError => 'تعذّر فتح الصورة.';
+
+  @override
+  String get paymentQrCaptionLabel => 'السطر فوق الرمز';
+
+  @override
+  String get paymentQrNoteLabel => 'السطر تحت الرمز';
+
+  @override
+  String get paymentQrNoteHint => 'مثلاً اسم البنك أو صاحب الحساب';
+
+  @override
+  String get paymentQrDefaultCaption => 'امسح للدفع';
+
+  @override
+  String get paymentQrTextNone => 'لا شيء';
+
+  @override
+  String get paymentQrWhenLabel => 'متى يظهر';
+
+  @override
+  String get paymentQrWhenAlways => 'على كل فاتورة';
+
+  @override
+  String get paymentQrWhenUnpaid => 'فقط عند وجود مبلغ متبقٍّ (آجل / جزئي)';
+
+  @override
+  String get paymentQrOnReceipts => 'وعلى سندات القبض أيضاً';
+
+  @override
+  String get paymentQrOnStatements => 'وعلى كشوف الحساب أيضاً';
+
+  @override
+  String get pinReasonPaymentQr => 'تغيير رمز الدفع';
+
+  @override
+  String get paymentQrImageKind => 'صورة';
+
+  @override
+  String get auditPaymentQrSet => 'تعيين رمز الدفع';
+
+  @override
+  String get auditPaymentQrRemove => 'إزالة رمز الدفع';
+
+  @override
+  String get auditPaymentQrOn => 'تشغيل رمز الدفع';
+
+  @override
+  String get auditPaymentQrOff => 'إيقاف رمز الدفع';
+
+  @override
+  String get auditPaymentQrText => 'تغيير نص رمز الدفع';
+
+  @override
+  String get contactsSection => 'أرقام التواصل';
+
+  @override
+  String get contactsSwitch => 'طباعة أرقام التواصل';
+
+  @override
+  String get contactsHint => 'حتى 3 أسماء مع رقم هاتف، كل واحد في سطر.';
+
+  @override
+  String get contactsEmpty => 'لا توجد أرقام بعد.';
+
+  @override
+  String get contactsAdd => 'إضافة رقم';
+
+  @override
+  String get contactsMax => '3 أرقام كحد أقصى.';
+
+  @override
+  String get contactsPositionLabel => 'مكان الطباعة';
+
+  @override
+  String get contactsPositionHeader => 'تحت الترويسة';
+
+  @override
+  String get contactsPositionFooter => 'فوق التذييل';
+
+  @override
+  String get contactMoveUp => 'نقل للأعلى';
+
+  @override
+  String get contactMoveDown => 'نقل للأسفل';
+
+  @override
+  String get contactAddTitle => 'إضافة رقم تواصل';
+
+  @override
+  String get contactEditTitle => 'تعديل رقم التواصل';
+
+  @override
+  String get contactNameLabel => 'الاسم (اختياري)';
+
+  @override
+  String get contactPhoneLabel => 'رقم الهاتف';
+
+  @override
+  String get contactPhoneInvalid => 'أدخل رقم هاتف';
 }

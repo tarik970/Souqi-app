@@ -7542,6 +7542,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This screen is protected by the PIN.'**
   String get adminLockedMessage;
+
+  /// No description provided for @paymentQrSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment QR'**
+  String get paymentQrSection;
+
+  /// No description provided for @paymentQrSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Print a payment QR'**
+  String get paymentQrSwitch;
+
+  /// No description provided for @paymentQrSwitchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A QR code the customer scans to send you money: the code of your bank, wallet or payment app.'**
+  String get paymentQrSwitchHint;
+
+  /// No description provided for @paymentQrReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get paymentQrReplace;
+
+  /// No description provided for @paymentQrRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get paymentQrRemove;
+
+  /// No description provided for @paymentQrFromText.
+  ///
+  /// In en, this message translates to:
+  /// **'Read from the image: printed as a clean, sharp code'**
+  String get paymentQrFromText;
+
+  /// No description provided for @paymentQrFromImage.
+  ///
+  /// In en, this message translates to:
+  /// **'The image as it is: it may not scan'**
+  String get paymentQrFromImage;
+
+  /// No description provided for @paymentQrTooDense.
+  ///
+  /// In en, this message translates to:
+  /// **'This code holds a lot of text: on this paper its squares come out very small and it may not scan.'**
+  String get paymentQrTooDense;
+
+  /// No description provided for @paymentQrSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where is the QR code?'**
+  String get paymentQrSourceTitle;
+
+  /// No description provided for @paymentQrSourceGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo gallery'**
+  String get paymentQrSourceGallery;
+
+  /// No description provided for @paymentQrSourceFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get paymentQrSourceFile;
+
+  /// No description provided for @paymentQrSourceCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get paymentQrSourceCamera;
+
+  /// No description provided for @paymentQrConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this payment code?'**
+  String get paymentQrConfirmTitle;
+
+  /// No description provided for @paymentQrConfirmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This is how it will be printed. The code says:'**
+  String get paymentQrConfirmHint;
+
+  /// No description provided for @paymentQrUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this code'**
+  String get paymentQrUse;
+
+  /// No description provided for @paymentQrNotReadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No QR code could be read'**
+  String get paymentQrNotReadTitle;
+
+  /// No description provided for @paymentQrNotReadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No QR code could be read from this image. Try a sharper picture with the whole code in it, or use the image as it is.'**
+  String get paymentQrNotReadBody;
+
+  /// No description provided for @paymentQrUseImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the image as is'**
+  String get paymentQrUseImage;
+
+  /// No description provided for @paymentQrUseImageWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be printed in plain black and white and may not scan. Test it with a phone before relying on it.'**
+  String get paymentQrUseImageWarning;
+
+  /// No description provided for @paymentQrChooseAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another'**
+  String get paymentQrChooseAnother;
+
+  /// No description provided for @paymentQrNotAnImage.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is not an image.'**
+  String get paymentQrNotAnImage;
+
+  /// No description provided for @paymentQrPickError.
+  ///
+  /// In en, this message translates to:
+  /// **'The image could not be opened.'**
+  String get paymentQrPickError;
+
+  /// No description provided for @paymentQrCaptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Line above the code'**
+  String get paymentQrCaptionLabel;
+
+  /// No description provided for @paymentQrNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Line under the code'**
+  String get paymentQrNoteLabel;
+
+  /// No description provided for @paymentQrNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example the bank name or the account holder'**
+  String get paymentQrNoteHint;
+
+  /// No description provided for @paymentQrDefaultCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to pay'**
+  String get paymentQrDefaultCaption;
+
+  /// No description provided for @paymentQrTextNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get paymentQrTextNone;
+
+  /// No description provided for @paymentQrWhenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it appears'**
+  String get paymentQrWhenLabel;
+
+  /// No description provided for @paymentQrWhenAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'On every invoice'**
+  String get paymentQrWhenAlways;
+
+  /// No description provided for @paymentQrWhenUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Only when something is left to pay (credit / partial)'**
+  String get paymentQrWhenUnpaid;
+
+  /// No description provided for @paymentQrOnReceipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Also on payment receipts'**
+  String get paymentQrOnReceipts;
+
+  /// No description provided for @paymentQrOnStatements.
+  ///
+  /// In en, this message translates to:
+  /// **'Also on account statements'**
+  String get paymentQrOnStatements;
+
+  /// No description provided for @pinReasonPaymentQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the payment QR'**
+  String get pinReasonPaymentQr;
+
+  /// No description provided for @paymentQrImageKind.
+  ///
+  /// In en, this message translates to:
+  /// **'image'**
+  String get paymentQrImageKind;
+
+  /// No description provided for @auditPaymentQrSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment QR set'**
+  String get auditPaymentQrSet;
+
+  /// No description provided for @auditPaymentQrRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment QR removed'**
+  String get auditPaymentQrRemove;
+
+  /// No description provided for @auditPaymentQrOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment QR turned on'**
+  String get auditPaymentQrOn;
+
+  /// No description provided for @auditPaymentQrOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment QR turned off'**
+  String get auditPaymentQrOff;
+
+  /// No description provided for @auditPaymentQrText.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment QR text changed'**
+  String get auditPaymentQrText;
+
+  /// No description provided for @contactsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact numbers'**
+  String get contactsSection;
+
+  /// No description provided for @contactsSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Print contact numbers'**
+  String get contactsSwitch;
+
+  /// No description provided for @contactsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 3 names with a phone number, one line each.'**
+  String get contactsHint;
+
+  /// No description provided for @contactsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No numbers yet.'**
+  String get contactsEmpty;
+
+  /// No description provided for @contactsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a number'**
+  String get contactsAdd;
+
+  /// No description provided for @contactsMax.
+  ///
+  /// In en, this message translates to:
+  /// **'3 numbers at most.'**
+  String get contactsMax;
+
+  /// No description provided for @contactsPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Where they are printed'**
+  String get contactsPositionLabel;
+
+  /// No description provided for @contactsPositionHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Under the header'**
+  String get contactsPositionHeader;
+
+  /// No description provided for @contactsPositionFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Above the footer'**
+  String get contactsPositionFooter;
+
+  /// No description provided for @contactMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get contactMoveUp;
+
+  /// No description provided for @contactMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get contactMoveDown;
+
+  /// No description provided for @contactAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a contact number'**
+  String get contactAddTitle;
+
+  /// No description provided for @contactEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the contact number'**
+  String get contactEditTitle;
+
+  /// No description provided for @contactNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get contactNameLabel;
+
+  /// No description provided for @contactPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get contactPhoneLabel;
+
+  /// No description provided for @contactPhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a phone number'**
+  String get contactPhoneInvalid;
 }
 
 class _AppLocalizationsDelegate

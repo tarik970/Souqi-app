@@ -187,6 +187,11 @@ String auditActionLabel(AppLocalizations l10n, String action) =>
       AuditAction.voidAgeLimit => l10n.auditVoidAgeLimit,
       AuditAction.adminLockOn => l10n.auditAdminLockOn,
       AuditAction.adminLockOff => l10n.auditAdminLockOff,
+      AuditAction.paymentQrSet => l10n.auditPaymentQrSet,
+      AuditAction.paymentQrRemove => l10n.auditPaymentQrRemove,
+      AuditAction.paymentQrOn => l10n.auditPaymentQrOn,
+      AuditAction.paymentQrOff => l10n.auditPaymentQrOff,
+      AuditAction.paymentQrText => l10n.auditPaymentQrText,
       // Written by a newer version of the app: show what was stored.
       null => action,
     };
@@ -227,6 +232,12 @@ IconData _auditIcon(String action) => switch (AuditAction.fromDb(action)) {
       AuditAction.invoiceReturn => Icons.assignment_return_outlined,
       AuditAction.voidAgeLimit => Icons.event_busy,
       AuditAction.adminLockOn || AuditAction.adminLockOff => Icons.lock_outline,
+      AuditAction.paymentQrSet ||
+      AuditAction.paymentQrRemove ||
+      AuditAction.paymentQrOn ||
+      AuditAction.paymentQrOff ||
+      AuditAction.paymentQrText =>
+        Icons.qr_code_2,
       null => Icons.info_outline,
     };
 
@@ -307,6 +318,18 @@ class _AuditTile extends ConsumerWidget {
       if (details['invoices'] is int)
         l10n.auditDetailInvoices(number(details['invoices'])),
       if (details['file'] is String) ltrIsolate(details['file'] as String),
+      // The payment QR: what it says (shortened), or that it is a picture;
+      // a changed line above or under it, as it now reads.
+      if (details['qr'] is String) ltrIsolate(details['qr'] as String),
+      if (details['qr_image'] == 1) l10n.paymentQrImageKind,
+      if (details['field'] is String)
+        details['field'] == 'note'
+            ? l10n.paymentQrNoteLabel
+            : l10n.paymentQrCaptionLabel,
+      if (details['text'] is String)
+        (details['text'] as String).isEmpty
+            ? l10n.paymentQrTextNone
+            : details['text'] as String,
       if (details['reason'] is String &&
           (details['reason'] as String).isNotEmpty)
         l10n.auditDetailReason(details['reason'] as String),

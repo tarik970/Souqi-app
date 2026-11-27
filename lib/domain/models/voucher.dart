@@ -366,7 +366,16 @@ enum AuditAction {
 
   /// "PIN to open settings, archive and statistics" turned on or off.
   adminLockOn('ADMIN_LOCK_ON'),
-  adminLockOff('ADMIN_LOCK_OFF');
+  adminLockOff('ADMIN_LOCK_OFF'),
+
+  /// The payment QR printed on the papers — where customers send money —
+  /// chosen or replaced (its text, shortened, or "image"), removed, turned
+  /// on or off, and the lines above and under it changed.
+  paymentQrSet('PAYMENT_QR_SET'),
+  paymentQrRemove('PAYMENT_QR_REMOVE'),
+  paymentQrOn('PAYMENT_QR_ON'),
+  paymentQrOff('PAYMENT_QR_OFF'),
+  paymentQrText('PAYMENT_QR_TEXT');
 
   const AuditAction(this.db);
 

@@ -5,10 +5,13 @@ import 'package:flutter/widgets.dart';
 import '../../core/money/money_format.dart';
 import '../../domain/models/currency.dart';
 import '../../domain/models/debt.dart';
+import '../../domain/models/invoice_extras.dart';
 import '../../domain/models/invoice_settings.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../invoice/contact_lines.dart';
 import '../invoice/invoice_text.dart';
 import '../invoice/invoice_view.dart';
+import '../invoice/payment_qr.dart';
 import 'debt_text.dart';
 
 const _ink = Color(0xFF000000);
@@ -64,6 +67,7 @@ class PaperFrame extends StatelessWidget {
     required this.title,
     required this.builder,
     this.cancelled = false,
+    this.showPaymentQr = false,
   });
 
   final InvoiceSettings settings;
@@ -74,6 +78,10 @@ class PaperFrame extends StatelessWidget {
 
   /// The paper was cancelled (a reversed payment): says so in a box.
   final bool cancelled;
+
+  /// Print the shop's payment QR before the footer. The paper decides
+  /// ([paymentQrOnReceipt], [paymentQrOnStatement]); a return never does.
+  final bool showPaymentQr;
   final List<Widget> Function(PaperStyle style) builder;
 
   @override
@@ -103,6 +111,18 @@ class PaperFrame extends StatelessWidget {
     final shopName = s.shopName.trim();
     final header = isolateSpacedNumbers(s.headerText.trim());
     final footer = isolateSpacedNumbers(s.footerText.trim());
+    final contacts = s.printedContacts;
+    final contactsOnTop =
+        contacts.isNotEmpty && s.contactsPosition == ContactsPosition.header;
+    final contactsAtFoot =
+        contacts.isNotEmpty && s.contactsPosition == ContactsPosition.footer;
+    final contactLines = contacts.isEmpty
+        ? null
+        : PaperContactLines(
+            contacts: contacts,
+            language: s.language,
+            gap: style.gap,
+          );
 
     return MediaQuery(
       // Fresh data: no text scaling, no bold-text override from the phone.
@@ -158,7 +178,11 @@ class PaperFrame extends StatelessWidget {
                     ),
                   if (header.isNotEmpty)
                     Text(header, textAlign: TextAlign.center),
-                  if (logo != null || shopName.isNotEmpty || header.isNotEmpty)
+                  if (contactsOnTop) contactLines!,
+                  if (logo != null ||
+                      shopName.isNotEmpty ||
+                      header.isNotEmpty ||
+                      contactsOnTop)
                     style.rule,
                   Text(
                     title,
@@ -167,10 +191,14 @@ class PaperFrame extends StatelessWidget {
                   ),
                   SizedBox(height: style.gap * 0.5),
                   ...builder(style),
-                  if (footer.isNotEmpty) ...[
+                  if (showPaymentQr && s.hasPaymentQr) ...[
                     style.rule,
-                    Text(footer, textAlign: TextAlign.center),
+                    PaymentQrBlock(settings: s, base: base),
                   ],
+                  if (contactsAtFoot || footer.isNotEmpty) style.rule,
+                  if (contactsAtFoot) contactLines!,
+                  if (footer.isNotEmpty)
+                    Text(footer, textAlign: TextAlign.center),
                   if (s.showPoweredBy)
                     Padding(
                       padding: EdgeInsets.only(top: style.gap),
@@ -305,6 +333,11 @@ class ReceiptView extends StatelessWidget {
       padding: padding,
       isCopy: isCopy,
       cancelled: payment.isReversed,
+      showPaymentQr: paymentQrOnReceipt(
+        s,
+        balanceAfterBaseMinor: after,
+        reversed: payment.isReversed,
+      ),
       title: lookupAppLocalizations(Locale(s.language)).receiptTitle,
       builder: (style) {
         final l10n = style.l10n;
@@ -462,6 +495,10 @@ class StatementView extends StatelessWidget {
       logo: logo,
       padding: padding,
       isCopy: isCopy,
+      showPaymentQr: paymentQrOnStatement(
+        s,
+        closingBalanceBaseMinor: statement.closingBalanceBaseMinor,
+      ),
       title: lookupAppLocalizations(Locale(s.language)).accountStatement,
       builder: (style) {
         final l10n = style.l10n;

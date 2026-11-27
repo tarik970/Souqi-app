@@ -11,7 +11,9 @@ import '../../core/printing/escpos.dart';
 import '../../core/printing/print_geometry.dart';
 import '../../core/printing/print_job.dart';
 import '../../core/printing/printer_detect.dart';
+import '../../core/printing/qr_bitmap.dart';
 import '../../core/utils/normalize.dart';
+import 'invoice_extras.dart';
 
 /// What the main button does after a sale is saved.
 enum OutputMode {
@@ -86,6 +88,17 @@ class InvoiceSettings {
     this.outputMode = OutputMode.print,
     this.shareWidthMm,
     this.defaultCountryCode = '963',
+    this.paymentQrEnabled = false,
+    this.paymentQrText = '',
+    this.paymentQrPicture,
+    this.paymentQrCaption,
+    this.paymentQrNote = '',
+    this.paymentQrWhen = PaymentQrWhen.always,
+    this.paymentQrOnReceipts = false,
+    this.paymentQrOnStatements = true,
+    this.showContacts = false,
+    this.contacts = const [],
+    this.contactsPosition = ContactsPosition.header,
     this.trialNotice = false,
   });
 
@@ -306,6 +319,44 @@ class InvoiceSettings {
   final double? shareWidthMm;
   final String defaultCountryCode;
 
+  // The payment QR ("رمز الدفع"), printed after the totals.
+  final bool paymentQrEnabled;
+
+  /// What the shop's QR says, read out of its image: the code is drawn
+  /// again from this text, sharp, at print time. '' when it could not be
+  /// read and [paymentQrPicture] is used instead.
+  final String paymentQrText;
+
+  /// The fallback: the image itself, made black and white ("use the image
+  /// as is"). Only used while [paymentQrText] is empty.
+  final QrPicture? paymentQrPicture;
+
+  /// The line above the code. Null = "Scan to pay" in the invoice
+  /// language; '' = no line.
+  final String? paymentQrCaption;
+
+  /// The line under the code (bank name, account holder); '' = none.
+  final String paymentQrNote;
+  final PaymentQrWhen paymentQrWhen;
+  final bool paymentQrOnReceipts;
+  final bool paymentQrOnStatements;
+
+  /// There is a code to print: switched on, and either text or a picture.
+  bool get hasPaymentQr => paymentQrEnabled && hasPaymentQrContent;
+
+  /// A code is stored, whether it is switched on or not.
+  bool get hasPaymentQrContent =>
+      paymentQrText.isNotEmpty || paymentQrPicture != null;
+
+  // Contact numbers ("name: phone" lines).
+  final bool showContacts;
+  final List<InvoiceContact> contacts;
+  final ContactsPosition contactsPosition;
+
+  /// The lines to print — none while switched off.
+  List<InvoiceContact> get printedContacts =>
+      showContacts ? contacts : const [];
+
   /// Print the small "trial version" line. NOT a stored setting: it is set
   /// for rendering while the app runs on its trial (`LicenseStatus.isTrial`)
   /// and is in neither [fromMap] nor [toMap].
@@ -418,6 +469,16 @@ class InvoiceSettings {
     final printerName = get(SettingsKeys.printerName);
     final language = get(SettingsKeys.invoiceLanguage);
 
+    QrPicture? qrPicture;
+    final qrRaw = get(SettingsKeys.paymentQrImageBase64);
+    if (qrRaw.isNotEmpty) {
+      try {
+        qrPicture = QrPicture.fromPng(base64Decode(qrRaw));
+      } on FormatException {
+        qrPicture = null;
+      }
+    }
+
     return InvoiceSettings(
       paperWidthMm: _mm(get(SettingsKeys.paperWidthMm), paper80),
       printerDpi: (int.tryParse(get(SettingsKeys.printerDpi)) ?? 203)
@@ -469,6 +530,18 @@ class InvoiceSettings {
       outputMode: OutputMode.fromDb(get(SettingsKeys.outputMode)),
       shareWidthMm: shareRaw.isEmpty ? null : _mm(shareRaw, paper80),
       defaultCountryCode: get(SettingsKeys.defaultCountryCode),
+      paymentQrEnabled: _bool(get(SettingsKeys.paymentQrEnabled)),
+      paymentQrText: get(SettingsKeys.paymentQrText),
+      paymentQrPicture: qrPicture,
+      paymentQrCaption: stored[SettingsKeys.paymentQrCaption],
+      paymentQrNote: get(SettingsKeys.paymentQrNote),
+      paymentQrWhen: PaymentQrWhen.fromDb(get(SettingsKeys.paymentQrWhen)),
+      paymentQrOnReceipts: _bool(get(SettingsKeys.paymentQrOnReceipts)),
+      paymentQrOnStatements: _bool(get(SettingsKeys.paymentQrOnStatements)),
+      showContacts: _bool(get(SettingsKeys.contactsEnabled)),
+      contacts: InvoiceContact.listFromJson(get(SettingsKeys.contacts)),
+      contactsPosition:
+          ContactsPosition.fromDb(get(SettingsKeys.contactsPosition)),
     );
   }
 
@@ -524,6 +597,21 @@ class InvoiceSettings {
         SettingsKeys.shareWidthMm:
             shareWidthMm == null ? '' : _mmText(shareWidthMm!),
         SettingsKeys.defaultCountryCode: defaultCountryCode,
+        SettingsKeys.paymentQrEnabled: paymentQrEnabled ? '1' : '0',
+        SettingsKeys.paymentQrText: paymentQrText,
+        SettingsKeys.paymentQrImageBase64: paymentQrPicture == null
+            ? ''
+            : base64Encode(paymentQrPicture!.png),
+        // Left out while it was never set: the default line follows the
+        // invoice language.
+        SettingsKeys.paymentQrCaption: ?paymentQrCaption,
+        SettingsKeys.paymentQrNote: paymentQrNote,
+        SettingsKeys.paymentQrWhen: paymentQrWhen.db,
+        SettingsKeys.paymentQrOnReceipts: paymentQrOnReceipts ? '1' : '0',
+        SettingsKeys.paymentQrOnStatements: paymentQrOnStatements ? '1' : '0',
+        SettingsKeys.contactsEnabled: showContacts ? '1' : '0',
+        SettingsKeys.contacts: InvoiceContact.listToJson(contacts),
+        SettingsKeys.contactsPosition: contactsPosition.db,
       };
 
   InvoiceSettings copyWith({
@@ -568,6 +656,17 @@ class InvoiceSettings {
     OutputMode? outputMode,
     double? Function()? shareWidthMm,
     String? defaultCountryCode,
+    bool? paymentQrEnabled,
+    String? paymentQrText,
+    QrPicture? Function()? paymentQrPicture,
+    String? paymentQrCaption,
+    String? paymentQrNote,
+    PaymentQrWhen? paymentQrWhen,
+    bool? paymentQrOnReceipts,
+    bool? paymentQrOnStatements,
+    bool? showContacts,
+    List<InvoiceContact>? contacts,
+    ContactsPosition? contactsPosition,
     bool? trialNotice,
   }) {
     return InvoiceSettings(
@@ -615,6 +714,19 @@ class InvoiceSettings {
       outputMode: outputMode ?? this.outputMode,
       shareWidthMm: shareWidthMm != null ? shareWidthMm() : this.shareWidthMm,
       defaultCountryCode: defaultCountryCode ?? this.defaultCountryCode,
+      paymentQrEnabled: paymentQrEnabled ?? this.paymentQrEnabled,
+      paymentQrText: paymentQrText ?? this.paymentQrText,
+      paymentQrPicture:
+          paymentQrPicture != null ? paymentQrPicture() : this.paymentQrPicture,
+      paymentQrCaption: paymentQrCaption ?? this.paymentQrCaption,
+      paymentQrNote: paymentQrNote ?? this.paymentQrNote,
+      paymentQrWhen: paymentQrWhen ?? this.paymentQrWhen,
+      paymentQrOnReceipts: paymentQrOnReceipts ?? this.paymentQrOnReceipts,
+      paymentQrOnStatements:
+          paymentQrOnStatements ?? this.paymentQrOnStatements,
+      showContacts: showContacts ?? this.showContacts,
+      contacts: contacts ?? this.contacts,
+      contactsPosition: contactsPosition ?? this.contactsPosition,
       trialNotice: trialNotice ?? this.trialNotice,
     );
   }

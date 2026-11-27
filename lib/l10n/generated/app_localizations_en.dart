@@ -4508,4 +4508,178 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLockedMessage => 'This screen is protected by the PIN.';
+
+  @override
+  String get paymentQrSection => 'Payment QR';
+
+  @override
+  String get paymentQrSwitch => 'Print a payment QR';
+
+  @override
+  String get paymentQrSwitchHint =>
+      'A QR code the customer scans to send you money: the code of your bank, wallet or payment app.';
+
+  @override
+  String get paymentQrReplace => 'Replace';
+
+  @override
+  String get paymentQrRemove => 'Remove';
+
+  @override
+  String get paymentQrFromText =>
+      'Read from the image: printed as a clean, sharp code';
+
+  @override
+  String get paymentQrFromImage => 'The image as it is: it may not scan';
+
+  @override
+  String get paymentQrTooDense =>
+      'This code holds a lot of text: on this paper its squares come out very small and it may not scan.';
+
+  @override
+  String get paymentQrSourceTitle => 'Where is the QR code?';
+
+  @override
+  String get paymentQrSourceGallery => 'Photo gallery';
+
+  @override
+  String get paymentQrSourceFile => 'Files';
+
+  @override
+  String get paymentQrSourceCamera => 'Take a photo';
+
+  @override
+  String get paymentQrConfirmTitle => 'Use this payment code?';
+
+  @override
+  String get paymentQrConfirmHint =>
+      'This is how it will be printed. The code says:';
+
+  @override
+  String get paymentQrUse => 'Use this code';
+
+  @override
+  String get paymentQrNotReadTitle => 'No QR code could be read';
+
+  @override
+  String get paymentQrNotReadBody =>
+      'No QR code could be read from this image. Try a sharper picture with the whole code in it, or use the image as it is.';
+
+  @override
+  String get paymentQrUseImage => 'Use the image as is';
+
+  @override
+  String get paymentQrUseImageWarning =>
+      'It will be printed in plain black and white and may not scan. Test it with a phone before relying on it.';
+
+  @override
+  String get paymentQrChooseAnother => 'Choose another';
+
+  @override
+  String get paymentQrNotAnImage => 'This file is not an image.';
+
+  @override
+  String get paymentQrPickError => 'The image could not be opened.';
+
+  @override
+  String get paymentQrCaptionLabel => 'Line above the code';
+
+  @override
+  String get paymentQrNoteLabel => 'Line under the code';
+
+  @override
+  String get paymentQrNoteHint =>
+      'For example the bank name or the account holder';
+
+  @override
+  String get paymentQrDefaultCaption => 'Scan to pay';
+
+  @override
+  String get paymentQrTextNone => 'None';
+
+  @override
+  String get paymentQrWhenLabel => 'Where it appears';
+
+  @override
+  String get paymentQrWhenAlways => 'On every invoice';
+
+  @override
+  String get paymentQrWhenUnpaid =>
+      'Only when something is left to pay (credit / partial)';
+
+  @override
+  String get paymentQrOnReceipts => 'Also on payment receipts';
+
+  @override
+  String get paymentQrOnStatements => 'Also on account statements';
+
+  @override
+  String get pinReasonPaymentQr => 'Changing the payment QR';
+
+  @override
+  String get paymentQrImageKind => 'image';
+
+  @override
+  String get auditPaymentQrSet => 'Payment QR set';
+
+  @override
+  String get auditPaymentQrRemove => 'Payment QR removed';
+
+  @override
+  String get auditPaymentQrOn => 'Payment QR turned on';
+
+  @override
+  String get auditPaymentQrOff => 'Payment QR turned off';
+
+  @override
+  String get auditPaymentQrText => 'Payment QR text changed';
+
+  @override
+  String get contactsSection => 'Contact numbers';
+
+  @override
+  String get contactsSwitch => 'Print contact numbers';
+
+  @override
+  String get contactsHint =>
+      'Up to 3 names with a phone number, one line each.';
+
+  @override
+  String get contactsEmpty => 'No numbers yet.';
+
+  @override
+  String get contactsAdd => 'Add a number';
+
+  @override
+  String get contactsMax => '3 numbers at most.';
+
+  @override
+  String get contactsPositionLabel => 'Where they are printed';
+
+  @override
+  String get contactsPositionHeader => 'Under the header';
+
+  @override
+  String get contactsPositionFooter => 'Above the footer';
+
+  @override
+  String get contactMoveUp => 'Move up';
+
+  @override
+  String get contactMoveDown => 'Move down';
+
+  @override
+  String get contactAddTitle => 'Add a contact number';
+
+  @override
+  String get contactEditTitle => 'Edit the contact number';
+
+  @override
+  String get contactNameLabel => 'Name (optional)';
+
+  @override
+  String get contactPhoneLabel => 'Phone number';
+
+  @override
+  String get contactPhoneInvalid => 'Enter a phone number';
 }

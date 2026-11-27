@@ -18,12 +18,15 @@ import '../security/pin_session.dart';
 import 'invoice_output.dart';
 import 'invoice_preview.dart';
 import 'invoice_providers.dart';
+import 'contact_numbers_settings.dart';
 import 'logo_codec.dart';
 import 'output_messages.dart';
+import 'payment_qr_settings.dart';
 import 'printer_diagnostics_screen.dart';
 import 'printer_picker.dart';
 import 'printer_widgets.dart';
 import 'sample_invoice.dart';
+import 'settings_parts.dart';
 
 /// Invoice & printing settings with a live preview.
 ///
@@ -291,6 +294,8 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
         ..._printerSection(l10n, theme, s),
         ..._paperSection(l10n, theme, s),
         ..._shopSection(l10n, theme, s),
+        const ContactNumbersSection(),
+        const PaymentQrSettingsSection(),
         ..._contentSection(l10n, s),
         ..._currencySection(l10n, theme, s, currencies, baseCode, appLocale),
         ..._sharingSection(l10n, s),
@@ -919,60 +924,9 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 16, 4),
-      child: Text(
-        text,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _Padded extends StatelessWidget {
-  const _Padded({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: child,
-        ),
-      );
-}
-
-class _Hint extends StatelessWidget {
-  const _Hint(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Text(
-        text,
-        style: theme.textTheme.bodySmall
-            ?.copyWith(color: theme.colorScheme.outline),
-      ),
-    );
-  }
-}
+typedef _SectionTitle = SettingsSectionTitle;
+typedef _Padded = SettingsPadded;
+typedef _Hint = SettingsHint;
 
 /// A numeric text field that owns its text. [onChanged] applies the value
 /// when it is valid and returns whether it was; an invalid entry shows an

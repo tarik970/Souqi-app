@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -37,6 +39,12 @@ import 'package:souqi/features/home/home_screen.dart';
 import 'package:souqi/features/invoice/invoice_actions.dart';
 import 'package:souqi/features/invoice/invoice_providers.dart';
 import 'package:souqi/features/invoice/invoice_settings_screen.dart';
+import 'package:souqi/core/printing/qr_bitmap.dart';
+import 'package:souqi/domain/models/invoice_extras.dart';
+import 'package:souqi/domain/models/invoice_settings.dart';
+import 'package:souqi/features/invoice/contact_numbers_settings.dart';
+import 'package:souqi/features/invoice/payment_qr_reader.dart';
+import 'package:souqi/features/invoice/payment_qr_settings.dart';
 import 'package:souqi/features/products/product_form_screen.dart';
 import 'package:souqi/features/products/products_screen.dart';
 import 'package:souqi/features/sale/cash_received.dart';
@@ -1689,6 +1697,97 @@ void main() {
       isPage: true,
       after: (tester) async =>
           expect(find.byType(InvoiceDetailScreen), findsOneWidget),
+    ),
+    // Invoice settings → payment QR and contact numbers.
+    Closable(
+      'payment QR: where the picture comes from',
+      home: host((context) => showModalBottomSheet<QrImageSource>(
+            context: context,
+            builder: (_) => const QrSourceSheet(),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('payment-qr-source-sheet')),
+    ),
+    Closable(
+      'payment QR: confirm the code that was read',
+      home: host((context) => showDialog<bool>(
+            context: context,
+            builder: (_) => const PaymentQrConfirmDialog(
+              text: 'upi://pay?pa=shop@bank&pn=Souqi',
+              settings: InvoiceSettings(),
+            ),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('payment-qr-confirm')),
+      button: find.byKey(const ValueKey('payment-qr-confirm-cancel')),
+    ),
+    Closable(
+      'payment QR: no code could be read',
+      home: host((context) => showDialog<UnreadQrChoice>(
+            context: context,
+            builder: (_) => PaymentQrUnreadDialog(
+              picture: QrPicture.fromBitmap(
+                QrBitmap(side: 4, bits: Uint8List.fromList(
+                  [1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1],
+                )),
+              ),
+            ),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('payment-qr-unread')),
+      button: find.byKey(const ValueKey('payment-qr-unread-cancel')),
+    ),
+    Closable(
+      'payment QR: the line above the code',
+      home: host((context) => showDialog<String>(
+            context: context,
+            builder: (_) => const PaymentQrTextDialog(
+              title: 'Line above the code',
+              initial: 'Scan to pay',
+            ),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('payment-qr-text-dialog')),
+      button: find.byKey(const ValueKey('payment-qr-text-cancel')),
+      keyboard: true,
+    ),
+    Closable(
+      'contact number dialog',
+      home: host((context) => showDialog<InvoiceContact>(
+            context: context,
+            builder: (_) => const ContactEditDialog(
+              initial: InvoiceContact(name: 'أبو أحمد', phone: '0944 123 456'),
+            ),
+          )),
+      open: openHost,
+      shown: find.byKey(const ValueKey('contact-dialog')),
+      button: find.byKey(const ValueKey('contact-cancel')),
+      keyboard: true,
+    ),
+    Closable(
+      'contact number dialog, from the invoice settings',
+      home: const InvoiceSettingsScreen(),
+      seed: (database) => SettingsRepository(database.db)
+          .setString(SettingsKeys.contactsEnabled, '1'),
+      open: (tester) async {
+        final add = find.byKey(const ValueKey('contact-add'));
+        await tester.scrollUntilVisible(
+          add,
+          200,
+          scrollable: find
+              .descendant(
+                of: find.byType(ListView),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await settle(tester, 4);
+        await tester.tap(add);
+        await animated(tester);
+      },
+      shown: find.byKey(const ValueKey('contact-dialog')),
+      button: find.byKey(const ValueKey('contact-cancel')),
+      keyboard: true,
     ),
   ];
 
