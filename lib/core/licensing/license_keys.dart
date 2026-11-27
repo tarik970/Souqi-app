@@ -34,4 +34,4 @@ const String licenseDeviceSalt = 'souqi-device-16400f75d8a914f24b22e1355c5d8b3d'
 ///
 /// (the line "SHA256:"). Until it is filled in, only DEBUG builds skip the
 /// check; a release or profile build reports itself as not sealed.
-const String expectedSigningCertSha256 = '';
+const String expectedSigningCertSha256 = '13996c9e997a6e33418ff680c44b5624dcd275579b923954e378221ef7aa18c2';
