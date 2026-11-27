@@ -25,6 +25,7 @@
 #   makes the licensing code harder to find and patch;
 # - "--split-debug-info" takes the symbols out of the APK into the folder
 #   above;
+# - fails if a libapp.so in the built APK still has .debug_* (DWARF) sections;
 # - checks the certificate of the APK it built.
 #
 # -AllowDebugSigning   builds without the release key (signed with the debug
@@ -114,6 +115,13 @@ if ($LASTEXITCODE -ne 0) { throw "flutter build failed ($LASTEXITCODE)" }
 
 $built = 'build/app/outputs/flutter-apk/app-release.apk'
 if (-not (Test-Path $built)) { throw "no APK at $built" }
+
+# The "unobfuscated DWARF debugging information, use --strip" warning above is
+# about gen_snapshot's own file, which the Android build strips. Checked here,
+# before the APK goes into the release folder.
+$strippedLibs = Assert-ApkLibappStripped $built
+Write-Host "No DWARF debug info in: $($strippedLibs -join ', ')" -ForegroundColor Green
+
 $apk = "$out/souqi-$version.apk"
 Copy-Item $built $apk -Force
 
